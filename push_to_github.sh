@@ -37,8 +37,8 @@ git branch -M main
 # Desactivar helper de credenciales (evita que falle el login visual y usa el token directo)
 git config credential.helper ""
 
-# Intentar empujar
-git push -u origin main
+# Intentar empujar (forzando a ignorar el asistente de credenciales de Windows)
+git -c credential.helper= push -u origin main
 
 if [ $? -eq 0 ]; then
     echo "=============================================="
