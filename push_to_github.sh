@@ -14,7 +14,7 @@ fi
 # Configurar el repositorio remoto
 echo "[2/5] Configurando repositorio remoto..."
 git remote remove origin 2>/dev/null
-git remote add origin https://github.com/elevensistemas/naviera_app.git
+git remote add origin https://ghp_gMwRfTWDA7V4wKCheHQCzj7WXU6Krg42nS8k@github.com/elevensistemas/naviera_app.git
 
 # Agregar los archivos
 echo "[3/5] Agregando archivos al area de preparacion (staging)..."
