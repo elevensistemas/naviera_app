@@ -1,0 +1,26 @@
+# SDKs and local tools (too large for GitHub, must not be uploaded)
+flutter/
+android_tools/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local environment files (prevent uploading secrets)
+.env
+.env.local
+.env.production
+.env.development
+.env.staging
+*.env
+*.env.*
