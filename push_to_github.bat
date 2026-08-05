@@ -11,10 +11,17 @@ if not exist .git (
     echo [1/5] Repositorio Git ya inicializado localmente.
 )
 
-:: Configurar el repositorio remoto
+:: Pedir el token al usuario para evitar problemas de copia o expiracion
+echo.
+echo Para subir los archivos de forma segura, necesitamos tu Token de GitHub.
+echo (Debe empezar con ghp_ y tener permisos 'repo').
+set /p USER_TOKEN="Pega tu token de GitHub y presiona Enter: "
+echo.
+
+:: Configurar el repositorio remoto usando el token ingresado
 echo [2/5] Configurando repositorio remoto...
 git remote remove origin >nul 2>&1
-git remote add origin https://oauth2:ghp_gMwRfTWDA7V4wKCheHQCzj7WXU6Krg42nS8k@github.com/elevensistemas/naviera_app.git
+git remote add origin https://oauth2:%USER_TOKEN%@github.com/elevensistemas/naviera_app.git
 
 :: Agregar los archivos
 echo [3/5] Agregando archivos al area de preparacion (staging)...
@@ -48,7 +55,7 @@ if %ERRORLEVEL% equ 0 (
 ) else (
     echo ==============================================
     echo Hubo un error al subir el proyecto.
-    echo Asegurate de tener permisos en el repositorio y haber iniciado sesion en Git/GitHub.
+    echo Asegurate de tener permisos en el repositorio y que el token sea correcto.
     echo ==============================================
 )
 
