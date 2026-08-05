@@ -34,8 +34,8 @@ git commit -m "Primer commit: Estructura del proyecto"
 echo "[5/5] Subiendo a GitHub en la rama main..."
 git branch -M main
 
-# Configurar el inicio de sesion con navegador (evita usar token manual)
-git config --global credential.helper manager
+# Desactivar helper de credenciales (evita que falle el login visual y usa el token directo)
+git config credential.helper ""
 
 # Intentar empujar
 git push -u origin main
