@@ -3,7 +3,8 @@ import '../home/home_view.dart';
 import '../fleet/fleet_view.dart';
 import '../chat/chat_list_view.dart';
 import '../schedule/schedule_view.dart';
-import '../profile/profile_view.dart';
+import '../incidents/incident_list_view.dart';
+import '../../app/drawer_widget.dart';
 
 class MainTabView extends StatefulWidget {
   const MainTabView({super.key});
@@ -18,14 +19,15 @@ class _MainTabViewState extends State<MainTabView> {
   final List<Widget> _views = const [
     HomeView(),
     FleetView(),
-    ChatListView(),
     ScheduleView(),
-    ProfileView(),
+    IncidentListView(),
+    ChatListView(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      endDrawer: const NavieraDrawer(), // side drawer for settings and profile details
       body: IndexedStack(
         index: _currentIndex,
         children: _views,
@@ -39,24 +41,29 @@ class _MainTabViewState extends State<MainTabView> {
         },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.newspaper),
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
             label: "Inicio",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.directions_boat),
+            icon: Icon(Icons.anchor_outlined),
+            activeIcon: Icon(Icons.anchor),
             label: "Flota",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.message),
+            icon: Icon(Icons.calendar_today_outlined),
+            activeIcon: Icon(Icons.calendar_today),
+            label: "Programado",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shield_outlined),
+            activeIcon: Icon(Icons.shield),
+            label: "Seguridad",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            activeIcon: Icon(Icons.chat_bubble),
             label: "Chat",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month),
-            label: "Agenda",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle),
-            label: "Perfil",
           ),
         ],
       ),

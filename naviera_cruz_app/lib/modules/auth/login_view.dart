@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../app/theme.dart';
+import '../../app/logo.dart';
 import '../../services/services.dart';
 import '../../core/storage.dart';
 
@@ -60,187 +61,200 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom - 40,
+      backgroundColor: ColorTheme.primary, // Fondo azul corporativo sólido
+      body: Stack(
+        children: [
+          // Elementos Decorativos de Fondo (Esquina inferior derecha)
+          Positioned(
+            bottom: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: const BoxDecoration(
+                color: Color(0xFF007AFF), // Círculo celeste brillante
+                shape: BoxShape.circle,
+              ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const SizedBox(height: 20),
-                // Logo & Header
-                Column(
-                  children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: theme.brightness == Brightness.light 
-                            ? ColorTheme.primary.withOpacity(0.1) 
-                            : ColorTheme.accent.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          )
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.directions_boat_filled,
-                        size: 60,
-                        color: theme.brightness == Brightness.light 
-                            ? ColorTheme.primary 
-                            : ColorTheme.accent,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      "NAVIERA CRUZ DEL SUR",
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        letterSpacing: 2,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+          ),
+          Positioned(
+            bottom: -60,
+            right: -60,
+            child: Container(
+              width: 320,
+              height: 320,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.2), // Arco blanco translúcido
+                  width: 1.5,
                 ),
+              ),
+            ),
+          ),
 
-                // Form Fields
-                Column(
-                  children: [
-                    TextField(
-                      controller: _usernameController,
-                      decoration: InputDecoration(
-                        hintText: "Usuario (Ej. admin)",
-                        filled: true,
-                        fillColor: theme.colorScheme.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      ),
-                      textInputAction: TextInputAction.next,
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _passwordController,
-                      decoration: InputDecoration(
-                        hintText: "Contraseña",
-                        filled: true,
-                        fillColor: theme.colorScheme.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      ),
-                      obscureText: true,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _handleLogin(),
-                    ),
-                    if (_errorMessage != null) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        _errorMessage!,
-                        style: const TextStyle(
-                          color: ColorTheme.danger,
-                          fontSize: 13,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ColorTheme.primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                        onPressed: _isLoading ? null : _handleLogin,
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2.5,
-                                ),
-                              )
-                            : const Text(
-                                "Ingresar",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ],
+          // Contenido Principal
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom - 48,
                 ),
-
-                // Footer Links
-                Column(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      "Al ingresar aceptas nuestros",
-                      style: TextStyle(fontSize: 11, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    const SizedBox(height: 40),
+                    // Logo de la empresa en versión blanca
+                    const Column(
                       children: [
-                        GestureDetector(
-                          onTap: () => _openUrl("https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"),
-                          child: const Text(
-                            "Términos de Uso",
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: ColorTheme.accent,
-                              decoration: TextDecoration.underline,
+                        NavieraLogo(
+                          size: 75,
+                          isWhiteVersion: true,
+                        ),
+                      ],
+                    ),
+
+                    // Formulario de ingreso
+                    Column(
+                      children: [
+                        TextField(
+                          controller: _usernameController,
+                          style: const TextStyle(color: Colors.black87),
+                          decoration: InputDecoration(
+                            hintText: "Usuario (Ej. admin)",
+                            hintStyle: const TextStyle(color: Colors.black38),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
                             ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                           ),
+                          textInputAction: TextInputAction.next,
+                          keyboardType: TextInputType.emailAddress,
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Text("|", style: TextStyle(fontSize: 11, color: Colors.grey)),
-                        ),
-                        GestureDetector(
-                          onTap: () => _openUrl("https://www.navieracruz.cl/privacy-policy/"),
-                          child: const Text(
-                            "Política de Privacidad",
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: ColorTheme.accent,
-                              decoration: TextDecoration.underline,
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _passwordController,
+                          style: const TextStyle(color: Colors.black87),
+                          decoration: InputDecoration(
+                            hintText: "Contraseña",
+                            hintStyle: const TextStyle(color: Colors.black38),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
                             ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                          ),
+                          obscureText: true,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _handleLogin(),
+                        ),
+                        if (_errorMessage != null) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            _errorMessage!,
+                            style: const TextStyle(
+                              color: Color(0xFFFFCDD2), // Rojo muy suave para fondo azul
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                        const SizedBox(height: 28),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 54,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ColorTheme.accent, // Naranja corporativo
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                            onPressed: _isLoading ? null : _handleLogin,
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2.5,
+                                    ),
+                                  )
+                                : const Text(
+                                    "Ingresar",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 10),
+
+                    // Enlaces de Privacidad en versión blanca/clara
+                    Column(
+                      children: [
+                        const Text(
+                          "Al ingresar aceptas nuestros",
+                          style: TextStyle(fontSize: 11, color: Colors.white60),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            GestureDetector(
+                              onTap: () => _openUrl("https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"),
+                              child: const Text(
+                                "Términos de Uso",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.white,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Text("|", style: TextStyle(fontSize: 11, color: Colors.white30)),
+                            ),
+                            GestureDetector(
+                              onTap: () => _openUrl("https://www.navieracruz.cl/privacy-policy/"),
+                              child: const Text(
+                                "Política de Privacidad",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.white,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                    ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

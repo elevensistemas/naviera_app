@@ -74,5 +74,7 @@
 	<string>Esta aplicación requiere acceder a la cámara para permitirle tomar y adjuntar fotografías en los reportes de incidentes HSE.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Esta aplicación requiere acceder a su galería de fotos para permitirle adjuntar imágenes existentes en los reportes de incidentes HSE.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
