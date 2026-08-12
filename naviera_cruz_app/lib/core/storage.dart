@@ -41,7 +41,12 @@ class SessionManager with ChangeNotifier {
         if (userJson != null) {
           _currentUser = User.fromJson(jsonDecode(userJson));
         } else {
-          _currentUser = User(id: "1", name: "Usuario Autenticado", role: "Personal Naviera");
+          _currentUser = User(
+            id: "1",
+            name: "Usuario Autenticado",
+            role: "Personal Naviera",
+            avatarURL: "https://i.pravatar.cc/150?img=60",
+          );
         }
         _isAuthenticated = true;
       } else {

@@ -62,14 +62,19 @@ class NavieraDrawer extends StatelessWidget {
                     CircleAvatar(
                       radius: 30,
                       backgroundColor: Colors.white.withOpacity(0.2),
-                      child: Text(
-                        user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                      backgroundImage: (user.avatarURL != null && user.avatarURL!.isNotEmpty)
+                          ? NetworkImage(user.avatarURL!)
+                          : null,
+                      child: (user.avatarURL != null && user.avatarURL!.isNotEmpty)
+                          ? null
+                          : Text(
+                              user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(

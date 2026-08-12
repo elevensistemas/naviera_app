@@ -21,8 +21,14 @@ class MockAuthService implements AuthService {
   @override
   Future<Map<String, dynamic>> login(String username, String passcode) async {
     await Future.delayed(const Duration(seconds: 1));
-    if (username.toLowerCase() == "admin" && passcode == "123456") {
-      final user = User(id: "1", name: "Administrador", role: "Gerencia", sector: "Gerencia");
+    if (username.toLowerCase() == "admin" && (passcode == "123456" || passcode == "mate8286")) {
+      final user = User(
+        id: "1",
+        name: "Administrador",
+        role: "Gerencia",
+        sector: "Gerencia",
+        avatarURL: "https://i.pravatar.cc/150?img=60",
+      );
       const token = "eyJhbGciOiJIUzI1NiIsInR...";
       return {'user': user, 'token': token};
     } else {

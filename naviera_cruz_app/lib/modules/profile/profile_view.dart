@@ -126,14 +126,19 @@ class _ProfileViewState extends State<ProfileView> {
                   CircleAvatar(
                     radius: 36,
                     backgroundColor: ColorTheme.primary,
-                    child: Text(
-                      user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                    backgroundImage: (user.avatarURL != null && user.avatarURL!.isNotEmpty)
+                        ? NetworkImage(user.avatarURL!)
+                        : null,
+                    child: (user.avatarURL != null && user.avatarURL!.isNotEmpty)
+                        ? null
+                        : Text(
+                            user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
                   ),
                   const SizedBox(width: 20),
                   Expanded(

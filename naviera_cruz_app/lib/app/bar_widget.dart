@@ -53,10 +53,32 @@ class NavieraAppBar extends StatelessWidget implements PreferredSizeWidget {
           ],
         ),
         // Hamburger menu
-        IconButton(
-          icon: const Icon(Icons.menu, color: Colors.white, size: 26),
-          onPressed: () {},
-        ),
+        if (!showBackButton)
+          IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white, size: 26),
+            onPressed: () {
+              ScaffoldState? scaffoldState;
+              BuildContext? currentContext = context;
+              while (currentContext != null) {
+                scaffoldState = currentContext.findAncestorStateOfType<ScaffoldState>();
+                if (scaffoldState == null) break;
+                if (scaffoldState.widget.endDrawer != null) {
+                  scaffoldState.openEndDrawer();
+                  return;
+                }
+                BuildContext? parentContext;
+                scaffoldState.context.visitAncestorElements((element) {
+                  parentContext = element;
+                  return false;
+                });
+                currentContext = parentContext;
+              }
+              // Fallback
+              try {
+                Scaffold.of(context).openEndDrawer();
+              } catch (_) {}
+            },
+          ),
         const SizedBox(width: 8),
       ],
     );
