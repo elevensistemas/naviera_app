@@ -123,6 +123,29 @@ extension ShipStatusExtension on ShipStatus {
   }
 }
 
+class ShipCamera {
+  final String id;
+  final String name;
+  final String serialNumber;
+  final bool isActive;
+
+  ShipCamera({
+    required this.id,
+    required this.name,
+    required this.serialNumber,
+    required this.isActive,
+  });
+
+  factory ShipCamera.fromJson(Map<String, dynamic> json) {
+    return ShipCamera(
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? '',
+      serialNumber: json['serial_number'] ?? '',
+      isActive: json['is_active'] ?? false,
+    );
+  }
+}
+
 class Ship {
   final String id;
   final String name;
@@ -131,6 +154,7 @@ class Ship {
   final double latitude;
   final double longitude;
   final String? cameraUrl;
+  final List<ShipCamera> cameras;
 
   Ship({
     required this.id,
@@ -140,17 +164,48 @@ class Ship {
     required this.latitude,
     required this.longitude,
     this.cameraUrl,
+    this.cameras = const [],
   });
 
+  Ship copyWith({
+    String? id,
+    String? name,
+    ShipStatus? status,
+    double? totalCargo,
+    double? latitude,
+    double? longitude,
+    String? cameraUrl,
+    List<ShipCamera>? cameras,
+  }) {
+    return Ship(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      status: status ?? this.status,
+      totalCargo: totalCargo ?? this.totalCargo,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      cameraUrl: cameraUrl ?? this.cameraUrl,
+      cameras: cameras ?? this.cameras,
+    );
+  }
+
   factory Ship.fromJson(Map<String, dynamic> json) {
+    var camerasJson = json['cameras'];
+    List<ShipCamera> camerasList = [];
+    if (camerasJson is List) {
+      camerasList = camerasJson.map((e) => ShipCamera.fromJson(e)).toList();
+    }
     return Ship(
       id: json['id']?.toString() ?? '',
-      name: json['name'] ?? '',
-      status: ShipStatusExtension.fromString(json['status'] ?? ''),
+      name: json['name'] ?? json['description'] ?? json['code'] ?? '',
+      status: json['status'] != null
+          ? ShipStatusExtension.fromString(json['status'])
+          : (json['active'] == true ? ShipStatus.active : ShipStatus.docked),
       totalCargo: (json['total_cargo'] as num?)?.toDouble() ?? 0.0,
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       cameraUrl: json['camera_url'],
+      cameras: camerasList,
     );
   }
 }
@@ -228,9 +283,16 @@ class CrewMember {
   factory CrewMember.fromJson(Map<String, dynamic> json) {
     return CrewMember(
       id: json['id']?.toString() ?? '',
-      shipId: json['ship_id']?.toString() ?? json['ship']?.toString() ?? '',
+      shipId: json['ship_id']?.toString() ??
+          json['ship']?.toString() ??
+          json['current_ship_detail']?['id']?.toString() ??
+          json['current_situation_detail']?['ship']?.toString() ??
+          '',
       name: json['name'] ?? '',
-      role: json['role'] ?? '',
+      role: json['role'] ??
+          json['position_detail']?['name'] ??
+          json['position_detail']?['short_name'] ??
+          '',
     );
   }
 }
@@ -275,13 +337,14 @@ extension IncidentStatusExtension on IncidentStatus {
   }
 
   static IncidentStatus fromString(String value) {
-    switch (value) {
-      case "En Revisión":
-      case "inReview": return IncidentStatus.inReview;
-      case "Resuelto":
-      case "resolved": return IncidentStatus.resolved;
-      case "Abierto":
+    switch (value.toLowerCase()) {
+      case "process":
+      case "en revisión":
+      case "inreview": return IncidentStatus.inReview;
+      case "resolved":
+      case "resuelto": return IncidentStatus.resolved;
       case "open":
+      case "abierto":
       default: return IncidentStatus.open;
     }
   }
@@ -317,10 +380,22 @@ class Incident {
     return Incident(
       id: json['id']?.toString() ?? '',
       description: json['description'] ?? '',
-      shipId: json['ship_id']?.toString() ?? json['ship']?.toString() ?? '',
-      reporterId: json['reporter_id']?.toString() ?? '',
-      date: json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
-      status: IncidentStatusExtension.fromString(json['status'] ?? ''),
+      shipId: json['ship_id']?.toString() ??
+          json['ship']?.toString() ??
+          json['vessel']?.toString() ??
+          json['vessel_detail']?['id']?.toString() ??
+          '',
+      reporterId: json['reporter_id']?.toString() ??
+          json['created_by']?.toString() ??
+          '',
+      date: json['date'] != null
+          ? DateTime.parse(json['date'])
+          : (json['date_time'] != null
+              ? DateTime.parse(json['date_time'])
+              : (json['created_at'] != null
+                  ? DateTime.parse(json['created_at'])
+                  : DateTime.now())),
+      status: IncidentStatusExtension.fromString(json['status'] ?? json['state'] ?? ''),
       photoURLs: photoList,
     );
   }

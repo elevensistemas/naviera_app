@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class NavieraLogo extends StatelessWidget {
   final double size;
@@ -18,131 +19,14 @@ class NavieraLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double circleSize = size / 5.5;
-    final double spacing = size / 15;
+    // logo_NCS.svg is for dark backgrounds (white version)
+    // logo2.svg is for light backgrounds
+    final assetName = isWhiteVersion ? 'assets/logo/logo_NCS.svg' : 'assets/logo/logo2.svg';
 
-    final Color primaryActive = activeColor ?? (isWhiteVersion ? Colors.white : const Color(0xFF0055B8));
-    final Color primaryOrange = isWhiteVersion 
-        ? Colors.white 
-        : (orangeColor ?? const Color(0xFFF28000));
-    final Color finalTextColor = textColor ?? (isWhiteVersion ? Colors.white : const Color(0xFF0055B8));
-
-    // Grid definition: true = active (filled), false = inactive (outline), null = orange
-    final List<List<dynamic>> grid = [
-      [false, true, false, true],
-      [false, false, null, false],
-      [false, false, false, true],
-      [true, false, false, false],
-    ];
-
-    Widget buildCircle(dynamic type) {
-      if (type == null) {
-        // Orange circle
-        return Container(
-          width: circleSize,
-          height: circleSize,
-          decoration: BoxDecoration(
-            color: primaryOrange,
-            shape: BoxShape.circle,
-          ),
-        );
-      } else if (type == true) {
-        // Filled circle
-        return Container(
-          width: circleSize,
-          height: circleSize,
-          decoration: BoxDecoration(
-            color: primaryActive,
-            shape: BoxShape.circle,
-          ),
-        );
-      } else {
-        // Outline circle
-        return Container(
-          width: circleSize,
-          height: circleSize,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: primaryActive,
-              width: 1.8,
-            ),
-          ),
-        );
-      }
-    }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // 4x4 Grid
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(4, (r) {
-            return Padding(
-              padding: EdgeInsets.only(bottom: r < 3 ? spacing : 0),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(4, (c) {
-                  return Padding(
-                    padding: EdgeInsets.only(right: c < 3 ? spacing : 0),
-                    child: buildCircle(grid[r][c]),
-                  );
-                }),
-              ),
-            );
-          }),
-        ),
-        SizedBox(width: size / 3.5),
-        // Text
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              "NAVIERA",
-              style: TextStyle(
-                color: finalTextColor,
-                fontSize: size / 4.8,
-                fontWeight: FontWeight.bold,
-                height: 1.0,
-                letterSpacing: 1.2,
-              ),
-            ),
-            Text(
-              "CRUZ",
-              style: TextStyle(
-                color: finalTextColor,
-                fontSize: size / 2.4,
-                fontWeight: FontWeight.w900,
-                height: 0.95,
-                letterSpacing: 0.5,
-              ),
-            ),
-            Text(
-              "DEL",
-              style: TextStyle(
-                color: finalTextColor,
-                fontSize: size / 2.4,
-                fontWeight: FontWeight.w900,
-                height: 0.95,
-                letterSpacing: 0.5,
-              ),
-            ),
-            Text(
-              "SUR",
-              style: TextStyle(
-                color: finalTextColor,
-                fontSize: size / 2.4,
-                fontWeight: FontWeight.w900,
-                height: 0.95,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
-        ),
-      ],
+    return SvgPicture.asset(
+      assetName,
+      height: size,
+      fit: BoxFit.contain,
     );
   }
 }

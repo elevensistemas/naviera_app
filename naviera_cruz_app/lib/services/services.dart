@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:http/http.dart' as http;
 import '../app/config.dart';
 import '../core/network.dart';
 import '../models/models.dart';
@@ -279,11 +280,114 @@ class MockFleetService implements FleetService {
   }
 }
 
+class EzvizService {
+  static final EzvizService shared = EzvizService._internal();
+  EzvizService._internal();
+
+  static const String _appKey = "b7b99e5c45d64148a1492fb25b84ceb8";
+  static const String _appSecret = "2bd739f5c4614af0b33191f9a780fd42";
+
+  String? _accessToken;
+  DateTime? _tokenExpireTime;
+
+  Future<String> _getAccessToken() async {
+    if (_accessToken != null && _tokenExpireTime != null && DateTime.now().isBefore(_tokenExpireTime!)) {
+      return _accessToken!;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse("https://open.ezvizlife.com/api/lapp/token/get"),
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: {
+          "appKey": _appKey,
+          "appSecret": _appSecret,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data["code"] == "200" && data["data"] != null) {
+          _accessToken = data["data"]["accessToken"];
+          // Token is valid for 7 days, cache it for 6 days
+          _tokenExpireTime = DateTime.now().add(const Duration(days: 6));
+          return _accessToken!;
+        } else {
+          throw Exception(data["msg"] ?? "Error obteniendo token de Ezviz");
+        }
+      } else {
+        throw Exception("Error de conexión con Ezviz API (HTTP ${response.statusCode})");
+      }
+    } catch (e) {
+      throw Exception("Fallo de red al autenticar en Ezviz: $e");
+    }
+  }
+
+  Future<String> getLiveStreamUrl(String deviceSerial) async {
+    final token = await _getAccessToken();
+
+    try {
+      final response = await http.post(
+        Uri.parse("https://open.ezvizlife.com/api/lapp/v2/live/address/get"),
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: {
+          "accessToken": token,
+          "deviceSerial": deviceSerial,
+          "channelNo": "1",
+          "protocol": "2", // HLS
+          "quality": "1",  // HD/Standard
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data["code"] == "200" && data["data"] != null) {
+          final url = data["data"]["url"];
+          if (url != null && url.isNotEmpty) {
+            return url;
+          }
+        }
+        throw Exception(data["msg"] ?? "Error de Ezviz al obtener dirección de directo");
+      } else {
+        throw Exception("Error de red con Ezviz (HTTP ${response.statusCode})");
+      }
+    } catch (e) {
+      throw Exception("Fallo al consultar dirección HLS de Ezviz: $e");
+    }
+  }
+}
+
 class ProductionFleetService implements FleetService {
   @override
   Future<List<Ship>> fetchShips() async {
-    final List<dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/ships/');
-    return response.map((json) => Ship.fromJson(json)).toList();
+    final List<dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/fleet-combo/');
+    final List<Ship> rawShips = response.map((json) => Ship.fromJson(json)).toList();
+    
+    // Resolve dynamic HLS streams for active cameras on the fly
+    final List<Ship> resolvedShips = [];
+    for (var ship in rawShips) {
+      String? cameraUrl = ship.cameraUrl;
+      
+      // If there is an active camera on this ship, fetch its live HLS stream address dynamically
+      final activeCams = ship.cameras.where((c) => c.isActive && c.serialNumber.isNotEmpty);
+      if (activeCams.isNotEmpty) {
+        try {
+          final camera = activeCams.first;
+          cameraUrl = await EzvizService.shared.getLiveStreamUrl(camera.serialNumber);
+        } catch (e) {
+          // Fallback to null (or mock/static if present) in case of fetch errors
+          print("Error resolving Ezviz camera stream for ${ship.name}: $e");
+        }
+      }
+      
+      resolvedShips.add(ship.copyWith(cameraUrl: cameraUrl));
+    }
+    
+    return resolvedShips;
   }
 
   @override
@@ -344,7 +448,14 @@ class ProductionHomeService implements HomeService {
 // ==========================================
 abstract class IncidentService {
   Future<List<Incident>> fetchIncidents();
-  Future<Incident> reportIncident(String description, String shipId, List<Uint8List> photos);
+  Future<Incident> reportIncident({
+    required String description,
+    required String shipId,
+    required String code,
+    required String type,
+    required String title,
+    required List<Uint8List> photos,
+  });
 
   factory IncidentService() {
     return AppConfig.isMockActive ? MockIncidentService() : ProductionIncidentService();
@@ -369,7 +480,14 @@ class MockIncidentService implements IncidentService {
   }
 
   @override
-  Future<Incident> reportIncident(String description, String shipId, List<Uint8List> photos) async {
+  Future<Incident> reportIncident({
+    required String description,
+    required String shipId,
+    required String code,
+    required String type,
+    required String title,
+    required List<Uint8List> photos,
+  }) async {
     await Future.delayed(const Duration(milliseconds: 1200));
     return Incident(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -391,16 +509,29 @@ class ProductionIncidentService implements IncidentService {
   }
 
   @override
-  Future<Incident> reportIncident(String description, String shipId, List<Uint8List> photos) async {
+  Future<Incident> reportIncident({
+    required String description,
+    required String shipId,
+    required String code,
+    required String type,
+    required String title,
+    required List<Uint8List> photos,
+  }) async {
     List<String> base64Photos = [];
     for (var data in photos) {
       base64Photos.add(base64Encode(data));
     }
+    
     final body = {
+      'code': code,
+      'vessel': int.tryParse(shipId) ?? 1,
+      'type': type,
+      'title': title,
       'description': description,
-      'ship': shipId,
+      'date_time': DateTime.now().toIso8601String(),
       'photos': base64Photos,
     };
+    
     final response = await APIClient.shared.request(
       endpoint: '/api/v1/incidents/',
       method: 'POST',

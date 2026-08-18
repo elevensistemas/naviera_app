@@ -123,22 +123,42 @@ class _ProfileViewState extends State<ProfileView> {
               color: theme.colorScheme.surface,
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 36,
-                    backgroundColor: ColorTheme.primary,
-                    backgroundImage: (user.avatarURL != null && user.avatarURL!.isNotEmpty)
-                        ? NetworkImage(user.avatarURL!)
-                        : null,
-                    child: (user.avatarURL != null && user.avatarURL!.isNotEmpty)
-                        ? null
-                        : Text(
-                            user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: const BoxDecoration(
+                      color: ColorTheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: ClipOval(
+                      child: (user.avatarURL != null && user.avatarURL!.isNotEmpty)
+                          ? Image.network(
+                              user.avatarURL!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Center(
+                                  child: Text(
+                                    user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                                    style: const TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          : Center(
+                              child: Text(
+                                user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                                style: const TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
-                          ),
+                    ),
                   ),
                   const SizedBox(width: 20),
                   Expanded(

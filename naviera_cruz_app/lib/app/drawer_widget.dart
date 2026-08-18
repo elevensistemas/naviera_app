@@ -59,22 +59,42 @@ class NavieraDrawer extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Colors.white.withOpacity(0.2),
-                      backgroundImage: (user.avatarURL != null && user.avatarURL!.isNotEmpty)
-                          ? NetworkImage(user.avatarURL!)
-                          : null,
-                      child: (user.avatarURL != null && user.avatarURL!.isNotEmpty)
-                          ? null
-                          : Text(
-                              user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: ClipOval(
+                        child: (user.avatarURL != null && user.avatarURL!.isNotEmpty)
+                            ? Image.network(
+                                user.avatarURL!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Center(
+                                    child: Text(
+                                      user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                                      style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            : Center(
+                                child: Text(
+                                  user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
-                            ),
+                      ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
