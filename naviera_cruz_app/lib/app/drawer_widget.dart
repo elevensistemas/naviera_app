@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../core/storage.dart';
 import 'theme.dart';
 import '../modules/profile/profile_view.dart';
-import '../modules/crew/crew_list_view.dart';
 
 class NavieraDrawer extends StatelessWidget {
   const NavieraDrawer({super.key});
@@ -164,23 +163,6 @@ class NavieraDrawer extends StatelessWidget {
                   ),
                   const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
                   
-                  ListTile(
-                    leading: const Icon(Icons.people_alt_outlined, color: ColorTheme.primary),
-                    title: const Text(
-                      "Tripulación",
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-                    ),
-                    trailing: const Icon(Icons.chevron_right, size: 18),
-                    onTap: () {
-                      Navigator.pop(context); // Close drawer
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const CrewListView()),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
-
                   ListTile(
                     leading: const Icon(Icons.settings_outlined, color: ColorTheme.primary),
                     title: const Text(

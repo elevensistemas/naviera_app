@@ -4,10 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/storage.dart';
 import '../../services/services.dart';
 import '../../app/theme.dart';
-import '../finance/finance_view.dart';
 import '../stats/stats_view.dart';
-import '../crew/crew_list_view.dart';
-import '../incidents/incident_list_view.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -156,7 +153,7 @@ class _ProfileViewState extends State<ProfileView> {
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                 ),
-                              ),
+                               ),
                             ),
                     ),
                   ),
@@ -209,18 +206,6 @@ class _ProfileViewState extends State<ProfileView> {
                 ),
                 const Divider(height: 1, indent: 56),
                 ListTile(
-                  leading: const Icon(Icons.pie_chart, color: Colors.purple),
-                  title: const Text("Módulo Contable (Gerencial)"),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const FinanceView()),
-                    );
-                  },
-                ),
-                const Divider(height: 1, indent: 56),
-                ListTile(
                   leading: const Icon(Icons.bar_chart, color: Colors.indigo),
                   title: const Text("Estadísticas Operativas"),
                   trailing: const Icon(Icons.chevron_right),
@@ -228,30 +213,6 @@ class _ProfileViewState extends State<ProfileView> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const StatsView()),
-                    );
-                  },
-                ),
-                const Divider(height: 1, indent: 56),
-                ListTile(
-                  leading: const Icon(Icons.people_alt, color: Colors.teal),
-                  title: const Text("Tripulación Actual"),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const CrewListView()),
-                    );
-                  },
-                ),
-                const Divider(height: 1, indent: 56),
-                ListTile(
-                  leading: const Icon(Icons.warning, color: ColorTheme.danger),
-                  title: const Text("Incidentes HSE"),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const IncidentListView()),
                     );
                   },
                 ),
