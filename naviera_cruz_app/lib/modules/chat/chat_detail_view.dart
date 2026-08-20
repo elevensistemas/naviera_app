@@ -261,7 +261,11 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
-                        color: isMe ? ColorTheme.primary : theme.colorScheme.surface,
+                        color: isMe 
+                            ? ColorTheme.primary 
+                            : (theme.brightness == Brightness.dark 
+                                ? Colors.white.withOpacity(0.12) 
+                                : const Color(0xFFF1F5F9)),
                         borderRadius: BorderRadius.circular(16).copyWith(
                           bottomRight: isMe ? const Radius.circular(0) : null,
                           bottomLeft: isMe ? null : const Radius.circular(0),
@@ -270,7 +274,11 @@ class _ChatDetailViewState extends State<ChatDetailView> {
                       child: Text(
                         message.text,
                         style: TextStyle(
-                          color: isMe ? Colors.white : theme.colorScheme.onSurface,
+                          color: isMe 
+                              ? Colors.white 
+                              : (theme.brightness == Brightness.dark 
+                                  ? Colors.white 
+                                  : Colors.black87),
                           fontSize: 14,
                         ),
                       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../app/config.dart';
 
 // User Model
 class User {
@@ -227,11 +228,15 @@ class ChatMessage {
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
+    String? attachment = json['attachment_url'] ?? json['attachment'];
+    if (attachment != null && attachment.startsWith('/') && !attachment.startsWith('http')) {
+      attachment = "${AppConfig.apiBaseURL}$attachment";
+    }
     return ChatMessage(
       id: json['id']?.toString() ?? '',
       senderId: json['sender_id']?.toString() ?? '',
       text: json['content'] ?? json['text'] ?? '',
-      attachmentURL: json['attachment_url'] ?? json['attachment'],
+      attachmentURL: attachment,
       timestamp: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
           : (json['timestamp'] != null ? DateTime.parse(json['timestamp']) : DateTime.now()),
