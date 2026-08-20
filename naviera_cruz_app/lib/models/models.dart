@@ -201,7 +201,7 @@ class Ship {
       status: json['status'] != null
           ? ShipStatusExtension.fromString(json['status'])
           : (json['active'] == true ? ShipStatus.active : ShipStatus.docked),
-      totalCargo: (json['total_cargo'] as num?)?.toDouble() ?? 0.0,
+      totalCargo: (json['total_carbon'] as num?)?.toDouble() ?? (json['total_cargo'] as num?)?.toDouble() ?? 0.0,
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       cameraUrl: json['camera_url'],
@@ -230,9 +230,11 @@ class ChatMessage {
     return ChatMessage(
       id: json['id']?.toString() ?? '',
       senderId: json['sender_id']?.toString() ?? '',
-      text: json['text'] ?? '',
-      attachmentURL: json['attachment'],
-      timestamp: json['timestamp'] != null ? DateTime.parse(json['timestamp']) : DateTime.now(),
+      text: json['content'] ?? json['text'] ?? '',
+      attachmentURL: json['attachment_url'] ?? json['attachment'],
+      timestamp: json['created_at'] != null 
+          ? DateTime.parse(json['created_at']) 
+          : (json['timestamp'] != null ? DateTime.parse(json['timestamp']) : DateTime.now()),
     );
   }
 }
@@ -433,6 +435,35 @@ class Goal {
       targetDate: json['target_date'] ?? '',
       goalType: json['goal_type'] ?? '',
       leaderId: json['leader']?.toString() ?? '',
+    );
+  }
+}
+
+// AppNotification Model
+class AppNotification {
+  final String id;
+  final String title;
+  final String message;
+  final DateTime timestamp;
+  final bool isRead;
+
+  AppNotification({
+    required this.id,
+    required this.title,
+    required this.message,
+    required this.timestamp,
+    required this.isRead,
+  });
+
+  factory AppNotification.fromJson(Map<String, dynamic> json) {
+    return AppNotification(
+      id: json['id']?.toString() ?? '',
+      title: json['titulo'] ?? json['title'] ?? '',
+      message: json['mensaje'] ?? json['message'] ?? '',
+      timestamp: json['ts'] != null 
+          ? DateTime.parse(json['ts']) 
+          : (json['timestamp'] != null ? DateTime.parse(json['timestamp']) : DateTime.now()),
+      isRead: json['read'] ?? json['is_read'] ?? false,
     );
   }
 }

@@ -368,6 +368,7 @@ class _ChatDetailViewState extends State<ChatDetailView> {
 
   Widget _buildInputWidget() {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       color: theme.colorScheme.surface,
@@ -385,10 +386,12 @@ class _ChatDetailViewState extends State<ChatDetailView> {
             Expanded(
               child: TextField(
                 controller: _textController,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87),
                 decoration: InputDecoration(
                   hintText: "Escribir mensaje...",
+                  hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.black38),
                   filled: true,
-                  fillColor: theme.colorScheme.surface,
+                  fillColor: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F5F9),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                     borderSide: BorderSide.none,

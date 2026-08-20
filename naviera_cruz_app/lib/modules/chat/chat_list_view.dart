@@ -56,7 +56,9 @@ class _ChatListViewState extends State<ChatListView> {
 
     try {
       final chatService = ChatService();
-      final channels = await chatService.fetchChannels();
+      final channels = _activeSegment == 0 
+          ? await chatService.fetchChannels() 
+          : await chatService.fetchContacts();
       setState(() {
         _channels.clear();
         _channels.addAll(channels);
@@ -172,7 +174,10 @@ class _ChatListViewState extends State<ChatListView> {
                       children: [
                         Expanded(
                           child: GestureDetector(
-                            onTap: () => setState(() => _activeSegment = 0),
+                            onTap: () {
+                              setState(() => _activeSegment = 0);
+                              _loadChannels();
+                            },
                             child: Container(
                               alignment: Alignment.center,
                               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -193,7 +198,10 @@ class _ChatListViewState extends State<ChatListView> {
                         ),
                         Expanded(
                           child: GestureDetector(
-                            onTap: () => setState(() => _activeSegment = 1),
+                            onTap: () {
+                              setState(() => _activeSegment = 1);
+                              _loadChannels();
+                            },
                             child: Container(
                               alignment: Alignment.center,
                               padding: const EdgeInsets.symmetric(vertical: 12),

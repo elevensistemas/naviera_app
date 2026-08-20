@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'logo.dart';
 import 'theme.dart';
+import '../modules/notifications/notifications_view.dart';
 
 class NavieraAppBar extends StatelessWidget implements PreferredSizeWidget {
   final List<Widget>? actions;
@@ -36,7 +37,12 @@ class NavieraAppBar extends StatelessWidget implements PreferredSizeWidget {
           children: [
             IconButton(
               icon: const Icon(Icons.notifications_none_outlined, color: Colors.white, size: 26),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationsView()),
+                );
+              },
             ),
             Positioned(
               right: 12,

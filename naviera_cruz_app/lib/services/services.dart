@@ -83,6 +83,7 @@ class ProductionAuthService implements AuthService {
 // ==========================================
 abstract class ChatService {
   Future<List<ChatChannel>> fetchChannels();
+  Future<List<ChatChannel>> fetchContacts();
   Future<List<ChatMessage>> fetchMessages(String channelId);
   Future<ChatMessage> sendMessage(String text, String channelId, Uint8List? attachment);
   Future<void> report(String? reportedUserId, String? messageId, String reason);
@@ -113,6 +114,12 @@ class MockChatService implements ChatService {
         lastMessageTimestamp: DateTime.now().subtract(const Duration(hours: 1)),
       ),
     ];
+  }
+
+  @override
+  Future<List<ChatChannel>> fetchContacts() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    return fetchChannels();
   }
 
   @override
@@ -160,14 +167,42 @@ class MockChatService implements ChatService {
 class ProductionChatService implements ChatService {
   @override
   Future<List<ChatChannel>> fetchChannels() async {
-    final List<dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/chat/channels/');
-    return response.map((json) => ChatChannel.fromJson(json)).toList();
+    final Map<String, dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/chat/conversations/');
+    final List<dynamic> results = response['results'] ?? [];
+    return results.map((json) {
+      final participant = json['participant'] ?? {};
+      final lastMsg = json['last_message'] ?? {};
+      return ChatChannel(
+        id: participant['id']?.toString() ?? '',
+        name: participant['name'] ?? participant['username'] ?? '',
+        isGroup: false,
+        lastMessage: lastMsg['content'] ?? '',
+        lastMessageTimestamp: lastMsg['created_at'] != null 
+            ? DateTime.parse(lastMsg['created_at']) 
+            : null,
+      );
+    }).toList();
+  }
+
+  @override
+  Future<List<ChatChannel>> fetchContacts() async {
+    final Map<String, dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/chat/users/');
+    final List<dynamic> results = response['results'] ?? [];
+    return results.map((json) {
+      return ChatChannel(
+        id: json['id']?.toString() ?? '',
+        name: json['name'] ?? json['username'] ?? '',
+        isGroup: false,
+        lastMessage: null,
+        lastMessageTimestamp: null,
+      );
+    }).toList();
   }
 
   @override
   Future<List<ChatMessage>> fetchMessages(String channelId) async {
     final List<dynamic> response = await APIClient.shared.request(
-      endpoint: '/api/v1/chat/channels/${Uri.encodeComponent(channelId)}/messages/',
+      endpoint: '/api/v1/chat/messages/${Uri.encodeComponent(channelId)}/',
     );
     return response.map((json) => ChatMessage.fromJson(json)).toList();
   }
@@ -179,12 +214,11 @@ class ProductionChatService implements ChatService {
       base64Attachment = base64Encode(attachment);
     }
     final body = {
-      'text': text,
-      'channel': channelId,
+      'content': text,
       'attachment': base64Attachment,
     };
     final response = await APIClient.shared.request(
-      endpoint: '/api/v1/chat/channels/${Uri.encodeComponent(channelId)}/messages/',
+      endpoint: '/api/v1/chat/messages/${Uri.encodeComponent(channelId)}/send/',
       method: 'POST',
       body: body,
     );
@@ -628,5 +662,84 @@ class ProductionGoalService implements GoalService {
   Future<List<Goal>> fetchGoals() async {
     final List<dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/goals/');
     return response.map((json) => Goal.fromJson(json)).toList();
+  }
+}
+
+// ==========================================
+// 8. NOTIFICATION SERVICE
+// ==========================================
+abstract class NotificationService {
+  Future<List<AppNotification>> fetchNotifications();
+  Future<void> markAllAsRead();
+  Future<void> markAsRead(String notificationId);
+  Future<void> clearAll();
+
+  factory NotificationService() {
+    return AppConfig.isMockActive ? MockNotificationService() : ProductionNotificationService();
+  }
+}
+
+class MockNotificationService implements NotificationService {
+  @override
+  Future<List<AppNotification>> fetchNotifications() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    return [
+      AppNotification(
+        id: "1",
+        title: "Incidente reportado",
+        message: "Se ha registrado un nuevo incidente en el Alfa C.",
+        timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
+        isRead: false,
+      ),
+      AppNotification(
+        id: "2",
+        title: "Mantenimiento programado",
+        message: "El Gustavo U ingresará a dique seco mañana.",
+        timestamp: DateTime.now().subtract(const Duration(hours: 3)),
+        isRead: true,
+      ),
+    ];
+  }
+
+  @override
+  Future<void> markAllAsRead() async {}
+
+  @override
+  Future<void> markAsRead(String notificationId) async {}
+
+  @override
+  Future<void> clearAll() async {}
+}
+
+class ProductionNotificationService implements NotificationService {
+  @override
+  Future<List<AppNotification>> fetchNotifications() async {
+    final Map<String, dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/notifications/');
+    final List<dynamic> results = response['results'] ?? [];
+    return results.map((json) => AppNotification.fromJson(json)).toList();
+  }
+
+  @override
+  Future<void> markAllAsRead() async {
+    await APIClient.shared.request(
+      endpoint: '/api/v1/notifications/mark-all-read/',
+      method: 'POST',
+    );
+  }
+
+  @override
+  Future<void> markAsRead(String notificationId) async {
+    await APIClient.shared.request(
+      endpoint: '/api/v1/notifications/${Uri.encodeComponent(notificationId)}/read/',
+      method: 'POST',
+    );
+  }
+
+  @override
+  Future<void> clearAll() async {
+    await APIClient.shared.request(
+      endpoint: '/api/v1/notifications/clear/',
+      method: 'POST',
+    );
   }
 }

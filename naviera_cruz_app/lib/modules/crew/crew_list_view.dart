@@ -74,6 +74,13 @@ class _CrewListViewState extends State<CrewListView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final captionColor = isDark ? Colors.white38 : Colors.black38;
+    final text45Color = isDark ? Colors.white54 : Colors.black45;
+    final dividerColor = isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFF1F5F9);
+
     return Scaffold(
       appBar: const NavieraAppBar(showBackButton: true),
       body: Padding(
@@ -147,12 +154,12 @@ class _CrewListViewState extends State<CrewListView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   "A BORDO",
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black38,
+                    color: captionColor,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -183,15 +190,22 @@ class _CrewListViewState extends State<CrewListView> {
                           child: ListView.separated(
                             padding: const EdgeInsets.all(12.0),
                             itemCount: _crewMembers.length,
-                            separatorBuilder: (context, index) => const Divider(
+                            separatorBuilder: (context, index) => Divider(
                               height: 1,
-                              color: Color(0xFFF1F5F9),
+                              color: dividerColor,
                             ),
                             itemBuilder: (context, index) {
                               final member = _crewMembers[index];
 
                               // Generate clean realistic days based on index or ID
                               final days = 33 + (index * 21) % 45;
+
+                              // Soft adaptive badges for dark mode
+                              final badgeBg = isDark ? Colors.green.withOpacity(0.15) : const Color(0xFFE8F5E9);
+                              final badgeText = isDark ? Colors.greenAccent : const Color(0xFF2E7D32);
+                              final daysBg = isDark ? ColorTheme.primary.withOpacity(0.15) : const Color(0xFFE3F2FD);
+                              final daysBorder = isDark ? ColorTheme.primary.withOpacity(0.5) : const Color(0xFF90CAF9);
+                              final daysText = isDark ? Colors.blueAccent : ColorTheme.primary;
 
                               return Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
@@ -220,18 +234,18 @@ class _CrewListViewState extends State<CrewListView> {
                                         children: [
                                           Text(
                                             member.name,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 15,
                                               fontWeight: FontWeight.bold,
-                                              color: Colors.black87,
+                                              color: textColor,
                                             ),
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
                                             member.role,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 12,
-                                              color: Colors.black45,
+                                              color: text45Color,
                                             ),
                                           ),
                                           const SizedBox(height: 6),
@@ -239,17 +253,17 @@ class _CrewListViewState extends State<CrewListView> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFFE8F5E9), // Light green background
+                                              color: badgeBg,
                                               borderRadius: BorderRadius.circular(12),
                                               border: Border.all(
-                                                color: const Color(0xFF2E7D32), // Dark green border
+                                                color: badgeText,
                                                 width: 0.8,
                                               ),
                                             ),
-                                            child: const Text(
+                                            child: Text(
                                               "Embarcado",
                                               style: TextStyle(
-                                                color: Color(0xFF2E7D32),
+                                                color: badgeText,
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.bold,
                                               ),
@@ -263,10 +277,10 @@ class _CrewListViewState extends State<CrewListView> {
                                     Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Text(
+                                        Text(
                                           "Días",
                                           style: TextStyle(
-                                            color: Colors.black38,
+                                            color: captionColor,
                                             fontSize: 11,
                                             fontWeight: FontWeight.w500,
                                           ),
@@ -276,18 +290,18 @@ class _CrewListViewState extends State<CrewListView> {
                                           width: 36,
                                           height: 36,
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFFE3F2FD), // Light blue background
+                                            color: daysBg,
                                             shape: BoxShape.circle,
                                             border: Border.all(
-                                              color: const Color(0xFF90CAF9),
+                                              color: daysBorder,
                                               width: 0.8,
                                             ),
                                           ),
                                           alignment: Alignment.center,
                                           child: Text(
                                             "$days",
-                                            style: const TextStyle(
-                                              color: ColorTheme.primary,
+                                            style: TextStyle(
+                                              color: daysText,
                                               fontWeight: FontWeight.bold,
                                               fontSize: 13,
                                             ),
