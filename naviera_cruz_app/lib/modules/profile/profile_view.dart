@@ -194,29 +194,13 @@ class _ProfileViewState extends State<ProfileView> {
           Card(
             margin: const EdgeInsets.symmetric(horizontal: 16.0),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Column(
-              children: [
-                SwitchListTile(
-                  secondary: const Icon(Icons.dark_mode, color: Colors.blueGrey),
-                  title: const Text("Modo Oscuro"),
-                  value: session.isDarkMode,
-                  onChanged: (val) {
-                    session.toggleTheme(val);
-                  },
-                ),
-                const Divider(height: 1, indent: 56),
-                ListTile(
-                  leading: const Icon(Icons.bar_chart, color: Colors.indigo),
-                  title: const Text("Estadísticas Operativas"),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const StatsView()),
-                    );
-                  },
-                ),
-              ],
+            child: SwitchListTile(
+              secondary: const Icon(Icons.dark_mode, color: Colors.blueGrey),
+              title: const Text("Modo Oscuro"),
+              value: session.isDarkMode,
+              onChanged: (val) {
+                session.toggleTheme(val);
+              },
             ),
           ),
 

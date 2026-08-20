@@ -222,7 +222,8 @@ class ProductionChatService implements ChatService {
       method: 'POST',
       body: body,
     );
-    return ChatMessage.fromJson(response);
+    final msgJson = response['message'] ?? response;
+    return ChatMessage.fromJson(msgJson);
   }
 
   @override
