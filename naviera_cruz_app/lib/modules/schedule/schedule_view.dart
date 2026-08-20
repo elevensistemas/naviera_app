@@ -51,7 +51,12 @@ class _ScheduleViewState extends State<ScheduleView> {
     return "${date.day}/${date.month}/${date.year}";
   }
 
-  Widget _buildBarChartSection(String title, String shipName, List<double> heights, List<String> dates, Color barColor) {
+  Widget _buildBarChartSection(BuildContext context, String title, String shipName, List<double> heights, List<String> dates, Color barColor) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
+    final captionColor = isDark ? Colors.white38 : Colors.black38;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -64,10 +69,10 @@ class _ScheduleViewState extends State<ScheduleView> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: Colors.black87,
+                    color: textColor,
                   ),
                 ),
                 Container(
@@ -88,9 +93,9 @@ class _ScheduleViewState extends State<ScheduleView> {
               ],
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               "Junio 2026",
-              style: TextStyle(color: Colors.black38, fontSize: 12),
+              style: TextStyle(color: captionColor, fontSize: 12),
             ),
             const SizedBox(height: 24),
 
@@ -112,7 +117,7 @@ class _ScheduleViewState extends State<ScheduleView> {
                     const SizedBox(height: 8),
                     Text(
                       dates[index],
-                      style: const TextStyle(color: Colors.black38, fontSize: 11),
+                      style: TextStyle(color: captionColor, fontSize: 11),
                     ),
                   ],
                 );
@@ -126,6 +131,12 @@ class _ScheduleViewState extends State<ScheduleView> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
+    final captionColor = isDark ? Colors.white38 : Colors.black38;
+    final dividerColor = isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFF1F5F9);
+
     return Scaffold(
       appBar: const NavieraAppBar(),
       body: Column(
@@ -150,11 +161,11 @@ class _ScheduleViewState extends State<ScheduleView> {
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
             child: Row(
               children: [
-                _buildMonthChip("Junio 2026", 0),
+                _buildMonthChip(context, "Junio 2026", 0),
                 const SizedBox(width: 10),
-                _buildMonthChip("Mayo 2026", 1),
+                _buildMonthChip(context, "Mayo 2026", 1),
                 const SizedBox(width: 10),
-                _buildMonthChip("Abril 2026", 2),
+                _buildMonthChip(context, "Abril 2026", 2),
               ],
             ),
           ),
@@ -171,6 +182,7 @@ class _ScheduleViewState extends State<ScheduleView> {
                   // Visual Charts (App NCS - Pantalla 4 style)
                   if (_selectedMonthIndex == 0) ...[
                     _buildBarChartSection(
+                      context,
                       "Cargas diarias Raizen",
                       "Alfa C",
                       [0.8, 0.5, 0.7, 0.9],
@@ -179,6 +191,7 @@ class _ScheduleViewState extends State<ScheduleView> {
                     ),
                     const SizedBox(height: 16),
                     _buildBarChartSection(
+                      context,
                       "Cargas diarias WFS",
                       "Gustavo U",
                       [0.6, 0.4, 0.8, 0.5],
@@ -189,12 +202,12 @@ class _ScheduleViewState extends State<ScheduleView> {
                   ],
 
                   // Details Header
-                  const Text(
+                  Text(
                     "Detalle de operaciones",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black54,
+                      color: secondaryTextColor,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -231,10 +244,10 @@ class _ScheduleViewState extends State<ScheduleView> {
                                   const SizedBox(width: 8),
                                   Text(
                                     _formatDate(schedule.date),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
-                                      color: Colors.black87,
+                                      color: textColor,
                                     ),
                                   ),
                                   const Spacer(),
@@ -256,21 +269,21 @@ class _ScheduleViewState extends State<ScheduleView> {
                                 ],
                               ),
                               const SizedBox(height: 14),
-                              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                              Divider(height: 1, color: dividerColor),
                               const SizedBox(height: 14),
 
                               // Cargo type details
-                              const Text(
+                              Text(
                                 "Tipo de Carga",
-                                style: TextStyle(color: Colors.black38, fontSize: 11),
+                                style: TextStyle(color: captionColor, fontSize: 11),
                               ),
                               const SizedBox(height: 3),
                               Text(
                                 schedule.cargoType,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                                  color: textColor,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -278,8 +291,8 @@ class _ScheduleViewState extends State<ScheduleView> {
                               // Specific comments/destinations
                               Text(
                                 schedule.details,
-                                style: const TextStyle(
-                                  color: Colors.black54,
+                                style: TextStyle(
+                                  color: secondaryTextColor,
                                   fontSize: 13,
                                   height: 1.3,
                                 ),
@@ -299,8 +312,14 @@ class _ScheduleViewState extends State<ScheduleView> {
     );
   }
 
-  Widget _buildMonthChip(String label, int index) {
+  Widget _buildMonthChip(BuildContext context, String label, int index) {
     final isSelected = _selectedMonthIndex == index;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    final unselectedBg = isDark ? Colors.white.withOpacity(0.1) : Colors.transparent;
+    final unselectedBorder = isDark ? Colors.white24 : const Color(0xFFE2E8F0);
+    final unselectedText = isDark ? Colors.white70 : Colors.black54;
+
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -312,16 +331,16 @@ class _ScheduleViewState extends State<ScheduleView> {
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? ColorTheme.primary : Colors.transparent,
+            color: isSelected ? ColorTheme.primary : unselectedBg,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: isSelected ? ColorTheme.primary : const Color(0xFFE2E8F0),
+              color: isSelected ? ColorTheme.primary : unselectedBorder,
             ),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.black54,
+              color: isSelected ? Colors.white : unselectedText,
               fontWeight: FontWeight.bold,
               fontSize: 12,
             ),
