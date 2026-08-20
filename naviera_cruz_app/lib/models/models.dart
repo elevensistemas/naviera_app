@@ -20,7 +20,7 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id']?.toString() ?? '',
+      id: (json['id'] ?? json['user_id'])?.toString() ?? '',
       name: json['name'] ?? json['username'] ?? '',
       role: json['role'] ?? 'Personal Naviera',
       avatarURL: json['avatar_url'],
@@ -397,6 +397,42 @@ class Incident {
                   : DateTime.now())),
       status: IncidentStatusExtension.fromString(json['status'] ?? json['state'] ?? ''),
       photoURLs: photoList,
+    );
+  }
+}
+
+// Goal Model
+class Goal {
+  final String id;
+  final String description;
+  final String expectedValue;
+  final String? achievedValue;
+  final String weightedValue;
+  final String targetDate;
+  final String goalType;
+  final String leaderId;
+
+  Goal({
+    required this.id,
+    required this.description,
+    required this.expectedValue,
+    this.achievedValue,
+    required this.weightedValue,
+    required this.targetDate,
+    required this.goalType,
+    required this.leaderId,
+  });
+
+  factory Goal.fromJson(Map<String, dynamic> json) {
+    return Goal(
+      id: json['id']?.toString() ?? '',
+      description: json['description'] ?? '',
+      expectedValue: json['expected_value']?.toString() ?? '',
+      achievedValue: json['achieved_value']?.toString(),
+      weightedValue: json['weighted_value']?.toString() ?? '',
+      targetDate: json['target_date'] ?? '',
+      goalType: json['goal_type'] ?? '',
+      leaderId: json['leader']?.toString() ?? '',
     );
   }
 }

@@ -582,3 +582,51 @@ class ProductionScheduleService implements ScheduleService {
     return response.map((json) => Schedule.fromJson(json)).toList();
   }
 }
+
+// ==========================================
+// 7. GOAL SERVICE
+// ==========================================
+abstract class GoalService {
+  Future<List<Goal>> fetchGoals();
+
+  factory GoalService() {
+    return AppConfig.isMockActive ? MockGoalService() : ProductionGoalService();
+  }
+}
+
+class MockGoalService implements GoalService {
+  @override
+  Future<List<Goal>> fetchGoals() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    return [
+      Goal(
+        id: "1",
+        description: "Optimizar procesos contables e intranet",
+        expectedValue: "100.00",
+        achievedValue: "50.00",
+        weightedValue: "1.00",
+        targetDate: "2025-12-31",
+        goalType: "percentage",
+        leaderId: "1",
+      ),
+      Goal(
+        id: "2",
+        description: "Mantener servidores seguros contra ciberataques",
+        expectedValue: "1.00",
+        achievedValue: null,
+        weightedValue: "1.00",
+        targetDate: "2025-12-31",
+        goalType: "boolean",
+        leaderId: "1",
+      ),
+    ];
+  }
+}
+
+class ProductionGoalService implements GoalService {
+  @override
+  Future<List<Goal>> fetchGoals() async {
+    final List<dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/goals/');
+    return response.map((json) => Goal.fromJson(json)).toList();
+  }
+}

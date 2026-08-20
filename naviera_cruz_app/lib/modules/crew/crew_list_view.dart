@@ -53,9 +53,20 @@ class _CrewListViewState extends State<CrewListView> {
     try {
       final fleetService = FleetService();
       final crew = await fleetService.fetchCrew(_selectedShipId!);
+      
+      // Deduplicate by ID on the client side to avoid duplicate cards for the same person
+      final seenIds = <String>{};
+      final uniqueCrew = <CrewMember>[];
+      for (var member in crew) {
+        if (member.id.isNotEmpty && !seenIds.contains(member.id)) {
+          seenIds.add(member.id);
+          uniqueCrew.add(member);
+        }
+      }
+      
       setState(() {
         _crewMembers.clear();
-        _crewMembers.addAll(crew);
+        _crewMembers.addAll(uniqueCrew);
       });
     } catch (_) {}
     setState(() => _isLoading = false);
