@@ -21,6 +21,20 @@ class _SBSWebCameraPlayerState extends State<SBSWebCameraPlayer> {
   @override
   void initState() {
     super.initState();
+    _initView();
+  }
+
+  @override
+  void didUpdateWidget(covariant SBSWebCameraPlayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.url != widget.url) {
+      setState(() {
+        _initView();
+      });
+    }
+  }
+
+  void _initView() {
     // Unique view type per URL to avoid view factory conflicts
     _viewId = 'hls-player-${widget.url.hashCode}';
     

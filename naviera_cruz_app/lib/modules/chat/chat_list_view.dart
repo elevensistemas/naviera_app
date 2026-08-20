@@ -101,6 +101,12 @@ class _ChatListViewState extends State<ChatListView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final captionColor = isDark ? Colors.white38 : Colors.black38;
+    final text45Color = isDark ? Colors.white54 : Colors.black45;
+
     return Scaffold(
       appBar: const NavieraAppBar(),
       body: Column(
@@ -131,19 +137,20 @@ class _ChatListViewState extends State<ChatListView> {
                   // Buscar conversación Input (App NCS - Pantalla 6 style)
                   TextField(
                     controller: _searchController,
+                    style: TextStyle(color: textColor),
                     decoration: InputDecoration(
                       hintText: "Buscar conversación",
-                      hintStyle: const TextStyle(color: Colors.black38),
-                      prefixIcon: const Icon(Icons.search, color: Colors.black38),
+                      hintStyle: TextStyle(color: captionColor),
+                      prefixIcon: Icon(Icons.search, color: captionColor),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderSide: BorderSide(color: isDark ? Colors.white24 : const Color(0xFFE2E8F0)),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        borderSide: BorderSide(color: isDark ? Colors.white24 : const Color(0xFFE2E8F0)),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
@@ -157,9 +164,9 @@ class _ChatListViewState extends State<ChatListView> {
                   // Segmented control: Chat recientes / Todos los contactos
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
+                      color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: isDark ? Colors.white24 : const Color(0xFFE2E8F0)),
                     ),
                     child: Row(
                       children: [
@@ -176,7 +183,7 @@ class _ChatListViewState extends State<ChatListView> {
                               child: Text(
                                 "Chat recientes",
                                 style: TextStyle(
-                                  color: _activeSegment == 0 ? Colors.white : ColorTheme.primary,
+                                  color: _activeSegment == 0 ? Colors.white : (isDark ? Colors.white70 : ColorTheme.primary),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
                                 ),
@@ -197,7 +204,7 @@ class _ChatListViewState extends State<ChatListView> {
                               child: Text(
                                 "Todos los contactos",
                                 style: TextStyle(
-                                  color: _activeSegment == 1 ? Colors.white : ColorTheme.primary,
+                                  color: _activeSegment == 1 ? Colors.white : (isDark ? Colors.white70 : ColorTheme.primary),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
                                 ),
@@ -217,8 +224,8 @@ class _ChatListViewState extends State<ChatListView> {
                       leading: Container(
                         width: 50,
                         height: 50,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFFFF3E0),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.orange.withOpacity(0.15) : const Color(0xFFFFF3E0),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -227,11 +234,11 @@ class _ChatListViewState extends State<ChatListView> {
                           size: 28,
                         ),
                       ),
-                      title: const Text(
+                      title: Text(
                         "NCS-Bot Operativo",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: textColor,
                           fontSize: 15,
                         ),
                       ),
@@ -263,7 +270,7 @@ class _ChatListViewState extends State<ChatListView> {
                         padding: const EdgeInsets.all(40.0),
                         child: Text(
                           _errorMessage ?? "No hay conversaciones.",
-                          style: const TextStyle(color: Colors.grey),
+                          style: TextStyle(color: captionColor),
                         ),
                       ),
                     )
@@ -301,7 +308,7 @@ class _ChatListViewState extends State<ChatListView> {
                                   decoration: BoxDecoration(
                                     color: const Color(0xFF4CAF50), // Green dot
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 2),
+                                    border: Border.all(color: isDark ? const Color(0xFF1E293B) : Colors.white, width: 2),
                                   ),
                                 ),
                               ),
@@ -309,10 +316,10 @@ class _ChatListViewState extends State<ChatListView> {
                           ),
                           title: Text(
                             channel.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
-                              color: Colors.black87,
+                              color: textColor,
                             ),
                           ),
                           subtitle: Padding(
@@ -321,7 +328,7 @@ class _ChatListViewState extends State<ChatListView> {
                               channel.lastMessage ?? "Sin mensajes recientes",
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.black45, fontSize: 13),
+                              style: TextStyle(color: text45Color, fontSize: 13),
                             ),
                           ),
                           trailing: Column(
@@ -331,10 +338,10 @@ class _ChatListViewState extends State<ChatListView> {
                               if (channel.lastMessageTimestamp != null)
                                 Text(
                                   _formatTime(channel.lastMessageTimestamp),
-                                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                  style: TextStyle(fontSize: 11, color: captionColor),
                                 ),
                               const SizedBox(height: 4),
-                              const Icon(Icons.chevron_right, size: 16, color: Colors.black38),
+                              Icon(Icons.chevron_right, size: 16, color: captionColor),
                             ],
                           ),
                           onTap: () {
@@ -366,44 +373,44 @@ class _ChatListViewState extends State<ChatListView> {
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
+                                fontSize: 16,
                               ),
                             ),
-                            title: Text(
-                              channel.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            subtitle: const Padding(
-                              padding: EdgeInsets.only(top: 4.0),
-                              child: Text(
-                                "Personal de Naviera",
-                                style: TextStyle(color: Colors.black45, fontSize: 12),
-                              ),
-                            ),
-                            trailing: const Icon(Icons.chevron_right, size: 16, color: Colors.black38),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => ChatDetailView(channel: channel),
-                                ),
-                              );
-                            },
                           ),
-                        );
-                      }),
-                    ],
+                          title: Text(
+                            channel.name,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: textColor,
+                            ),
+                          ),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Text(
+                              "Personal de Naviera",
+                              style: TextStyle(color: text45Color, fontSize: 12),
+                            ),
+                          ),
+                          trailing: Icon(Icons.chevron_right, size: 16, color: captionColor),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ChatDetailView(channel: channel),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    }),
                   ],
-                ),
+                ],
               ),
             ),
-          ],
-        ),
-      );
-    }
+          ),
+        ],
+      ),
+    );
   }
+}

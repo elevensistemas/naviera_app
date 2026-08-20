@@ -164,6 +164,10 @@ class _FleetViewState extends State<FleetView> {
 
   Widget _buildShipCard(BuildContext context, Ship ship, ThemeData theme) {
     final statusCol = _statusColor(ship.status);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
+    final dividerColor = isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFF1F5F9);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),
@@ -178,7 +182,7 @@ class _FleetViewState extends State<FleetView> {
                 Text(
                   ship.name,
                   style: TypographyTheme.headline(context).copyWith(
-                    color: Colors.black87,
+                    color: textColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -200,7 +204,7 @@ class _FleetViewState extends State<FleetView> {
                 ),
               ],
             ),
-            const Divider(height: 24, color: Color(0xFFF1F5F9)),
+            Divider(height: 24, color: dividerColor),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -209,14 +213,14 @@ class _FleetViewState extends State<FleetView> {
                   children: [
                     Text(
                       "Carga Total",
-                      style: TypographyTheme.caption(context),
+                      style: TypographyTheme.caption(context).copyWith(color: secondaryTextColor),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       "${ship.totalCargo.toInt()} tons",
                       style: theme.textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: textColor,
                       ),
                     ),
                   ],
@@ -226,14 +230,14 @@ class _FleetViewState extends State<FleetView> {
                   children: [
                     Text(
                       "Ubicación",
-                      style: TypographyTheme.caption(context),
+                      style: TypographyTheme.caption(context).copyWith(color: secondaryTextColor),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       "Lat: ${ship.latitude.toStringAsFixed(2)}, Lon: ${ship.longitude.toStringAsFixed(2)}",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Colors.black54,
+                        color: secondaryTextColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -245,7 +249,10 @@ class _FleetViewState extends State<FleetView> {
             
             // Video Player or Fallback for SBS camera
             if (ship.cameraUrl != null && ship.cameraUrl!.isNotEmpty)
-              SBSCameraPlayer(url: ship.cameraUrl!)
+              SBSCameraPlayer(
+                key: ValueKey(ship.cameraUrl),
+                url: ship.cameraUrl!,
+              )
             else
               Container(
                 height: 150,

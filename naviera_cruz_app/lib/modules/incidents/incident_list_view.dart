@@ -58,7 +58,10 @@ class _IncidentListViewState extends State<IncidentListView> {
     }
   }
 
-  Color _statusBgColor(IncidentStatus status) {
+  Color _statusBgColor(IncidentStatus status, bool isDark) {
+    if (isDark) {
+      return _statusColor(status).withOpacity(0.15);
+    }
     switch (status) {
       case IncidentStatus.open:
         return const Color(0xFFFFEBEE); // Light Red
@@ -104,6 +107,12 @@ class _IncidentListViewState extends State<IncidentListView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
+    final captionColor = isDark ? Colors.white38 : Colors.black38;
+    final text45Color = isDark ? Colors.white54 : Colors.black45;
+    final dividerColor = isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFF1F5F9);
 
     return Scaffold(
       appBar: const NavieraAppBar(showBackButton: true),
@@ -158,14 +167,14 @@ class _IncidentListViewState extends State<IncidentListView> {
                                       "Control de Incidentes",
                                       style: theme.textTheme.titleMedium?.copyWith(
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
+                                        color: textColor,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
-                                    const Text(
+                                    Text(
                                       "Registrá novedades para revisión de capitanía",
                                       style: TextStyle(
-                                        color: Colors.black45,
+                                        color: text45Color,
                                         fontSize: 12,
                                       ),
                                     ),
@@ -211,12 +220,12 @@ class _IncidentListViewState extends State<IncidentListView> {
                   const SizedBox(height: 24),
 
                   // Section Title
-                  const Text(
+                  Text(
                     "Historial de incidentes",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black54,
+                      color: secondaryTextColor,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -235,7 +244,7 @@ class _IncidentListViewState extends State<IncidentListView> {
                             const SizedBox(height: 12),
                             Text(
                               _errorMessage ?? "No hay incidentes reportados.",
-                              style: const TextStyle(color: Colors.black38),
+                              style: TextStyle(color: captionColor),
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -245,7 +254,7 @@ class _IncidentListViewState extends State<IncidentListView> {
                   else
                     ..._incidents.map((incident) {
                       final statusCol = _statusColor(incident.status);
-                      final statusBg = _statusBgColor(incident.status);
+                      final statusBg = _statusBgColor(incident.status, isDark);
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 16.0),
@@ -288,12 +297,12 @@ class _IncidentListViewState extends State<IncidentListView> {
                               // Date row
                               Row(
                                 children: [
-                                  const Icon(Icons.calendar_today_outlined, size: 14, color: Colors.black38),
+                                  Icon(Icons.calendar_today_outlined, size: 14, color: captionColor),
                                   const SizedBox(width: 6),
                                   Text(
                                     _formatDate(incident.date),
-                                    style: const TextStyle(
-                                      color: Colors.black45,
+                                    style: TextStyle(
+                                      color: text45Color,
                                       fontSize: 12,
                                     ),
                                   ),
@@ -304,17 +313,17 @@ class _IncidentListViewState extends State<IncidentListView> {
                               // Description/Text
                               Text(
                                 incident.description,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
+                                  color: textColor,
                                   height: 1.35,
                                 ),
                               ),
                               const SizedBox(height: 20),
 
                               // Divider
-                              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                              Divider(height: 1, color: dividerColor),
                               const SizedBox(height: 16),
 
                               // Footer Row
@@ -324,22 +333,22 @@ class _IncidentListViewState extends State<IncidentListView> {
                                   const SizedBox(width: 6),
                                   Text(
                                     incident.shipId,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
-                                      color: Colors.black54,
+                                      color: secondaryTextColor,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                   const Spacer(),
-                                  const Icon(Icons.person_outline_outlined, size: 16, color: Colors.black38),
+                                  Icon(Icons.person_outline_outlined, size: 16, color: captionColor),
                                   const SizedBox(width: 4),
                                   Text(
                                     incident.reporterId.isNotEmpty 
                                         ? incident.reporterId 
                                         : "Tripulante",
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
-                                      color: Colors.black54,
+                                      color: secondaryTextColor,
                                     ),
                                   ),
                                 ],
