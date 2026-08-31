@@ -201,10 +201,17 @@ class ProductionChatService implements ChatService {
 
   @override
   Future<List<ChatMessage>> fetchMessages(String channelId) async {
-    final List<dynamic> response = await APIClient.shared.request(
+    final response = await APIClient.shared.request(
       endpoint: '/api/v1/chat/messages/${Uri.encodeComponent(channelId)}/',
     );
-    return response.map((json) => ChatMessage.fromJson(json)).toList();
+    if (response is List) {
+      return response.map((json) => ChatMessage.fromJson(json)).toList();
+    }
+    if (response is Map && response.containsKey('results') && response['results'] is List) {
+      final List<dynamic> results = response['results'];
+      return results.map((json) => ChatMessage.fromJson(json)).toList();
+    }
+    return [];
   }
 
   @override

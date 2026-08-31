@@ -4,6 +4,7 @@ import '../fleet/fleet_view.dart';
 import '../chat/chat_list_view.dart';
 import '../schedule/schedule_view.dart';
 import '../incidents/incident_list_view.dart';
+import '../stats/stats_view.dart';
 import '../../app/drawer_widget.dart';
 
 class MainTabView extends StatefulWidget {
@@ -21,6 +22,7 @@ class _MainTabViewState extends State<MainTabView> {
     FleetView(),
     ScheduleView(),
     IncidentListView(),
+    StatsView(),
     ChatListView(),
   ];
 
@@ -33,6 +35,7 @@ class _MainTabViewState extends State<MainTabView> {
         children: _views,
       ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
         onTap: (index) {
           setState(() {
@@ -59,6 +62,11 @@ class _MainTabViewState extends State<MainTabView> {
             icon: Icon(Icons.shield_outlined),
             activeIcon: Icon(Icons.shield),
             label: "Seguridad",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart_outlined),
+            activeIcon: Icon(Icons.bar_chart),
+            label: "Estadísticas",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_outline),

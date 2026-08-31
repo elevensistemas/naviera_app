@@ -232,14 +232,22 @@ class ChatMessage {
     if (attachment != null && attachment.startsWith('/') && !attachment.startsWith('http')) {
       attachment = "${AppConfig.apiBaseURL}$attachment";
     }
+    
+    DateTime parsedTime = DateTime.now();
+    try {
+      if (json['created_at'] != null) {
+        parsedTime = DateTime.parse(json['created_at']);
+      } else if (json['timestamp'] != null) {
+        parsedTime = DateTime.parse(json['timestamp']);
+      }
+    } catch (_) {}
+
     return ChatMessage(
       id: json['id']?.toString() ?? '',
       senderId: json['sender_id']?.toString() ?? '',
       text: json['content'] ?? json['text'] ?? '',
       attachmentURL: attachment,
-      timestamp: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
-          : (json['timestamp'] != null ? DateTime.parse(json['timestamp']) : DateTime.now()),
+      timestamp: parsedTime,
     );
   }
 }
