@@ -312,6 +312,39 @@ class CrewMember {
   }
 }
 
+// OperationCharge Model (from /api/v1/operation-charges-chart/)
+class OperationCharge {
+  final String client;
+  final String ship;
+  final double totalLsfo;
+  final double totalMgo;
+  final int totalShips;
+  final double? limit;
+  final DateTime? dateApplied;
+
+  OperationCharge({
+    required this.client,
+    required this.ship,
+    required this.totalLsfo,
+    required this.totalMgo,
+    required this.totalShips,
+    this.limit,
+    this.dateApplied,
+  });
+
+  factory OperationCharge.fromJson(Map<String, dynamic> json) {
+    return OperationCharge(
+      client: json['client'] ?? '',
+      ship: json['ship'] ?? '',
+      totalLsfo: (json['total_lsfo'] as num?)?.toDouble() ?? 0.0,
+      totalMgo: (json['total_mgo'] as num?)?.toDouble() ?? 0.0,
+      totalShips: (json['total_ships'] as num?)?.toInt() ?? 0,
+      limit: (json['limit'] as num?)?.toDouble(),
+      dateApplied: json['date_applied'] != null ? DateTime.tryParse(json['date_applied'].toString()) : null,
+    );
+  }
+}
+
 // Schedule Model
 class Schedule {
   final String id;
@@ -331,10 +364,12 @@ class Schedule {
   factory Schedule.fromJson(Map<String, dynamic> json) {
     return Schedule(
       id: json['id']?.toString() ?? '',
-      shipId: json['ship_id']?.toString() ?? json['ship']?.toString() ?? '',
-      date: json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
-      cargoType: json['cargo_type'] ?? '',
-      details: json['details'] ?? '',
+      shipId: json['ship_id']?.toString() ?? json['ship']?.toString() ?? json['voyage_number']?.toString() ?? '',
+      date: json['date'] != null 
+          ? DateTime.parse(json['date']) 
+          : (json['start_date_time'] != null ? DateTime.parse(json['start_date_time']) : DateTime.now()),
+      cargoType: json['cargo_type'] ?? json['observations'] ?? 'Operación Naviera',
+      details: json['details'] ?? "Etapa: ${json['stage'] ?? 'N/A'} | Carga: ${json['load'] ?? '0'} m³",
     );
   }
 }

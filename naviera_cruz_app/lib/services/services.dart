@@ -587,7 +587,8 @@ class ProductionIncidentService implements IncidentService {
 // 6. SCHEDULE SERVICE
 // ==========================================
 abstract class ScheduleService {
-  Future<List<Schedule>> fetchMonthlySchedule();
+  Future<List<Schedule>> fetchMonthlySchedule({int? month, int? year});
+  Future<List<OperationCharge>> fetchOperationCharges({int? month, int? year, bool detailed = false});
 
   factory ScheduleService() {
     return AppConfig.isMockActive ? MockScheduleService() : ProductionScheduleService();
@@ -596,32 +597,94 @@ abstract class ScheduleService {
 
 class MockScheduleService implements ScheduleService {
   @override
-  Future<List<Schedule>> fetchMonthlySchedule() async {
+  Future<List<Schedule>> fetchMonthlySchedule({int? month, int? year}) async {
     await Future.delayed(const Duration(milliseconds: 500));
     return [
       Schedule(
         id: "sch1",
-        shipId: "s1",
+        shipId: "Alfa C",
         date: DateTime.now(),
         cargoType: "Contenedores secos",
         details: "Descarga en Puerto Madryn",
       ),
       Schedule(
         id: "sch2",
-        shipId: "s3",
+        shipId: "Gustavo U",
         date: DateTime.now().add(const Duration(days: 3)),
         cargoType: "Pesca congelada",
         details: "Arribo programado a Ushuaia",
       ),
     ];
   }
+
+  @override
+  Future<List<OperationCharge>> fetchOperationCharges({int? month, int? year, bool detailed = false}) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (detailed) {
+      final now = DateTime.now();
+      final m = month ?? now.month;
+      final y = year ?? now.year;
+      return [
+        OperationCharge(client: "Raizen", ship: "ALFA C", totalLsfo: 3345, totalMgo: 100, totalShips: 6, limit: 17500, dateApplied: DateTime(y, m, 5)),
+        OperationCharge(client: "WFS", ship: "GUSTAVO U", totalLsfo: 2000, totalMgo: 0, totalShips: 3, dateApplied: DateTime(y, m, 3)),
+        OperationCharge(client: "WFS", ship: "NANY", totalLsfo: 2180, totalMgo: 0, totalShips: 5, dateApplied: DateTime(y, m, 5)),
+      ];
+    }
+    return [
+      OperationCharge(client: "Raizen", ship: "ALFA C", totalLsfo: 405468.95, totalMgo: 1926.75, totalShips: 673, limit: 17500),
+      OperationCharge(client: "WFS", ship: "GUSTAVO U", totalLsfo: 276228.00, totalMgo: 27947.00, totalShips: 621),
+      OperationCharge(client: "WFS", ship: "NANY", totalLsfo: 246297.00, totalMgo: 21841.00, totalShips: 550),
+    ];
+  }
 }
 
 class ProductionScheduleService implements ScheduleService {
   @override
-  Future<List<Schedule>> fetchMonthlySchedule() async {
-    final List<dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/schedule/');
-    return response.map((json) => Schedule.fromJson(json)).toList();
+  Future<List<Schedule>> fetchMonthlySchedule({int? month, int? year}) async {
+    try {
+      String query = '';
+      if (month != null && year != null) {
+        query = '?month=$month&year=$year';
+      }
+      final response = await APIClient.shared.request(endpoint: '/api/v1/schedule/$query');
+      if (response is List && response.isNotEmpty) {
+        return response.map((json) => Schedule.fromJson(json)).toList();
+      }
+    } catch (_) {}
+
+    // Fallback to /api/v1/voyages/ if /schedule/ returns empty
+    try {
+      final List<dynamic> voyagesRes = await APIClient.shared.request(endpoint: '/api/v1/voyages/');
+      return voyagesRes.map((json) => Schedule.fromJson(json)).toList();
+    } catch (_) {}
+
+    return [];
+  }
+
+  @override
+  Future<List<OperationCharge>> fetchOperationCharges({int? month, int? year, bool detailed = false}) async {
+    try {
+      final targetYear = year ?? DateTime.now().year;
+      final targetMonth = month ?? DateTime.now().month;
+      final lastDay = DateTime(targetYear, targetMonth + 1, 0).day;
+      
+      final monthStr = targetMonth.toString().padLeft(2, '0');
+      final lastDayStr = lastDay.toString().padLeft(2, '0');
+
+      final dateFrom = "$targetYear-$monthStr-01";
+      final dateTo = "$targetYear-$monthStr-$lastDayStr";
+
+      String query = "?date_from=$dateFrom&date_to=$dateTo";
+      if (detailed) {
+        query += "&detailed=1";
+      }
+
+      final response = await APIClient.shared.request(endpoint: '/api/v1/operation-charges-chart/$query');
+      if (response is List) {
+        return response.map((json) => OperationCharge.fromJson(json)).toList();
+      }
+    } catch (_) {}
+    return [];
   }
 }
 

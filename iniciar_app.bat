@@ -25,7 +25,7 @@ if %errorlevel% neq 0 (
     echo.
     echo [3/3] Iniciando Flutter en Chrome con CORS desactivado...
     cd /d N:\naviera_cruz_app
-    call N:\flutter\bin\flutter.bat run -d chrome --web-browser-flag="--disable-web-security"
+    call N:\flutter\bin\flutter.bat run -d chrome --web-port=8080 --web-browser-flag="--disable-web-security"
 )
 
 echo.
