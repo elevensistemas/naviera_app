@@ -330,8 +330,8 @@ class _ScheduleViewState extends State<ScheduleView> {
 
     final chartData = _getChartDataForCharge(charge);
     final bool hasData = chartData['hasData'] ?? false;
-    final List<String> chartDates = (chartData['dates'] as List<dynamic>?)?.cast<String>() ?? [];
-    final List<double> barHeights = (chartData['heights'] as List<dynamic>?)?.cast<double>() ?? [];
+    final List<String> chartDates = List<String>.from(chartData['dates'] ?? []);
+    final List<double> barHeights = List<double>.from(chartData['heights'] ?? []);
 
     return Card(
       child: Padding(
@@ -341,16 +341,19 @@ class _ScheduleViewState extends State<ScheduleView> {
           children: [
             // Top Row: Client & Ship Badge
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  "Cargas diarias ${charge.client}",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: textColor,
+                Expanded(
+                  child: Text(
+                    "Cargas diarias ${charge.client}",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                   decoration: BoxDecoration(
