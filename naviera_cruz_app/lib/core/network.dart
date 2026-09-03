@@ -39,19 +39,20 @@ class APIClient {
     try {
       final bodyStr = body != null ? jsonEncode(body) : null;
       
+      const timeoutDuration = Duration(seconds: 10);
       switch (method.toUpperCase()) {
         case 'POST':
-          response = await http.post(uri, headers: headers, body: bodyStr);
+          response = await http.post(uri, headers: headers, body: bodyStr).timeout(timeoutDuration);
           break;
         case 'PUT':
-          response = await http.put(uri, headers: headers, body: bodyStr);
+          response = await http.put(uri, headers: headers, body: bodyStr).timeout(timeoutDuration);
           break;
         case 'DELETE':
-          response = await http.delete(uri, headers: headers, body: bodyStr);
+          response = await http.delete(uri, headers: headers).timeout(timeoutDuration);
           break;
         case 'GET':
         default:
-          response = await http.get(uri, headers: headers);
+          response = await http.get(uri, headers: headers).timeout(timeoutDuration);
           break;
       }
     } catch (e) {

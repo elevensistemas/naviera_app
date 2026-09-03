@@ -27,6 +27,7 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -37,24 +38,30 @@ class _HomeViewState extends State<HomeView> {
       final goalService = GoalService();
 
       final results = await Future.wait([
-        homeService.fetchPosts(),
-        goalService.fetchGoals(),
+        homeService.fetchPosts().catchError((_) => <Post>[]),
+        goalService.fetchGoals().catchError((_) => <Goal>[]),
       ]);
 
-      setState(() {
-        _posts.clear();
-        _posts.addAll(results[0] as List<Post>);
-        _goals.clear();
-        _goals.addAll(results[1] as List<Goal>);
-      });
+      if (mounted) {
+        setState(() {
+          _posts.clear();
+          _posts.addAll((results[0] as List).cast<Post>());
+          _goals.clear();
+          _goals.addAll((results[1] as List).cast<Goal>());
+        });
+      }
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+        });
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
