@@ -64,9 +64,9 @@ class _MainTabViewState extends State<MainTabView> {
             label: "Seguridad",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            activeIcon: Icon(Icons.bar_chart),
-            label: "Estadísticas",
+            icon: Icon(Icons.school_outlined),
+            activeIcon: Icon(Icons.school),
+            label: "Capacitaciones",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble_outline),

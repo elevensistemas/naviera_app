@@ -69,8 +69,17 @@ class SessionManager with ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await _secureStorage.delete(key: _tokenKey);
-    await _prefs.remove(_userKey);
+    try {
+      await _secureStorage.delete(key: _tokenKey);
+    } catch (e) {
+      debugPrint('Error deleting secure token: $e');
+    }
+    try {
+      await _prefs.remove(_userKey);
+      await _prefs.clear();
+    } catch (e) {
+      debugPrint('Error clearing prefs: $e');
+    }
     _currentUser = null;
     _isAuthenticated = false;
     notifyListeners();

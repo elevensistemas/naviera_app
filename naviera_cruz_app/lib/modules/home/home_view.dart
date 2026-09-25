@@ -119,8 +119,59 @@ class _HomeViewState extends State<HomeView> {
     final session = Provider.of<SessionManager>(context);
     final currentUser = session.currentUser;
 
+    final now = DateTime.now();
+    final currentYear = now.year;
+    final currentSemester = now.month >= 7 ? 2 : 1;
+
     // Filter goals for current user
-    final userGoals = _goals.where((g) => g.leaderId == currentUser?.id).toList();
+    final userSpecificGoals = currentUser == null 
+        ? _goals 
+        : _goals.where((g) {
+            if (g.userId.isNotEmpty && g.userId == currentUser.id) return true;
+            if (g.leaderId.isNotEmpty && g.leaderId == currentUser.id) return true;
+            if (g.userId.isEmpty && g.leaderId.isEmpty) return true;
+            return false;
+          }).toList();
+
+    final goalsToFilter = userSpecificGoals.isNotEmpty ? userSpecificGoals : _goals;
+
+    // Filter goals for current active period (Current Semester & Year)
+    final currentSemesterGoals = goalsToFilter.where((g) {
+      if (g.targetDate.isEmpty) return true;
+      final dt = DateTime.tryParse(g.targetDate);
+      if (dt == null) return true;
+      final sem = dt.month >= 7 ? 2 : 1;
+      return dt.year == currentYear && sem == currentSemester;
+    }).toList();
+
+    List<Goal> userGoals;
+    if (currentSemesterGoals.isNotEmpty) {
+      userGoals = currentSemesterGoals;
+    } else {
+      // If no goals for exact semester, check current year goals
+      final currentYearGoals = goalsToFilter.where((g) {
+        if (g.targetDate.isEmpty) return true;
+        final dt = DateTime.tryParse(g.targetDate);
+        return dt != null && dt.year == currentYear;
+      }).toList();
+      
+      if (currentYearGoals.isNotEmpty) {
+        userGoals = currentYearGoals;
+      } else {
+        // Exclude expired past years (e.g. 2025)
+        userGoals = goalsToFilter.where((g) {
+          if (g.targetDate.isEmpty) return true;
+          final dt = DateTime.tryParse(g.targetDate);
+          return dt == null || dt.year >= currentYear;
+        }).toList();
+      }
+    }
+
+    if (userGoals.isEmpty && _goals.isNotEmpty) {
+      userGoals = List.from(_goals);
+    }
+
+    userGoals.sort((a, b) => b.targetDate.compareTo(a.targetDate));
 
     return Scaffold(
       appBar: const NavieraAppBar(),

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { Home, Anchor, MessageSquare, User, Bell, Settings, Users, Calendar, Shield, Trash2, CheckSquare } from 'lucide-react';
+import { Home, Anchor, MessageSquare, User, Bell, Settings, Users, Calendar, Shield, GraduationCap, Trash2, CheckSquare } from 'lucide-react';
 import AuthContext from '../context/AuthContext';
 import { getApiEndpoint } from '../config';
 
@@ -256,6 +256,11 @@ const Layout = () => {
           <NavLink to="/security" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>
             <Shield size={24} />
             <span>Seguridad</span>
+          </NavLink>
+
+          <NavLink to="/trainings" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>
+            <GraduationCap size={24} />
+            <span>Capacitaciones</span>
           </NavLink>
           
           <NavLink to="/chat" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>

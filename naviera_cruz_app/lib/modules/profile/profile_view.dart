@@ -4,7 +4,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/storage.dart';
 import '../../services/services.dart';
 import '../../app/theme.dart';
-import '../stats/stats_view.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -76,19 +75,22 @@ class _ProfileViewState extends State<ProfileView> {
   void _confirmLogout(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text("Cerrar Sesión"),
           content: const Text("¿Estás seguro que deseas desconectarte?"),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text("Cancelar"),
             ),
             TextButton(
               onPressed: () async {
-                Navigator.pop(context);
+                Navigator.of(dialogContext).pop();
                 await SessionManager.shared.logout();
+                if (context.mounted) {
+                  Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
+                }
               },
               child: const Text("Salir", style: TextStyle(color: Colors.red)),
             ),

@@ -22,8 +22,10 @@ class NavieraDrawer extends StatelessWidget {
             TextButton(
               onPressed: () async {
                 Navigator.pop(dialogContext);
-                Navigator.pop(context); // Close drawer
                 await SessionManager.shared.logout();
+                if (context.mounted) {
+                  Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
+                }
               },
               child: const Text("Salir", style: TextStyle(color: Colors.red)),
             ),

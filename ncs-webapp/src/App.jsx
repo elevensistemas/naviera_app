@@ -13,6 +13,7 @@ import AdminPanel from './pages/AdminPanel';
 import Crew from './pages/Crew';
 import MonthlySchedule from './pages/MonthlySchedule';
 import Security from './pages/Security';
+import Trainings from './pages/Trainings';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = React.useContext(AuthContext);
@@ -40,6 +41,7 @@ function App() {
             <Route path="crew" element={<Crew />} />
             <Route path="monthly" element={<MonthlySchedule />} />
             <Route path="security" element={<Security />} />
+            <Route path="trainings" element={<Trainings />} />
             <Route path="chat" element={<ChatList />} />
             <Route path="chat/:id" element={<ChatDetail />} />
             <Route path="ai" element={<AIChat />} />

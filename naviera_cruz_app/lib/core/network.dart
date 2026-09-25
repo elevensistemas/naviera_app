@@ -70,6 +70,9 @@ class APIClient {
           throw NetworkException("Error al procesar la respuesta del servidor.");
         }
       case 401:
+        if (endpoint.contains('/login/')) {
+          throw NetworkException("Usuario o contraseña incorrectos.", statusCode: 401);
+        }
         await SessionManager.shared.logout();
         throw NetworkException("Sesión expirada. Por favor inicie sesión nuevamente.", statusCode: 401);
       default:

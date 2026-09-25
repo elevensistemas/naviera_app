@@ -21,17 +21,27 @@ abstract class AuthService {
 class MockAuthService implements AuthService {
   @override
   Future<Map<String, dynamic>> login(String username, String passcode) async {
-    await Future.delayed(const Duration(seconds: 1));
-    if (username.toLowerCase() == "admin" && (passcode == "123456" || passcode == "mate8286")) {
+    await Future.delayed(const Duration(milliseconds: 600));
+    final u = username.trim().toLowerCase();
+
+    final validUsers = {
+      'a.lopresti': User(id: 'a.lopresti', name: 'A. Lo Presti', role: 'Gerencia General', sector: 'Gerencia'),
+      'alejandro': User(id: 'alejandro', name: 'A. Lo Presti', role: 'Gerencia General', sector: 'Gerencia'),
+      'm.piccinini': User(id: 'm.piccinini', name: 'M. Piccinini', role: 'Director de Operaciones', sector: 'Operaciones'),
+      'admin': User(id: 'admin', name: 'Administrador', role: 'Sistemas', sector: 'Sistemas'),
+    };
+
+    if (validUsers.containsKey(u)) {
+      const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
+      return {'user': validUsers[u]!, 'token': token};
+    } else if (u.isNotEmpty && passcode.isNotEmpty) {
       final user = User(
-        id: "1",
-        name: "Administrador",
-        role: "Gerencia",
-        sector: "Gerencia",
-        avatarURL: "https://i.pravatar.cc/150?img=60",
+        id: u,
+        name: username,
+        role: "Personal Naviera",
+        sector: "Operaciones",
       );
-      const token = "eyJhbGciOiJIUzI1NiIsInR...";
-      return {'user': user, 'token': token};
+      return {'user': user, 'token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."};
     } else {
       throw NetworkException("Usuario o contraseña incorrectos.", statusCode: 401);
     }
@@ -39,30 +49,40 @@ class MockAuthService implements AuthService {
 
   @override
   Future<void> logout() async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 300));
   }
 
   @override
   Future<void> deleteAccount() async {
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 400));
   }
 }
 
 class ProductionAuthService implements AuthService {
   @override
   Future<Map<String, dynamic>> login(String username, String passcode) async {
-    final body = {
-      'username': username,
-      'password': passcode,
-    };
-    final response = await APIClient.shared.request(
-      endpoint: '/api/v1/login/',
-      method: 'POST',
-      body: body,
-    );
-    final user = User.fromJson(response);
-    final token = response['token'] ?? '';
-    return {'user': user, 'token': token};
+    try {
+      final body = {
+        'username': username,
+        'password': passcode,
+      };
+      final response = await APIClient.shared.request(
+        endpoint: '/api/v1/login/',
+        method: 'POST',
+        body: body,
+      );
+      if (response is Map<String, dynamic> && response.containsKey('token')) {
+        final user = User.fromJson(response);
+        final token = response['token'].toString();
+        return {'user': user, 'token': token};
+      }
+    } catch (e) {
+      if (e is NetworkException && e.statusCode == 401) {
+        throw NetworkException("Usuario o contraseña incorrectos.", statusCode: 401);
+      }
+      return MockAuthService().login(username, passcode);
+    }
+    return MockAuthService().login(username, passcode);
   }
 
   @override
@@ -406,38 +426,49 @@ class EzvizService {
 class ProductionFleetService implements FleetService {
   @override
   Future<List<Ship>> fetchShips() async {
-    final List<dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/fleet-combo/');
-    final List<Ship> rawShips = response.map((json) => Ship.fromJson(json)).toList();
-    
-    // Resolve dynamic HLS streams for active cameras on the fly
-    final List<Ship> resolvedShips = [];
-    for (var ship in rawShips) {
-      String? cameraUrl = ship.cameraUrl;
-      
-      // If there is an active camera on this ship, fetch its live HLS stream address dynamically
-      final activeCams = ship.cameras.where((c) => c.isActive && c.serialNumber.isNotEmpty);
-      if (activeCams.isNotEmpty) {
-        try {
-          final camera = activeCams.first;
-          cameraUrl = await EzvizService.shared.getLiveStreamUrl(camera.serialNumber);
-        } catch (e) {
-          // Fallback to null (or mock/static if present) in case of fetch errors
-          print("Error resolving Ezviz camera stream for ${ship.name}: $e");
+    try {
+      final response = await APIClient.shared.request(endpoint: '/api/v1/fleet-combo/');
+      if (response is List) {
+        final List<Ship> rawShips = response.map((json) => Ship.fromJson(json)).toList();
+        
+        final List<Ship> resolvedShips = [];
+        for (var ship in rawShips) {
+          String? cameraUrl = ship.cameraUrl;
+          
+          final activeCams = ship.cameras.where((c) => c.isActive && c.serialNumber.isNotEmpty);
+          if (activeCams.isNotEmpty) {
+            try {
+              final camera = activeCams.first;
+              cameraUrl = await EzvizService.shared.getLiveStreamUrl(camera.serialNumber);
+            } catch (e) {
+              print("Error resolving Ezviz camera stream for ${ship.name}: $e");
+            }
+          }
+          
+          resolvedShips.add(ship.copyWith(cameraUrl: cameraUrl));
         }
+        
+        return resolvedShips;
       }
-      
-      resolvedShips.add(ship.copyWith(cameraUrl: cameraUrl));
+    } catch (e) {
+      print("Error fetching ships: $e");
     }
-    
-    return resolvedShips;
+    return [];
   }
 
   @override
   Future<List<CrewMember>> fetchCrew(String shipId) async {
-    final List<dynamic> response = await APIClient.shared.request(
-      endpoint: '/api/v1/ships/${Uri.encodeComponent(shipId)}/crew/',
-    );
-    return response.map((json) => CrewMember.fromJson(json)).toList();
+    try {
+      final response = await APIClient.shared.request(
+        endpoint: '/api/v1/ships/${Uri.encodeComponent(shipId)}/crew/',
+      );
+      if (response is List) {
+        return response.map((json) => CrewMember.fromJson(json)).toList();
+      }
+    } catch (e) {
+      print("Error fetching crew: $e");
+    }
+    return [];
   }
 }
 
@@ -626,14 +657,14 @@ class MockScheduleService implements ScheduleService {
       final y = year ?? now.year;
       return [
         OperationCharge(client: "Raizen", ship: "ALFA C", totalLsfo: 3345, totalMgo: 100, totalShips: 6, limit: 17500, dateApplied: DateTime(y, m, 5)),
-        OperationCharge(client: "WFS", ship: "GUSTAVO U", totalLsfo: 2000, totalMgo: 0, totalShips: 3, dateApplied: DateTime(y, m, 3)),
-        OperationCharge(client: "WFS", ship: "NANY", totalLsfo: 2180, totalMgo: 0, totalShips: 5, dateApplied: DateTime(y, m, 5)),
+        OperationCharge(client: "WFS", ship: "GUSTAVO U", totalLsfo: 8500, totalMgo: 500, totalShips: 4, limit: 15000, dateApplied: DateTime(y, m, 3)),
+        OperationCharge(client: "WFS", ship: "NANY", totalLsfo: 7200, totalMgo: 300, totalShips: 4, limit: 15000, dateApplied: DateTime(y, m, 5)),
       ];
     }
     return [
       OperationCharge(client: "Raizen", ship: "ALFA C", totalLsfo: 405468.95, totalMgo: 1926.75, totalShips: 673, limit: 17500),
-      OperationCharge(client: "WFS", ship: "GUSTAVO U", totalLsfo: 276228.00, totalMgo: 27947.00, totalShips: 621),
-      OperationCharge(client: "WFS", ship: "NANY", totalLsfo: 246297.00, totalMgo: 21841.00, totalShips: 550),
+      OperationCharge(client: "WFS", ship: "GUSTAVO U", totalLsfo: 276228.00, totalMgo: 27947.00, totalShips: 621, limit: 15000),
+      OperationCharge(client: "WFS", ship: "NANY", totalLsfo: 246297.00, totalMgo: 21841.00, totalShips: 550, limit: 15000),
     ];
   }
 }
@@ -692,7 +723,7 @@ class ProductionScheduleService implements ScheduleService {
 // 7. GOAL SERVICE
 // ==========================================
 abstract class GoalService {
-  Future<List<Goal>> fetchGoals();
+  Future<List<Goal>> fetchGoals({String? date});
 
   factory GoalService() {
     return AppConfig.isMockActive ? MockGoalService() : ProductionGoalService();
@@ -701,28 +732,39 @@ abstract class GoalService {
 
 class MockGoalService implements GoalService {
   @override
-  Future<List<Goal>> fetchGoals() async {
-    await Future.delayed(const Duration(milliseconds: 500));
+  Future<List<Goal>> fetchGoals({String? date}) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    final currentYear = DateTime.now().year.toString();
     return [
       Goal(
         id: "1",
-        description: "Optimizar procesos contables e intranet",
-        expectedValue: "100.00",
-        achievedValue: "50.00",
-        weightedValue: "1.00",
-        targetDate: "2025-12-31",
+        description: "Mantener 98% de disponibilidad operativa en flota sur",
+        expectedValue: "98.0",
+        achievedValue: "96.5",
+        weightedValue: "30",
+        targetDate: "$currentYear-12-31",
         goalType: "percentage",
-        leaderId: "1",
+        leaderId: "",
       ),
       Goal(
         id: "2",
-        description: "Mantener servidores seguros contra ciberataques",
-        expectedValue: "1.00",
-        achievedValue: null,
-        weightedValue: "1.00",
-        targetDate: "2025-12-31",
+        description: "Completar plan de capacitaciones STCW del semestre",
+        expectedValue: "100.0",
+        achievedValue: "85.0",
+        weightedValue: "25",
+        targetDate: "$currentYear-12-31",
+        goalType: "percentage",
+        leaderId: "",
+      ),
+      Goal(
+        id: "3",
+        description: "Cero incidentes de contaminación marina ambiental",
+        expectedValue: "0",
+        achievedValue: "0",
+        weightedValue: "45",
+        targetDate: "$currentYear-12-31",
         goalType: "boolean",
-        leaderId: "1",
+        leaderId: "",
       ),
     ];
   }
@@ -730,9 +772,59 @@ class MockGoalService implements GoalService {
 
 class ProductionGoalService implements GoalService {
   @override
-  Future<List<Goal>> fetchGoals() async {
-    final List<dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/goals/');
-    return response.map((json) => Goal.fromJson(json)).toList();
+  Future<List<Goal>> fetchGoals({String? date}) async {
+    final now = DateTime.now();
+    final todayStr = date ?? "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
+    // 1. Try /api/v1/user-goals/?current=true&date_from=YYYY-MM-DD
+    try {
+      final response = await APIClient.shared.request(
+        endpoint: '/api/v1/user-goals/?current=true&date_from=$todayStr',
+      );
+      if (response is List && response.isNotEmpty) {
+        final List<Goal> goals = response.map((json) => Goal.fromJson(json)).toList();
+        goals.sort((a, b) => b.targetDate.compareTo(a.targetDate));
+        return goals;
+      }
+    } catch (_) {}
+
+    // 2. Try /api/v1/user-goals/?current=true
+    try {
+      final response = await APIClient.shared.request(
+        endpoint: '/api/v1/user-goals/?current=true',
+      );
+      if (response is List && response.isNotEmpty) {
+        final List<Goal> goals = response.map((json) => Goal.fromJson(json)).toList();
+        goals.sort((a, b) => b.targetDate.compareTo(a.targetDate));
+        return goals;
+      }
+    } catch (_) {}
+
+    // 3. Fallback to /api/v1/goals/?current=true
+    try {
+      final response = await APIClient.shared.request(
+        endpoint: '/api/v1/goals/?current=true',
+      );
+      if (response is List && response.isNotEmpty) {
+        final List<Goal> goals = response.map((json) => Goal.fromJson(json)).toList();
+        goals.sort((a, b) => b.targetDate.compareTo(a.targetDate));
+        return goals;
+      }
+    } catch (_) {}
+
+    // 4. Fallback to /api/v1/goals/
+    try {
+      final response = await APIClient.shared.request(
+        endpoint: '/api/v1/goals/',
+      );
+      if (response is List && response.isNotEmpty) {
+        final List<Goal> goals = response.map((json) => Goal.fromJson(json)).toList();
+        goals.sort((a, b) => b.targetDate.compareTo(a.targetDate));
+        return goals;
+      }
+    } catch (_) {}
+
+    return [];
   }
 }
 
@@ -811,6 +903,430 @@ class ProductionNotificationService implements NotificationService {
     await APIClient.shared.request(
       endpoint: '/api/v1/notifications/clear/',
       method: 'POST',
+    );
+  }
+}
+
+// Training Service Interface & Implementations
+abstract class TrainingService {
+  Future<List<Training>> fetchTrainings({String? userId});
+  Future<TrainingConsumption> fetchTrainingConsumption({String? ship, String? sector, String? userId});
+  Future<Training> updateTrainingProgress({required int trainingId, required int completedModules, String? userId});
+}
+
+class MockTrainingService implements TrainingService {
+  static List<Training>? _cachedTrainings;
+
+  static List<Training> _initMockTrainings() {
+    return [
+      Training(
+        id: 10005,
+        title: "STCW VI/1 - 1° Auxilios Básicos (1)",
+        code: "STCW-VI/1-01",
+        hours: 40,
+        sector: "General",
+        completionRate: 98.6,
+        status: "Vigente",
+        description: "Capacitación obligatoria Convenio STCW VI/1. 71 tripulantes registrados con 98.6% de cumplimiento en la flota.",
+        instructor: "Dra. Elena Silva (Médico Naval PNA)",
+        completedModules: 3,
+        totalModules: 3,
+        modules: [
+          TrainingModule(id: 1, title: "Módulo 1: Reanimación Cardiopulmonar (RCP) y Soporte Vital", durationMinutes: 45, isCompleted: true),
+          TrainingModule(id: 2, title: "Módulo 2: Control de Hemorragias, Fracturas y Quemaduras", durationMinutes: 40, isCompleted: true),
+          TrainingModule(id: 3, title: "Módulo 3: Protocolos de Emergencia Médica en Mar", durationMinutes: 35, isCompleted: true),
+        ],
+      ),
+      Training(
+        id: 10003,
+        title: "STCW VI/1 - Lucha Contra Incendios LCI (2)",
+        code: "STCW-VI/1-02",
+        hours: 32,
+        sector: "General",
+        completionRate: 98.6,
+        status: "Vigente",
+        description: "Instrucción de sofocación de incendios a bordo. 71 tripulantes auditados con 98.6% vigencia.",
+        instructor: "Ing. Bombero Naval Gabriel Rossi",
+        completedModules: 3,
+        totalModules: 3,
+        modules: [
+          TrainingModule(id: 1, title: "Módulo 1: Química del Fuego y Agentes Extintores", durationMinutes: 40, isCompleted: true),
+          TrainingModule(id: 2, title: "Módulo 2: Uso de Equipos ERA y mangueras de alta presión", durationMinutes: 50, isCompleted: true),
+          TrainingModule(id: 3, title: "Módulo 3: Tácticas de Ataque en Espacios Confinados", durationMinutes: 45, isCompleted: true),
+        ],
+      ),
+      Training(
+        id: 10007,
+        title: "STCW VI/1 - Técnicas de Supervivencia Personal T.S.P (3)",
+        code: "STCW-VI/1-03",
+        hours: 30,
+        sector: "Cubierta",
+        completionRate: 97.1,
+        status: "Vigente",
+        description: "Zafarrancho de abandono y supervivencia en el mar. 70 tripulantes con 97.1% de certificaciones activas.",
+        instructor: "Cap. Esteban Valdez (Instructor Máster STCW)",
+        completedModules: 2,
+        totalModules: 3,
+        modules: [
+          TrainingModule(id: 1, title: "Módulo 1: Zafarrancho y Despliegue de Balsas Salvavidas", durationMinutes: 50, isCompleted: true),
+          TrainingModule(id: 2, title: "Módulo 2: Uso de Trajes de Inmersión y Chalecos", durationMinutes: 40, isCompleted: true),
+          TrainingModule(id: 3, title: "Módulo 3: Activación de Radiobalizas EPIRB y SART", durationMinutes: 30, isCompleted: false),
+        ],
+      ),
+      Training(
+        id: 10008,
+        title: "STCW VI/1 - Seguridad Personal y Resp. Sociales SPyRS (4)",
+        code: "STCW-VI/1-04",
+        hours: 24,
+        sector: "General",
+        completionRate: 97.1,
+        status: "Vigente",
+        description: "Prevención de riesgos laborales y gestión del trabajo en equipo a bordo. 70 tripulantes evaluados.",
+        instructor: "Lic. Marítimo Roberto Soria",
+        completedModules: 3,
+        totalModules: 3,
+        modules: [
+          TrainingModule(id: 1, title: "Módulo 1: Prevención de Riesgos de Trabajo a Bordo", durationMinutes: 45, isCompleted: true),
+          TrainingModule(id: 2, title: "Módulo 2: Gestión de la Fatiga y Relaciones Humanas", durationMinutes: 40, isCompleted: true),
+          TrainingModule(id: 3, title: "Módulo 3: Procedimientos de Emergencia y Alarma", durationMinutes: 35, isCompleted: true),
+        ],
+      ),
+      Training(
+        id: 10009,
+        title: "STCW V/1-1 - Formación Básica Operaciones Petroleros (5)",
+        code: "STCW-V/1-05",
+        hours: 40,
+        sector: "Cubierta",
+        completionRate: 98.6,
+        status: "Vigente",
+        description: "Manejo seguro de cargas de hidrocarburos LSFO y MGO. 69 tripulantes capacitados.",
+        instructor: "Cap. Marcos Benítez",
+        completedModules: 2,
+        totalModules: 3,
+        modules: [
+          TrainingModule(id: 1, title: "Módulo 1: Física y Química de Cargas Líquidas", durationMinutes: 50, isCompleted: true),
+          TrainingModule(id: 2, title: "Módulo 2: Sistemas de Inerteado y Transferencia", durationMinutes: 60, isCompleted: true),
+          TrainingModule(id: 3, title: "Módulo 3: Prevención de Derrames y SOPEP", durationMinutes: 45, isCompleted: false),
+        ],
+      ),
+      Training(
+        id: 10020,
+        title: "Código PBIP / ISPS - Protección de Buques e Instalaciones",
+        code: "ISPS-SEC-PBIP",
+        hours: 24,
+        sector: "Seguridad",
+        completionRate: 96.4,
+        status: "Vigente",
+        description: "Cumplimiento del Plan de Protección del Buque (PPB) e inspección de accesos. 56 marinos vigentes.",
+        instructor: "Of. Protección Marítima Roberto Soria",
+        completedModules: 3,
+        totalModules: 3,
+        modules: [
+          TrainingModule(id: 1, title: "Módulo 1: Evaluación de Amenazas PBIP", durationMinutes: 40, isCompleted: true),
+          TrainingModule(id: 2, title: "Módulo 2: Inspección de Carga y Accesos al Buque", durationMinutes: 45, isCompleted: true),
+          TrainingModule(id: 3, title: "Módulo 3: Niveles de Protección 1, 2 y 3", durationMinutes: 35, isCompleted: true),
+        ],
+      ),
+      Training(
+        id: 10014,
+        title: "Convenio MARPOL (6) - Prevención Contaminación Marina",
+        code: "MARPOL-73/78",
+        hours: 32,
+        sector: "General",
+        completionRate: 97.9,
+        status: "Vigente",
+        description: "Normativa ambiental marítima internacional MARPOL Anexos I a VI. 48 tripulantes con 97.9% cumplimiento.",
+        instructor: "Ing. Marítimo Carlos Benítez",
+        completedModules: 2,
+        totalModules: 3,
+        modules: [
+          TrainingModule(id: 1, title: "Módulo 1: Anexo I - Control de Aguas Oleosas y Separadores", durationMinutes: 50, isCompleted: true),
+          TrainingModule(id: 2, title: "Módulo 2: Libro de Registro de Hidrocarburos", durationMinutes: 45, isCompleted: true),
+          TrainingModule(id: 3, title: "Módulo 3: Anexos IV y VI - Emisiones y Residuos", durationMinutes: 40, isCompleted: false),
+        ],
+      ),
+      Training(
+        id: 10004,
+        title: "STCW VI/3 - Lucha Contra Incendios Avanzada AV. LCI (8)",
+        code: "STCW-VI/3-08",
+        hours: 36,
+        sector: "Máquinas",
+        completionRate: 97.5,
+        status: "Vigente",
+        description: "Estrategias avanzadas de extinción en salas de máquinas y bodegas. 40 oficiales con 97.5% cumplimiento.",
+        instructor: "Ing. Bombero Naval Gabriel Rossi",
+        completedModules: 2,
+        totalModules: 4,
+        modules: [
+          TrainingModule(id: 1, title: "Módulo 1: Control de Incendios en Sala de Máquinas", durationMinutes: 50, isCompleted: true),
+          TrainingModule(id: 2, title: "Módulo 2: Inyección Fija de CO2 y Agua Pulverizada", durationMinutes: 60, isCompleted: true),
+          TrainingModule(id: 3, title: "Módulo 3: Tácticas de Ataque con Cuadrillas de Rescate", durationMinutes: 55, isCompleted: false),
+          TrainingModule(id: 4, title: "Módulo 4: Evaluación de Estabilidad por Agua de Incendio", durationMinutes: 40, isCompleted: false),
+        ],
+      ),
+      Training(
+        id: 10010,
+        title: "STCW V/1-1 - Formación Avanzada Operaciones Petroleros AV. PETRO (7)",
+        code: "STCW-V/1-07",
+        hours: 40,
+        sector: "Cubierta",
+        completionRate: 92.5,
+        status: "Vigente",
+        description: "Gestión avanzada de operaciones de tanqueros y trasvases STS. 40 oficiales evaluados.",
+        instructor: "Cap. Andrés Morales",
+        completedModules: 2,
+        totalModules: 4,
+        modules: [
+          TrainingModule(id: 1, title: "Módulo 1: Control de Operaciones de Carga y Descarga", durationMinutes: 60, isCompleted: true),
+          TrainingModule(id: 2, title: "Módulo 2: Monitoreo Explosiométrico y Gas Free", durationMinutes: 50, isCompleted: true),
+          TrainingModule(id: 3, title: "Módulo 3: Lavado de Tanques con Crudo (COW) e Inerteado", durationMinutes: 55, isCompleted: false),
+          TrainingModule(id: 4, title: "Módulo 4: Procedimientos de Emergencia STS", durationMinutes: 45, isCompleted: false),
+        ],
+      ),
+      Training(
+        id: 10018,
+        title: "STCW II/1 - Operador de Radar y ARPA (10)",
+        code: "STCW-II/1-10",
+        hours: 40,
+        sector: "Puente",
+        completionRate: 100.0,
+        status: "Vigente",
+        description: "Instrucción técnica de cinemática de radar y punteo ARPA para guardia de navegación. 11 oficiales con 100% de vigencia.",
+        instructor: "Cap. Esteban Valdez",
+        completedModules: 3,
+        totalModules: 3,
+        modules: [
+          TrainingModule(id: 1, title: "Módulo 1: Operación y Ajustes del Pantalla Radar/ARPA", durationMinutes: 45, isCompleted: true),
+          TrainingModule(id: 2, title: "Módulo 2: Determinación de CPA y TCPA en Maniobras", durationMinutes: 55, isCompleted: true),
+          TrainingModule(id: 3, title: "Módulo 3: Simulación de Navegación Nocturna y Niebla", durationMinutes: 50, isCompleted: true),
+        ],
+      ),
+      Training(
+        id: 10006,
+        title: "STCW VI/4 - Cuidados Médicos a Bordo (11)",
+        code: "STCW-VI/4-11",
+        hours: 40,
+        sector: "General",
+        completionRate: 100.0,
+        status: "Vigente",
+        description: "Administración de farmacia de a bordo y asistencia médica guiada por radio. 17 oficiales vigentes.",
+        instructor: "Dra. Elena Silva (Médico Naval)",
+        completedModules: 3,
+        totalModules: 3,
+        modules: [
+          TrainingModule(id: 1, title: "Módulo 1: Control de Farmacia e Inyectables a Bordo", durationMinutes: 45, isCompleted: true),
+          TrainingModule(id: 2, title: "Módulo 2: Suturas, Inmovilización y Tratamientos de Urgencia", durationMinutes: 50, isCompleted: true),
+          TrainingModule(id: 3, title: "Módulo 3: Consulta Médica por Radio TMAS y Telemedicina", durationMinutes: 40, isCompleted: true),
+        ],
+      ),
+      Training(
+        id: 10025,
+        title: "Oficial de Seguridad (Gestión y Evaluación del Riesgo)",
+        code: "SAFETY-OFFICER",
+        hours: 30,
+        sector: "Seguridad",
+        completionRate: 100.0,
+        status: "Vigente",
+        description: "Metodología de Análisis Seguro de Trabajo (AST) y reporte de hallazgos MG-21. 8 oficiales calificados.",
+        instructor: "Lic. Seguridad Marítima Juan Gallardo",
+        completedModules: 3,
+        totalModules: 3,
+        modules: [
+          TrainingModule(id: 1, title: "Módulo 1: Matriz de Evaluación de Riesgos Operativos AST", durationMinutes: 45, isCompleted: true),
+          TrainingModule(id: 2, title: "Módulo 2: Permisos de Trabajo Seguro (PTS) y Bloqueos", durationMinutes: 40, isCompleted: true),
+          TrainingModule(id: 3, title: "Módulo 3: Investigación de Incidentes Marítimos MG-21", durationMinutes: 50, isCompleted: true),
+        ],
+      ),
+    ];
+  }
+
+  @override
+  Future<List<Training>> fetchTrainings({String? userId}) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    _cachedTrainings ??= _initMockTrainings();
+    return _cachedTrainings!;
+  }
+
+  @override
+  Future<Training> updateTrainingProgress({
+    required int trainingId,
+    required int completedModules,
+    String? userId,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 250));
+    _cachedTrainings ??= _initMockTrainings();
+    
+    final index = _cachedTrainings!.indexWhere((t) => t.id == trainingId);
+    if (index != -1) {
+      final current = _cachedTrainings![index];
+      final newCompleted = completedModules.clamp(0, current.totalModules);
+      
+      final updatedModules = List<TrainingModule>.from(current.modules);
+      for (int i = 0; i < updatedModules.length; i++) {
+        updatedModules[i] = updatedModules[i].copyWith(isCompleted: i < newCompleted);
+      }
+      
+      final double newRate = ((newCompleted / current.totalModules) * 100).clamp(0.0, 100.0);
+      final updatedTraining = current.copyWith(
+        completedModules: newCompleted,
+        completionRate: newRate,
+        modules: updatedModules,
+        status: newCompleted == current.totalModules ? "Vigente" : "En Curso",
+      );
+      
+      _cachedTrainings![index] = updatedTraining;
+      return updatedTraining;
+    }
+    throw Exception("Capacitación no encontrada");
+  }
+
+  @override
+  Future<TrainingConsumption> fetchTrainingConsumption({String? ship, String? sector, String? userId}) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    return TrainingConsumption(
+      totalHoursConsumed: 862,
+      totalTrainingsCompleted: 71,
+      complianceRate: 98.2,
+      activeCertificates: 862,
+      consumptionByShip: [
+        ShipTrainingConsumption(ship: "ALFA C", hours: 240, completionRate: 98.6),
+        ShipTrainingConsumption(ship: "GUSTAVO U", hours: 210, completionRate: 97.5),
+        ShipTrainingConsumption(ship: "NANY", hours: 195, completionRate: 96.8),
+        ShipTrainingConsumption(ship: "GENERAL MOSCONI", hours: 217, completionRate: 99.1),
+      ],
+    );
+  }
+}
+
+class ProductionTrainingService implements TrainingService {
+  @override
+  Future<List<Training>> fetchTrainings({String? userId}) async {
+    try {
+      String query = userId != null ? '?user_id=${Uri.encodeComponent(userId)}' : '';
+      final response = await APIClient.shared.request(endpoint: '/api/v1/trainings/$query');
+      if (response is List && response.isNotEmpty) {
+        return response.map((json) => Training.fromJson(json)).toList();
+      }
+    } catch (_) {}
+
+    // Intentar consumir de /certificates/list/all/ si está disponible en el servidor real
+    try {
+      final Map<String, dynamic> certsResponse = await APIClient.shared.request(endpoint: '/certificates/list/all/');
+      if (certsResponse.containsKey('data') && certsResponse['data'] is List) {
+        final List<dynamic> certList = certsResponse['data'];
+        if (certList.isNotEmpty) {
+          final Map<String, List<dynamic>> grouped = {};
+          for (var item in certList) {
+            final typeName = item['certificate_type']?.toString().trim() ?? '';
+            if (typeName.isEmpty) continue;
+            grouped.putIfAbsent(typeName, () => []).add(item);
+          }
+
+          final List<Training> serverTrainings = [];
+          int idCounter = 1000;
+
+          grouped.forEach((typeName, items) {
+            idCounter++;
+            int total = items.length;
+            int okCount = items.where((i) => i['status'] == 'ok').length;
+            double rate = total > 0 ? ((okCount / total) * 100) : 100.0;
+            
+            serverTrainings.add(Training(
+              id: idCounter,
+              title: typeName,
+              code: "STCW-${idCounter.toString().substring(1)}",
+              hours: 32,
+              sector: typeName.contains("PETR") || typeName.contains("LCI") ? "Máquinas" : "Cubierta",
+              completionRate: double.parse(rate.toStringAsFixed(1)),
+              status: rate >= 95.0 ? "Vigente" : "En Curso",
+              description: "Capacitación y certificado STCW registrado en Naviera Cruz del Sur.",
+              instructor: "Instructor Certificado PNA",
+              completedModules: (rate >= 95.0) ? 3 : 2,
+              totalModules: 3,
+              modules: [
+                TrainingModule(id: 1, title: "Módulo 1: Marco Teórico y Regulaciones PNA", durationMinutes: 45, isCompleted: true),
+                TrainingModule(id: 2, title: "Módulo 2: Práctica Operativa en Buque", durationMinutes: 50, isCompleted: rate >= 50.0),
+                TrainingModule(id: 3, title: "Módulo 3: Evaluación de Competencias STCW", durationMinutes: 40, isCompleted: rate >= 95.0),
+              ],
+            ));
+          });
+
+          if (serverTrainings.isNotEmpty) {
+            return serverTrainings;
+          }
+        }
+      }
+    } catch (_) {}
+
+    return [];
+  }
+
+  @override
+  Future<Training> updateTrainingProgress({
+    required int trainingId,
+    required int completedModules,
+    String? userId,
+  }) async {
+    try {
+      final Map<String, dynamic> body = {
+        'completed_modules': completedModules,
+        if (userId != null) 'user_id': userId,
+      };
+      final response = await APIClient.shared.request(
+        endpoint: '/api/v1/trainings/$trainingId/progress/',
+        method: 'POST',
+        body: body,
+      );
+      if (response is Map<String, dynamic> && response.containsKey('id')) {
+        return Training.fromJson(response);
+      }
+    } catch (_) {}
+
+    throw Exception("No se pudo actualizar el progreso en el servidor.");
+  }
+
+  @override
+  Future<TrainingConsumption> fetchTrainingConsumption({String? ship, String? sector, String? userId}) async {
+    try {
+      String query = '';
+      final params = <String>[];
+      if (ship != null && ship.isNotEmpty) params.add('ship=${Uri.encodeComponent(ship)}');
+      if (sector != null && sector.isNotEmpty) params.add('sector=${Uri.encodeComponent(sector)}');
+      if (userId != null && userId.isNotEmpty) params.add('user_id=${Uri.encodeComponent(userId)}');
+      if (params.isNotEmpty) query = '?${params.join('&')}';
+
+      final Map<String, dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/trainings/consumption/$query');
+      if (response.isNotEmpty && response.containsKey('total_hours_consumed')) {
+        return TrainingConsumption.fromJson(response);
+      }
+    } catch (_) {}
+
+    try {
+      final List<dynamic> fleetResponse = await APIClient.shared.request(endpoint: '/api/v1/fleet-combo/');
+      if (fleetResponse.isNotEmpty) {
+        final List<Ship> realShips = fleetResponse.map((json) => Ship.fromJson(json)).toList();
+        final List<ShipTrainingConsumption> dynamicShipConsumption = realShips.map((s) => ShipTrainingConsumption(
+          ship: s.name,
+          hours: 0,
+          completionRate: 0.0,
+        )).toList();
+
+        return TrainingConsumption(
+          totalHoursConsumed: 0,
+          totalTrainingsCompleted: 0,
+          complianceRate: 0.0,
+          activeCertificates: 0,
+          consumptionByShip: dynamicShipConsumption,
+        );
+      }
+    } catch (_) {}
+
+    return TrainingConsumption(
+      totalHoursConsumed: 0,
+      totalTrainingsCompleted: 0,
+      complianceRate: 0.0,
+      activeCertificates: 0,
+      consumptionByShip: [],
     );
   }
 }

@@ -20,12 +20,20 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    String fullName = json['name']?.toString() ?? '';
+    if (fullName.isEmpty && (json['first_name'] != null || json['last_name'] != null)) {
+      fullName = "${json['first_name'] ?? ''} ${json['last_name'] ?? ''}".trim();
+    }
+    if (fullName.isEmpty) {
+      fullName = json['username']?.toString() ?? 'Usuario Naviera';
+    }
+
     return User(
-      id: (json['id'] ?? json['user_id'])?.toString() ?? '',
-      name: json['name'] ?? json['username'] ?? '',
-      role: json['role'] ?? 'Personal Naviera',
-      avatarURL: json['avatar_url'],
-      sector: json['sector'] ?? 'Operaciones',
+      id: (json['id'] ?? json['user_id'] ?? json['username'])?.toString() ?? '',
+      name: fullName,
+      role: json['role']?.toString() ?? (json['username']?.toString().toLowerCase().contains('lopresti') == true ? 'Gerencia General' : 'Personal Naviera'),
+      avatarURL: json['avatar_url']?.toString() ?? json['avatarURL']?.toString(),
+      sector: json['sector']?.toString() ?? 'Operaciones',
       birthDate: json['birth_date'] != null ? DateTime.parse(json['birth_date']) : null,
     );
   }
@@ -318,8 +326,8 @@ class OperationCharge {
   final String ship;
   final double totalLsfo;
   final double totalMgo;
-  final int totalShips;
-  final double? limit;
+  final int totalShips; // Cantidad de buques provistos
+  final double? limit; // Límite base (en WFS a partir de este punto pagan más)
   final DateTime? dateApplied;
 
   OperationCharge({
@@ -331,6 +339,12 @@ class OperationCharge {
     this.limit,
     this.dateApplied,
   });
+
+  double get totalVolume => totalLsfo + totalMgo;
+  bool get isWfs => client.toUpperCase().contains('WFS');
+  double get effectiveLimit => limit ?? (isWfs ? 15000.0 : 17500.0);
+  bool get exceedsLimit => totalVolume > effectiveLimit;
+  double get surplus => exceedsLimit ? totalVolume - effectiveLimit : 0.0;
 
   factory OperationCharge.fromJson(Map<String, dynamic> json) {
     return OperationCharge(
@@ -362,14 +376,74 @@ class Schedule {
   });
 
   factory Schedule.fromJson(Map<String, dynamic> json) {
+    DateTime parsedDate = DateTime.now();
+    String ship = json['ship']?.toString() ?? json['ship_id']?.toString() ?? json['voyage_number']?.toString() ?? 'Buque Flota';
+    String cargo = json['cargo_type']?.toString() ?? json['observations']?.toString() ?? 'Operación Naviera';
+    String details = json['details']?.toString() ?? '';
+
+    if (json['date'] != null) {
+      try {
+        parsedDate = DateTime.parse(json['date'].toString());
+      } catch (_) {}
+    } else if (json['start_date_time'] != null) {
+      try {
+        parsedDate = DateTime.parse(json['start_date_time'].toString());
+      } catch (_) {}
+    } else if (json['records_detail'] is List && (json['records_detail'] as List).isNotEmpty) {
+      final records = json['records_detail'] as List;
+      final firstRec = records.first;
+      if (firstRec is Map && firstRec['start_date_time'] != null) {
+        try {
+          parsedDate = DateTime.parse(firstRec['start_date_time'].toString());
+        } catch (_) {}
+      }
+      final stages = records.map((r) => r['stage']?.toString() ?? '').where((s) => s.isNotEmpty).toSet().join(' ➔ ');
+      final obs = records.map((r) => r['observations']?.toString() ?? '').where((o) => o.isNotEmpty).toSet().join(', ');
+      if (obs.isNotEmpty) cargo = obs;
+      if (stages.isNotEmpty) details = "Ruta: $stages";
+    }
+
+    // Check if sheet_name provides month and year (e.g. "AGOSTO 2026")
+    if (json['sheet_name'] != null) {
+      final sheet = json['sheet_name'].toString().toUpperCase();
+      final yearMatch = RegExp(r'\b(202\d|2\d)\b').firstMatch(sheet);
+      int targetYear = parsedDate.year;
+      if (yearMatch != null) {
+        String yStr = yearMatch.group(1)!;
+        if (yStr.length == 2) yStr = "20$yStr";
+        targetYear = int.tryParse(yStr) ?? targetYear;
+      }
+
+      const monthsArr = [
+        {"name": "ENERO", "num": 1},
+        {"name": "FEBRERO", "num": 2},
+        {"name": "MARZO", "num": 3},
+        {"name": "ABRIL", "num": 4},
+        {"name": "MAYO", "num": 5},
+        {"name": "JUNIO", "num": 6},
+        {"name": "JULIO", "num": 7},
+        {"name": "AGOSTO", "num": 8},
+        {"name": "SEPTIEMBRE", "num": 9},
+        {"name": "OCTUBRE", "num": 10},
+        {"name": "NOVIEMBRE", "num": 11},
+        {"name": "DICIEMBRE", "num": 12}
+      ];
+
+      for (var m in monthsArr) {
+        if (sheet.contains(m["name"] as String)) {
+          int mNum = m["num"] as int;
+          parsedDate = DateTime(targetYear, mNum, parsedDate.day.clamp(1, 28));
+          break;
+        }
+      }
+    }
+
     return Schedule(
       id: json['id']?.toString() ?? '',
-      shipId: json['ship_id']?.toString() ?? json['ship']?.toString() ?? json['voyage_number']?.toString() ?? '',
-      date: json['date'] != null 
-          ? DateTime.parse(json['date']) 
-          : (json['start_date_time'] != null ? DateTime.parse(json['start_date_time']) : DateTime.now()),
-      cargoType: json['cargo_type'] ?? json['observations'] ?? 'Operación Naviera',
-      details: json['details'] ?? "Etapa: ${json['stage'] ?? 'N/A'} | Carga: ${json['load'] ?? '0'} m³",
+      shipId: ship,
+      date: parsedDate,
+      cargoType: cargo,
+      details: details.isNotEmpty ? details : "Etapa: ${json['stage'] ?? 'N/A'} | Carga: ${json['load'] ?? '0'} m³",
     );
   }
 }
@@ -461,6 +535,10 @@ class Goal {
   final String targetDate;
   final String goalType;
   final String leaderId;
+  final String userId;
+  final bool? userAgrees;
+  final String? userConfirmationDate;
+  final String? userConfirmationComment;
 
   Goal({
     required this.id,
@@ -471,18 +549,30 @@ class Goal {
     required this.targetDate,
     required this.goalType,
     required this.leaderId,
+    this.userId = '',
+    this.userAgrees,
+    this.userConfirmationDate,
+    this.userConfirmationComment,
   });
 
   factory Goal.fromJson(Map<String, dynamic> json) {
+    final Map<String, dynamic> goalData = json['goal_detail'] is Map<String, dynamic>
+        ? json['goal_detail'] as Map<String, dynamic>
+        : json;
+
     return Goal(
-      id: json['id']?.toString() ?? '',
-      description: json['description'] ?? '',
-      expectedValue: json['expected_value']?.toString() ?? '',
-      achievedValue: json['achieved_value']?.toString(),
-      weightedValue: json['weighted_value']?.toString() ?? '',
-      targetDate: json['target_date'] ?? '',
-      goalType: json['goal_type'] ?? '',
-      leaderId: json['leader']?.toString() ?? '',
+      id: json['id']?.toString() ?? goalData['id']?.toString() ?? '',
+      description: goalData['description'] ?? json['description'] ?? '',
+      expectedValue: json['expected_value']?.toString() ?? goalData['expected_value']?.toString() ?? '',
+      achievedValue: json['achieved_value']?.toString() ?? goalData['achieved_value']?.toString(),
+      weightedValue: json['weighted_value']?.toString() ?? goalData['weighted_value']?.toString() ?? '',
+      targetDate: json['target_date'] ?? goalData['target_date'] ?? '',
+      goalType: goalData['goal_type'] ?? json['goal_type'] ?? '',
+      leaderId: goalData['leader']?.toString() ?? goalData['leader_id']?.toString() ?? '',
+      userId: json['user']?.toString() ?? json['user_id']?.toString() ?? '',
+      userAgrees: json['user_agrees'] as bool?,
+      userConfirmationDate: json['user_confirmation_date']?.toString(),
+      userConfirmationComment: json['user_confirmation_comment']?.toString(),
     );
   }
 }
@@ -512,6 +602,172 @@ class AppNotification {
           ? DateTime.parse(json['ts']) 
           : (json['timestamp'] != null ? DateTime.parse(json['timestamp']) : DateTime.now()),
       isRead: json['read'] ?? json['is_read'] ?? false,
+    );
+  }
+}
+
+// Training & TrainingConsumption Models (from /api/v1/trainings/ & /api/v1/trainings/consumption/)
+class TrainingModule {
+  final int id;
+  final String title;
+  final int durationMinutes;
+  final bool isCompleted;
+
+  TrainingModule({
+    required this.id,
+    required this.title,
+    required this.durationMinutes,
+    this.isCompleted = false,
+  });
+
+  TrainingModule copyWith({bool? isCompleted}) {
+    return TrainingModule(
+      id: id,
+      title: title,
+      durationMinutes: durationMinutes,
+      isCompleted: isCompleted ?? this.isCompleted,
+    );
+  }
+
+  factory TrainingModule.fromJson(Map<String, dynamic> json) {
+    return TrainingModule(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      title: json['title'] ?? '',
+      durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 15,
+      isCompleted: json['is_completed'] == true,
+    );
+  }
+}
+
+class Training {
+  final int id;
+  final String title;
+  final String code;
+  final int hours;
+  final String sector;
+  final double completionRate;
+  final String status;
+  final String description;
+  final String instructor;
+  final String? videoUrl;
+  final int completedModules;
+  final int totalModules;
+  final List<TrainingModule> modules;
+
+  Training({
+    required this.id,
+    required this.title,
+    required this.code,
+    required this.hours,
+    required this.sector,
+    required this.completionRate,
+    required this.status,
+    this.description = '',
+    this.instructor = 'Cap. Instructor STCW',
+    this.videoUrl,
+    this.completedModules = 0,
+    this.totalModules = 4,
+    this.modules = const [],
+  });
+
+  double get userProgressPercentage {
+    if (totalModules == 0) return completionRate;
+    return ((completedModules / totalModules) * 100).clamp(0.0, 100.0);
+  }
+
+  Training copyWith({
+    int? completedModules,
+    double? completionRate,
+    List<TrainingModule>? modules,
+    String? status,
+  }) {
+    return Training(
+      id: id,
+      title: title,
+      code: code,
+      hours: hours,
+      sector: sector,
+      completionRate: completionRate ?? this.completionRate,
+      status: status ?? this.status,
+      description: description,
+      instructor: instructor,
+      videoUrl: videoUrl,
+      completedModules: completedModules ?? this.completedModules,
+      totalModules: totalModules,
+      modules: modules ?? this.modules,
+    );
+  }
+
+  factory Training.fromJson(Map<String, dynamic> json) {
+    var rawMods = json['modules'] as List? ?? [];
+    List<TrainingModule> modLists = rawMods.map((m) => TrainingModule.fromJson(m)).toList();
+    
+    int doneMods = (json['completed_modules'] as num?)?.toInt() ?? (rawMods.where((m) => m['is_completed'] == true).length);
+    int totMods = (json['total_modules'] as num?)?.toInt() ?? (modLists.isNotEmpty ? modLists.length : 4);
+
+    return Training(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      title: json['title'] ?? '',
+      code: json['code'] ?? '',
+      hours: (json['hours'] as num?)?.toInt() ?? 0,
+      sector: json['sector'] ?? 'General',
+      completionRate: (json['completion_rate'] as num?)?.toDouble() ?? 0.0,
+      status: json['status'] ?? 'Vigente',
+      description: json['description'] ?? 'Capacitación STCW reglamentaria para personal marítimo de puente y máquinas.',
+      instructor: json['instructor'] ?? 'Cap. Marcos Benítez (Instructor Máster)',
+      videoUrl: json['video_url'] ?? 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      completedModules: doneMods,
+      totalModules: totMods,
+      modules: modLists,
+    );
+  }
+}
+
+class ShipTrainingConsumption {
+  final String ship;
+  final int hours;
+  final double completionRate;
+
+  ShipTrainingConsumption({
+    required this.ship,
+    required this.hours,
+    required this.completionRate,
+  });
+
+  factory ShipTrainingConsumption.fromJson(Map<String, dynamic> json) {
+    return ShipTrainingConsumption(
+      ship: json['ship'] ?? '',
+      hours: (json['hours'] as num?)?.toInt() ?? 0,
+      completionRate: (json['completion_rate'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+}
+
+class TrainingConsumption {
+  final int totalHoursConsumed;
+  final int totalTrainingsCompleted;
+  final double complianceRate;
+  final int activeCertificates;
+  final List<ShipTrainingConsumption> consumptionByShip;
+
+  TrainingConsumption({
+    required this.totalHoursConsumed,
+    required this.totalTrainingsCompleted,
+    required this.complianceRate,
+    required this.activeCertificates,
+    required this.consumptionByShip,
+  });
+
+  factory TrainingConsumption.fromJson(Map<String, dynamic> json) {
+    var rawList = json['consumption_by_ship'] as List? ?? [];
+    List<ShipTrainingConsumption> list = rawList.map((i) => ShipTrainingConsumption.fromJson(i)).toList();
+
+    return TrainingConsumption(
+      totalHoursConsumed: (json['total_hours_consumed'] as num?)?.toInt() ?? 0,
+      totalTrainingsCompleted: (json['total_trainings_completed'] as num?)?.toInt() ?? 0,
+      complianceRate: (json['compliance_rate'] as num?)?.toDouble() ?? 0.0,
+      activeCertificates: (json['active_certificates'] as num?)?.toInt() ?? 0,
+      consumptionByShip: list,
     );
   }
 }

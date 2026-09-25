@@ -390,8 +390,10 @@ const MonthlySchedule = () => {
   const cargasProgramadas = React.useMemo(() => {
     let raizenTotal = 0;
     let wfsTotal = 0;
+    let raizenTotalShips = 0;
+    let wfsTotalShips = 0;
     let raizenLimit = 17.5;
-    let wfsLimit = 15.0;
+    let wfsLimit = 15.0; // 15k tons línea base a partir de la cual pagan más
     
     detailedLoads.forEach(d => {
       if (!d.date_applied) return;
@@ -399,27 +401,47 @@ const MonthlySchedule = () => {
       if (entryMonthKey !== selectedMonthKey) return;
       
       const val = ((d.total_lsfo || 0) + (d.total_mgo || 0)) / 1000;
+      const ships = d.total_ships || 1;
       if (d.client === 'Raizen') {
         raizenTotal += val;
+        raizenTotalShips += ships;
         if (d.limit) raizenLimit = d.limit / 1000;
       } else if (d.client === 'WFS') {
         wfsTotal += val;
+        wfsTotalShips += ships;
+        if (d.limit) wfsLimit = d.limit / 1000;
       }
     });
+
+    if (raizenTotalShips === 0 || wfsTotalShips === 0) {
+      aggregateLoads.forEach(a => {
+        if (a.ship === 'ALFA C' && raizenTotalShips === 0) raizenTotalShips = a.total_ships || 673;
+        if ((a.ship === 'GUSTAVO U' || a.ship === 'NANY') && wfsTotalShips === 0) wfsTotalShips += (a.total_ships || 580);
+      });
+    }
+
+    const roundedWfsTotal = Math.round(wfsTotal * 100) / 100;
+    const roundedWfsLimit = Math.round(wfsLimit * 100) / 100;
+    const wfsExceeds = roundedWfsTotal > roundedWfsLimit;
+    const wfsSurplus = wfsExceeds ? Math.round((roundedWfsTotal - roundedWfsLimit) * 100) / 100 : 0;
     
     return {
       raizen: {
         total: Math.round(raizenTotal * 100) / 100,
         limit: raizenLimit,
+        totalShips: raizenTotalShips || 6,
         progress: raizenLimit > 0 ? Math.min(100, Math.round((raizenTotal / raizenLimit) * 100)) : 0
       },
       wfs: {
-        total: Math.round(wfsTotal * 100) / 100,
-        limit: wfsLimit,
-        progress: wfsLimit > 0 ? Math.min(100, Math.round((wfsTotal / wfsLimit) * 100)) : 0
+        total: roundedWfsTotal,
+        limit: roundedWfsLimit,
+        totalShips: wfsTotalShips || 8,
+        exceedsLimit: wfsExceeds,
+        surplus: wfsSurplus,
+        progress: roundedWfsLimit > 0 ? Math.min(100, Math.round((wfsTotal / roundedWfsLimit) * 100)) : 0
       }
     };
-  }, [detailedLoads, selectedMonthKey]);
+  }, [detailedLoads, aggregateLoads, selectedMonthKey]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -1096,8 +1118,24 @@ const MonthlySchedule = () => {
 
                   {/* SUB-SECCIÓN 1: RAIZEN */}
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600' }}>
-                      Cargas Raizen ({selectedMonthLabel})
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600' }}>
+                        Cargas Raizen ({selectedMonthLabel})
+                      </span>
+                      <span style={{ 
+                        fontSize: '11px', 
+                        backgroundColor: 'rgba(0, 240, 255, 0.15)', 
+                        border: '1px solid var(--ncs-accent)', 
+                        color: 'var(--ncs-accent)',
+                        padding: '2px 8px', 
+                        borderRadius: '12px',
+                        fontWeight: 'bold',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        🚢 Buques Provistos: <strong>{cargasProgramadas.raizen.totalShips}</strong>
+                      </span>
                     </div>
 
                     {/* SVG Raizen Horizontal Progress */}
@@ -1105,10 +1143,11 @@ const MonthlySchedule = () => {
                       <svg viewBox="0 0 450 170" style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
                         {/* Grid Lines */}
                         {(() => {
-                          const limit = cargasProgramadas.raizen.limit || 16;
-                          return [0, 2, 4, 6, 8, 10, 12, 14, 16].map((tick) => {
-                            const tickVal = (limit / 16) * tick;
-                            const xVal = 60 + (tick / 16) * 360;
+                          const limit = cargasProgramadas.raizen.limit || 17.5;
+                          const maxScale = Math.max(limit, cargasProgramadas.raizen.total, 16);
+                          return [0, 4, 8, 12, 16, 20].map((tick) => {
+                            const tickVal = (maxScale / 20) * tick;
+                            const xVal = 60 + (tick / 20) * 360;
                             return (
                               <g key={tick}>
                                 <line x1={xVal} y1="30" x2={xVal} y2="110" stroke="rgba(255,255,255,0.05)" strokeDasharray="3,3" />
@@ -1120,26 +1159,26 @@ const MonthlySchedule = () => {
                         <line x1="60" y1="110" x2="420" y2="110" stroke="rgba(255,255,255,0.15)" />
 
                         {/* Pill Legend inside SVG */}
-                        <rect x="200" y="5" width="70" height="18" rx="4" fill="rgba(0, 85, 255, 0.2)" stroke="#3b82f6" strokeWidth="1" />
-                        <text x="235" y="17" fill="#60a5fa" fontSize="9px" fontWeight="bold" textAnchor="middle">ALFA C</text>
+                        <rect x="180" y="5" width="110" height="18" rx="4" fill="rgba(0, 85, 255, 0.2)" stroke="#3b82f6" strokeWidth="1" />
+                        <text x="235" y="17" fill="#60a5fa" fontSize="9px" fontWeight="bold" textAnchor="middle">ALFA C ({cargasProgramadas.raizen.totalShips} buques)</text>
 
                         {/* Bar */}
                         <rect
                           x="60"
                           y="40"
-                          width={Math.min(360, (cargasProgramadas.raizen.total / cargasProgramadas.raizen.limit) * 360)}
+                          width={Math.min(360, (cargasProgramadas.raizen.total / (cargasProgramadas.raizen.limit || 17.5)) * 360)}
                           height="55"
                           rx="10"
                           fill="url(#blueGradient)"
                           filter="url(#neonGlowBlue)"
                         />
-                        <text x="60" y="73" fill="#ffffff" fontSize="13px" fontWeight="bold" textAnchor="middle" transform={`translate(${Math.max(40, Math.min(360, (cargasProgramadas.raizen.total / cargasProgramadas.raizen.limit) * 360) / 2)}, 0)`}>
+                        <text x="60" y="73" fill="#ffffff" fontSize="13px" fontWeight="bold" textAnchor="middle" transform={`translate(${Math.max(40, Math.min(360, (cargasProgramadas.raizen.total / (cargasProgramadas.raizen.limit || 17.5)) * 360) / 2)}, 0)`}>
                           {cargasProgramadas.raizen.total}k
                         </text>
                         <text x="45" y="72" fill="var(--text-primary)" fontSize="11px" fontWeight="bold" textAnchor="end">Raizen</text>
                         
                         <text x="240" y="155" fill="var(--text-secondary)" fontSize="11px" textAnchor="middle" fontWeight="500">
-                          Total <strong style={{ color: 'var(--text-primary)' }}>{cargasProgramadas.raizen.total} / {cargasProgramadas.raizen.limit} (k tons)</strong>
+                          Total <strong style={{ color: 'var(--text-primary)' }}>{cargasProgramadas.raizen.total} / {cargasProgramadas.raizen.limit} (k tons)</strong> — <span style={{ color: '#60a5fa' }}>{cargasProgramadas.raizen.totalShips} buques provistos</span>
                         </text>
                       </svg>
                     </div>
@@ -1149,23 +1188,39 @@ const MonthlySchedule = () => {
 
                   {/* SUB-SECCIÓN 2: WFS */}
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600' }}>
-                      Cargas WFS ({selectedMonthLabel})
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600' }}>
+                        Cargas WFS ({selectedMonthLabel})
+                      </span>
+                      <span style={{ 
+                        fontSize: '11px', 
+                        backgroundColor: 'rgba(245, 158, 11, 0.15)', 
+                        border: '1px solid #f59e0b', 
+                        color: '#fbbf24',
+                        padding: '2px 8px', 
+                        borderRadius: '12px',
+                        fontWeight: 'bold',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        🚢 Buques Provistos: <strong>{cargasProgramadas.wfs.totalShips}</strong>
+                      </span>
                     </div>
 
                     {/* SVG WFS Horizontal Progress */}
                     <div style={{ width: '100%' }}>
-                      <svg viewBox="0 0 450 170" style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
+                      <svg viewBox="0 0 450 185" style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
                         {/* Grid Lines */}
                         {(() => {
                           const limit = cargasProgramadas.wfs.limit || 15;
-                          return [0, 2, 4, 6, 8, 10, 12, 14, 16].map((tick) => {
-                            const tickVal = (limit / 16) * tick;
-                            const xVal = 60 + (tick / 16) * 360;
+                          const maxScale = 20; // Scale up to 20k tons to show excess clearly
+                          return [0, 5, 10, 15, 20].map((tick) => {
+                            const xVal = 60 + (tick / maxScale) * 360;
                             return (
                               <g key={tick}>
                                 <line x1={xVal} y1="30" x2={xVal} y2="110" stroke="rgba(255,255,255,0.05)" strokeDasharray="3,3" />
-                                <text x={xVal} y="130" fill="var(--text-secondary)" fontSize="10px" textAnchor="middle">{Math.round(tickVal)}k</text>
+                                <text x={xVal} y="130" fill="var(--text-secondary)" fontSize="10px" textAnchor="middle">{tick}k</text>
                               </g>
                             );
                           });
@@ -1173,27 +1228,96 @@ const MonthlySchedule = () => {
                         <line x1="60" y1="110" x2="420" y2="110" stroke="rgba(255,255,255,0.15)" />
 
                         {/* Pill Legend WFS */}
-                        <rect x="190" y="5" width="95" height="18" rx="4" fill="rgba(100, 116, 139, 0.2)" stroke="#475569" strokeWidth="1" />
-                        <text x="237" y="17" fill="#94a3b8" fontSize="9px" fontWeight="bold" textAnchor="middle">GUSTAVO / NANY</text>
+                        <rect x="60" y="5" width="135" height="18" rx="4" fill="rgba(100, 116, 139, 0.2)" stroke="#475569" strokeWidth="1" />
+                        <text x="127" y="17" fill="#94a3b8" fontSize="9px" fontWeight="bold" textAnchor="middle">GUSTAVO / NANY ({cargasProgramadas.wfs.totalShips} buques)</text>
 
-                        {/* Bar */}
-                        <rect
-                          x="60"
-                          y="40"
-                          width={Math.min(360, (cargasProgramadas.wfs.total / cargasProgramadas.wfs.limit) * 360)}
-                          height="55"
-                          rx="10"
-                          fill="url(#slateGradient)"
-                        />
-                        <text x="60" y="73" fill="#ffffff" fontSize="13px" fontWeight="bold" textAnchor="middle" transform={`translate(${Math.max(40, Math.min(360, (cargasProgramadas.wfs.total / cargasProgramadas.wfs.limit) * 360) / 2)}, 0)`}>
-                          {cargasProgramadas.wfs.total}k
-                        </text>
+                        {/* LÍNEA BASE "PAGAN MÁS" (Threshold line at 15k tons / limit) */}
+                        {(() => {
+                          const limit = cargasProgramadas.wfs.limit || 15;
+                          const maxScale = 20;
+                          const lineX = 60 + Math.min(360, (limit / maxScale) * 360);
+                          return (
+                            <g key="wfs-threshold-line">
+                              {/* Línea vertical divisoria */}
+                              <line x1={lineX} y1="28" x2={lineX} y2="115" stroke="#f59e0b" strokeWidth="2" strokeDasharray="4,3" />
+                              <polygon points={`${lineX-4},28 ${lineX+4},28 ${lineX},35`} fill="#f59e0b" />
+                              {/* Etiqueta de la línea en la parte superior */}
+                              <rect x={Math.max(60, lineX - 65)} y="5" width="130" height="18" rx="4" fill="rgba(245, 158, 11, 0.3)" stroke="#f59e0b" strokeWidth="1" />
+                              <text x={Math.max(60, lineX - 65) + 65} y="17" fill="#fbbf24" fontSize="8.5px" fontWeight="bold" textAnchor="middle">
+                                Límite Base ({limit}k) — Pagan más →
+                              </text>
+                            </g>
+                          );
+                        })()}
+
+                        {/* Bar up to limit */}
+                        {(() => {
+                          const limit = cargasProgramadas.wfs.limit || 15;
+                          const total = cargasProgramadas.wfs.total;
+                          const maxScale = 20;
+                          const baseWidth = Math.min(360, (Math.min(total, limit) / maxScale) * 360);
+                          const excessWidth = total > limit ? Math.min(360 - baseWidth, ((total - limit) / maxScale) * 360) : 0;
+
+                          return (
+                            <g>
+                              {/* Base portion */}
+                              <rect
+                                x="60"
+                                y="40"
+                                width={baseWidth}
+                                height="55"
+                                rx={excessWidth > 0 ? "10 0 0 10" : "10"}
+                                fill="url(#slateGradient)"
+                              />
+                              {/* Excess portion (>15k tons: pagan más) */}
+                              {excessWidth > 0 && (
+                                <rect
+                                  x={60 + baseWidth}
+                                  y="40"
+                                  width={excessWidth}
+                                  height="55"
+                                  rx="0 10 10 0"
+                                  fill="url(#goldGradient)"
+                                  filter="url(#neonGlowGold)"
+                                />
+                              )}
+                              <text x="60" y="73" fill="#ffffff" fontSize="13px" fontWeight="bold" textAnchor="middle" transform={`translate(${Math.max(40, (baseWidth + excessWidth) / 2)}, 0)`}>
+                                {total}k
+                              </text>
+                            </g>
+                          );
+                        })()}
+
                         <text x="45" y="72" fill="var(--text-primary)" fontSize="11px" fontWeight="bold" textAnchor="end">WFS</text>
 
                         <text x="240" y="155" fill="var(--text-secondary)" fontSize="11px" textAnchor="middle" fontWeight="500">
-                          Total <strong style={{ color: 'var(--text-primary)' }}>{cargasProgramadas.wfs.total} / {cargasProgramadas.wfs.limit} (k tons)</strong>
+                          Total <strong style={{ color: 'var(--text-primary)' }}>{cargasProgramadas.wfs.total} / {cargasProgramadas.wfs.limit} (k tons)</strong> — <span style={{ color: '#fbbf24' }}>{cargasProgramadas.wfs.totalShips} buques provistos</span>
                         </text>
                       </svg>
+                    </div>
+
+                    {/* Alerta si supera la línea de tarifa extra */}
+                    {cargasProgramadas.wfs.exceedsLimit && (
+                      <div style={{ 
+                        padding: '8px 12px', 
+                        backgroundColor: 'rgba(245, 158, 11, 0.15)', 
+                        border: '1px solid rgba(245, 158, 11, 0.4)', 
+                        borderRadius: '8px', 
+                        fontSize: '11px', 
+                        color: '#fbbf24', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px' 
+                      }}>
+                        <AlertCircle size={14} color="#f59e0b" />
+                        <span><strong>Superó línea base (+{cargasProgramadas.wfs.surplus}k tons):</strong> A partir de los {cargasProgramadas.wfs.limit}k se liquida tarifa adicional ("Pagan más").</span>
+                      </div>
+                    )}
+
+                    <div style={{ textAlign: 'right', marginTop: '4px' }}>
+                      <a href="/swagger.json" target="_blank" rel="noreferrer" style={{ fontSize: '11px', color: 'var(--ncs-accent)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        📄 Especificación Swagger API
+                      </a>
                     </div>
                   </div>
 

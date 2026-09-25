@@ -1,0 +1,278 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "NCS Intranet Operaciones API",
+    "description": "API REST para la gestión de flota, viajes, novedades, programa de cargas mensuales y consumo de capacitaciones navales de Naviera Cruz del Sur.",
+    "version": "1.1.0"
+  },
+  "servers": [
+    {
+      "url": "https://navieracruzdelsur.dyndns.org:6570",
+      "description": "Servidor de producción Intranet NCS"
+    },
+    {
+      "url": "http://localhost:2223",
+      "description": "Proxy de desarrollo local Vite"
+    }
+  ],
+  "paths": {
+    "/api/v1/operation-charges-chart/": {
+      "get": {
+        "summary": "Obtener gráfico y totales de cargas operativas por período",
+        "description": "Retorna la agregación de volumen de carga (LSFO y MGO) acumulada por cliente y buque, incluyendo la cantidad total de buques provistos en la operación y los límites contractuales. Para el cliente WFS, el campo limit representa la línea base (15k tons) a partir de la cual se aplica tarifa adicional ('pagan más').",
+        "parameters": [
+          { "in": "query", "name": "detailed", "schema": { "type": "integer", "enum": [0, 1] } },
+          { "in": "query", "name": "month", "schema": { "type": "integer" } },
+          { "in": "query", "name": "year", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de cargas operativas agregadas o detalladas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/OperationCharge" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trainings/": {
+      "get": {
+        "summary": "Obtener catálogo y estado de capacitaciones del personal marítimo",
+        "description": "Retorna la lista de cursos de capacitación (STCW, PBIP, Lucha contra Incendios, Carga Peligrosa) disponibles para los tripulantes y oficiales de la naviera. Soporta filtrado por usuario autenticado.",
+        "parameters": [
+          { "in": "query", "name": "user_id", "schema": { "type": "string" }, "description": "ID o username del marino autenticado para obtener avance personalizado por usuario." }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de capacitaciones",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Training" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trainings/{id}/": {
+      "get": {
+        "summary": "Ver detalle de capacitación, video y lista de módulos",
+        "description": "Permite hacer clic para abrir la capacitación, consultar el temario de módulos, instructor y URL de video.",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" }, "description": "ID de la capacitación" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalle completo de la capacitación",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Training" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trainings/{id}/progress/": {
+      "post": {
+        "summary": "Continuar capacitación y registrar avance de módulos por usuario",
+        "description": "Permite al marino avanzar módulos y continuar la capacitación en curso. Registra el progreso por usuario.",
+        "parameters": [
+          { "in": "path", "name": "id", "required": true, "schema": { "type": "integer" }, "description": "ID de la capacitación" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "completed_modules": { "type": "integer", "example": 3 },
+                  "user_id": { "type": "string", "example": "user_123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Capacitación actualizada con el nuevo progreso del usuario",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Training" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/trainings/consumption/": {
+      "get": {
+        "summary": "Obtener métricas de consumo de capacitación y horas acumuladas",
+        "description": "Retorna el análisis de consumo académico de capacitaciones por buque, sector y mes. Permite auditar el cumplimiento del plan anual de instrucción marítima por usuario.",
+        "parameters": [
+          { "in": "query", "name": "ship", "schema": { "type": "string" }, "description": "Nombre del buque para filtrar consumo (ej. ALFA C, GUSTAVO U, NANY)." },
+          { "in": "query", "name": "sector", "schema": { "type": "string" }, "description": "Sector de tripulación (Cubierta, Máquinas, Seguridad)." },
+          { "in": "query", "name": "user_id", "schema": { "type": "string" }, "description": "ID o código de usuario para obtener consumo académico individual." }
+        ],
+        "responses": {
+          "200": {
+            "description": "Métricas de consumo de capacitación",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TrainingConsumption" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/user-goals/": {
+      "get": {
+        "summary": "Listar objetivos asignados a usuarios con filtros de fecha y período",
+        "description": "Obtiene la lista de objetivos asignados al usuario autenticado (y a su equipo a cargo si el usuario es líder/jefe). Soporta parámetros: current=true para filtrar únicamente los objetivos del período actual activo según la fecha del día.",
+        "parameters": [
+          { "in": "query", "name": "current", "schema": { "type": "boolean" }, "description": "Enviar true para obtener solo los objetivos del período actual activo según la fecha de hoy." },
+          { "in": "query", "name": "year", "schema": { "type": "integer" }, "description": "Año específico para filtrar objetivos (ej: 2026)." },
+          { "in": "query", "name": "date_from", "schema": { "type": "string", "format": "date" }, "description": "Fecha inicial de rango (YYYY-MM-DD)." },
+          { "in": "query", "name": "date_to", "schema": { "type": "string", "format": "date" }, "description": "Fecha final de rango (YYYY-MM-DD)." },
+          { "in": "query", "name": "user_id", "schema": { "type": "integer" }, "description": "ID del usuario subordinado." }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de objetivos asignados al usuario para el período actual",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/UserGoal" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/goals/": {
+      "get": {
+        "summary": "Listar catálogo general de objetivos",
+        "description": "Obtiene el catálogo con todas las definiciones de objetivos registrados en la Intranet.",
+        "responses": {
+          "200": {
+            "description": "Lista de definiciones de objetivos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Goal" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Goal": {
+        "type": "object",
+        "required": ["description", "expected_value", "target_date", "goal_type"],
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "description": { "type": "string", "example": "Mantener 98% de disponibilidad operativa en flota sur" },
+          "expected_value": { "type": "string", "example": "98.0" },
+          "achieved_value": { "type": "string", "nullable": true, "example": "96.5" },
+          "weighted_value": { "type": "string", "example": "30.0" },
+          "target_date": { "type": "string", "format": "date", "example": "2026-12-31" },
+          "goal_type": { "type": "string", "example": "percentage" },
+          "leader": { "type": "integer", "nullable": true, "example": 2 }
+        }
+      },
+      "UserGoal": {
+        "type": "object",
+        "required": ["user", "goal", "expected_value"],
+        "properties": {
+          "id": { "type": "integer", "example": 10 },
+          "user": { "type": "integer", "example": 12 },
+          "goal": { "type": "integer", "example": 1 },
+          "goal_detail": { "$ref": "#/components/schemas/Goal" },
+          "expected_value": { "type": "string", "example": "98.0" },
+          "achieved_value": { "type": "string", "nullable": true, "example": "96.5" },
+          "weighted_value": { "type": "string", "example": "30.0" },
+          "target_date": { "type": "string", "format": "date", "example": "2026-12-31" },
+          "user_agrees": { "type": "boolean", "nullable": true, "example": true }
+        }
+      },
+      "OperationCharge": {
+        "type": "object",
+        "required": ["client", "ship", "total_lsfo", "total_mgo", "total_ships"],
+        "properties": {
+          "client": { "type": "string", "example": "WFS" },
+          "ship": { "type": "string", "example": "GUSTAVO U" },
+          "total_lsfo": { "type": "number", "format": "float", "example": 276228.00 },
+          "total_mgo": { "type": "number", "format": "float", "example": 27947.00 },
+          "total_ships": { "type": "integer", "description": "Cantidad total de buques provistos en el período.", "example": 621 },
+          "limit": { "type": "number", "format": "float", "nullable": true, "description": "Límite base (15.0k en WFS indica la línea a partir de la cual pagan más).", "example": 15000.00 }
+        }
+      },
+      "Training": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 101 },
+          "title": { "type": "string", "example": "STCW II/1 - Guardia de Navegación" },
+          "code": { "type": "string", "example": "STCW-NAV-01" },
+          "hours": { "type": "integer", "example": 40 },
+          "sector": { "type": "string", "example": "Cubierta" },
+          "completion_rate": { "type": "number", "format": "float", "example": 75.0 },
+          "status": { "type": "string", "example": "En Curso" },
+          "description": { "type": "string", "example": "Normas de guardia en puente de mando, avistamiento de buques y maniobras." },
+          "instructor": { "type": "string", "example": "Cap. Esteban Valdez (Instructor Máster STCW)" },
+          "video_url": { "type": "string", "example": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" },
+          "completed_modules": { "type": "integer", "example": 3 },
+          "total_modules": { "type": "integer", "example": 4 },
+          "modules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "integer", "example": 1 },
+                "title": { "type": "string", "example": "Módulo 1: Organización de la Guardia en el Puente" },
+                "duration_minutes": { "type": "integer", "example": 45 },
+                "is_completed": { "type": "boolean", "example": true }
+              }
+            }
+          }
+        }
+      },
+      "TrainingConsumption": {
+        "type": "object",
+        "properties": {
+          "total_hours_consumed": { "type": "integer", "example": 480 },
+          "total_trainings_completed": { "type": "integer", "example": 24 },
+          "compliance_rate": { "type": "number", "format": "float", "example": 96.2 },
+          "active_certificates": { "type": "integer", "example": 52 },
+          "consumption_by_ship": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ship": { "type": "string", "example": "ALFA C" },
+                "hours": { "type": "integer", "example": 180 },
+                "completion_rate": { "type": "number", "format": "float", "example": 98.0 }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
