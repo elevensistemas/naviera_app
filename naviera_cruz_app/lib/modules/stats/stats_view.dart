@@ -1,8 +1,14 @@
+import 'dart:io' show File;
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:video_player/video_player.dart';
+import 'package:chewie/chewie.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
 import '../../app/theme.dart';
+import '../../app/config.dart';
 import '../../core/storage.dart';
+import '../../core/video_helper.dart';
 
 class TrainingView extends StatefulWidget {
   const TrainingView({super.key});
@@ -76,169 +82,6 @@ class _TrainingViewState extends State<TrainingView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header con usuario activo
-                    Row(
-                      children: [
-                        const Icon(Icons.school, color: ColorTheme.primary, size: 28),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Consumo de Capacitación",
-                                style: TypographyTheme.title2(context),
-                              ),
-                              Text(
-                                "Control de instrucción marítima y certificaciones STCW • Registro por usuario activo",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: isDark ? Colors.white60 : Colors.black54,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // User Badge Clarification
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: ColorTheme.primary.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: ColorTheme.primary.withOpacity(0.2)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.account_circle, color: ColorTheme.primary, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              "Usuario Activo: ${SessionManager.shared.currentUser?.name ?? 'Usuario Autenticado'} (Registro en servidor)",
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: ColorTheme.primary),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // KPI Grid
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildKPICard(
-                            context,
-                            title: "Horas Consumidas",
-                            value: "${_consumption?.totalHoursConsumed ?? 0} h",
-                            icon: Icons.access_time_outlined,
-                            color: ColorTheme.primary,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildKPICard(
-                            context,
-                            title: "Cursos Completados",
-                            value: "${_consumption?.totalTrainingsCompleted ?? 0}",
-                            icon: Icons.assignment_turned_in_outlined,
-                            color: ColorTheme.success,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildKPICard(
-                            context,
-                            title: "Cumplimiento Plan",
-                            value: "${_consumption?.complianceRate ?? 0}%",
-                            icon: Icons.donut_large_outlined,
-                            color: ColorTheme.accent,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildKPICard(
-                            context,
-                            title: "Certificados Vigentes",
-                            value: "${_consumption?.activeCertificates ?? 0}",
-                            icon: Icons.verified_user_outlined,
-                            color: Colors.amber,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Consumo por Buque Card
-                    Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(18.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.directions_boat_filled, color: ColorTheme.primary, size: 20),
-                                const SizedBox(width: 8),
-                                Text(
-                                  "Consumo por Buque",
-                                  style: TypographyTheme.headline(context),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            if (_consumption?.consumptionByShip != null)
-                              ..._consumption!.consumptionByShip.map((shipItem) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 14.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            shipItem.ship,
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                          ),
-                                          Text(
-                                            "${shipItem.hours} hrs (${shipItem.completionRate}% completado)",
-                                            style: TextStyle(
-                                              color: isDark ? Colors.white70 : Colors.black54,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 6),
-                                      LinearProgressIndicator(
-                                        value: shipItem.completionRate / 100.0,
-                                        backgroundColor: isDark ? Colors.white10 : Colors.grey.shade200,
-                                        color: ColorTheme.primary,
-                                        minHeight: 8,
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
                     // Cursos y Capacitaciones Activas Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -421,11 +264,28 @@ class _TrainingDetailSheet extends StatefulWidget {
 class _TrainingDetailSheetState extends State<_TrainingDetailSheet> {
   late Training _current;
   bool _isUpdating = false;
+  bool _isPlayingVideo = false;
 
   @override
   void initState() {
     super.initState();
     _current = widget.training;
+    _loadDetail();
+  }
+
+  Future<void> _loadDetail() async {
+    try {
+      final service = ProductionTrainingService();
+      final identifier = _current.slug.isNotEmpty ? _current.slug : _current.id;
+      final detail = await service.fetchTrainingDetail(identifier);
+      if (detail != null && mounted) {
+        setState(() {
+          _current = detail;
+        });
+      }
+    } catch (e) {
+      debugPrint('Notice loading training detail: $e');
+    }
   }
 
   Future<void> _advanceCourse() async {
@@ -466,6 +326,7 @@ class _TrainingDetailSheetState extends State<_TrainingDetailSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool hasVideo = _current.videoUrl != null && _current.videoUrl!.trim().isNotEmpty;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
@@ -514,73 +375,99 @@ class _TrainingDetailSheetState extends State<_TrainingDetailSheet> {
               padding: const EdgeInsets.all(20),
               children: [
                 // Video Player Simulated Frame
-                Container(
-                  height: 180,
-                  decoration: BoxDecoration(
-                    color: Colors.black,
+                if (_isPlayingVideo && hasVideo && _current.videoUrl != null) ...[
+                  InlineTrainingVideoPlayer(videoUrl: _current.videoUrl!),
+                ] else ...[
+                  InkWell(
+                    onTap: () {
+                      if (hasVideo) {
+                        setState(() {
+                          _isPlayingVideo = true;
+                        });
+                      }
+                    },
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4)),
-                    ],
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Positioned.fill(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [Color(0xFF0B192C), Color(0xFF1E3E62)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                    child: Container(
+                      height: 180,
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4)),
+                        ],
+                      ),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Positioned.fill(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [Color(0xFF0B192C), Color(0xFF1E3E62)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                ),
+                                child: const Center(
+                                  child: Icon(Icons.movie_creation_outlined, color: Colors.white24, size: 70),
+                                ),
                               ),
                             ),
-                            child: const Center(
-                              child: Icon(Icons.movie_creation_outlined, color: Colors.white24, size: 70),
-                            ),
                           ),
-                        ),
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: const BoxDecoration(
-                              color: ColorTheme.primary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.play_arrow, color: Colors.white, size: 32),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            "Ver Clase en Video (STCW)",
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: hasVideo ? ColorTheme.primary : Colors.grey,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  hasVideo ? Icons.play_arrow : Icons.videocam_off,
+                                  color: Colors.white,
+                                  size: 32,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                hasVideo ? "Ver Clase en Video" : "Video no disponible",
+                                style: TextStyle(
+                                  color: hasVideo ? Colors.white : Colors.white60,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
                 const SizedBox(height: 16),
 
                 // Sector & Instructor info
                 Row(
                   children: [
-                    Chip(
-                      label: Text(_current.code, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                      backgroundColor: ColorTheme.primary,
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    const SizedBox(width: 8),
-                    Chip(
-                      label: Text("${_current.hours} Horas", style: const TextStyle(fontSize: 11)),
-                      backgroundColor: isDark ? Colors.white10 : Colors.grey.shade200,
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    const SizedBox(width: 8),
+                    if (_current.code.isNotEmpty) ...[
+                      Chip(
+                        label: Text(_current.code, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                        backgroundColor: ColorTheme.primary,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    if (_current.hours > 0) ...[
+                      Chip(
+                        label: Text("${_current.hours} Horas", style: const TextStyle(fontSize: 11)),
+                        backgroundColor: isDark ? Colors.white10 : Colors.grey.shade200,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                     Chip(
                       label: Text(_current.sector, style: const TextStyle(fontSize: 11)),
                       backgroundColor: isDark ? Colors.white10 : Colors.grey.shade200,
@@ -588,82 +475,120 @@ class _TrainingDetailSheetState extends State<_TrainingDetailSheet> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  _current.description,
-                  style: TextStyle(fontSize: 13, color: isDark ? Colors.white70 : Colors.black87, height: 1.4),
-                ),
+                if (_current.description.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _current.description,
+                    style: TextStyle(fontSize: 13, color: isDark ? Colors.white70 : Colors.black87, height: 1.4),
+                  ),
+                ],
                 const SizedBox(height: 10),
                 Text(
-                  "Instructor: ${_current.instructor}",
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: ColorTheme.primary),
+                  _current.instructor.isNotEmpty
+                      ? "Instructor: ${_current.instructor}"
+                      : "Instructor: No asignado",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: _current.instructor.isNotEmpty ? FontWeight.w600 : FontWeight.normal,
+                    fontStyle: _current.instructor.isNotEmpty ? FontStyle.normal : FontStyle.italic,
+                    color: _current.instructor.isNotEmpty ? ColorTheme.primary : (isDark ? Colors.white38 : Colors.grey.shade600),
+                  ),
                 ),
 
-                const SizedBox(height: 20),
-                const Divider(),
-                const SizedBox(height: 12),
+                if (_current.totalModules > 0 && _current.modules.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  const Divider(),
+                  const SizedBox(height: 12),
 
-                // Progreso personal
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text("Progreso del Marino", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    Text(
-                      "${_current.completedModules} de ${_current.totalModules} Módulos (${_current.userProgressPercentage.toStringAsFixed(0)}%)",
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: ColorTheme.success),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                LinearProgressIndicator(
-                  value: _current.userProgressPercentage / 100.0,
-                  backgroundColor: isDark ? Colors.white10 : Colors.grey.shade200,
-                  color: ColorTheme.success,
-                  minHeight: 8,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-
-                const SizedBox(height: 20),
-                const Text("Módulos del Curso", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                const SizedBox(height: 10),
-
-                // Lista de módulos
-                ..._current.modules.map((m) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withOpacity(0.04) : Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: m.isCompleted ? ColorTheme.success.withOpacity(0.4) : Colors.transparent,
+                  // Progreso personal
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("Progreso del Marino", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text(
+                        "${_current.completedModules} de ${_current.totalModules} Módulos (${_current.userProgressPercentage.toStringAsFixed(0)}%)",
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: ColorTheme.success),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          m.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-                          color: m.isCompleted ? ColorTheme.success : Colors.grey,
-                          size: 20,
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  LinearProgressIndicator(
+                    value: _current.userProgressPercentage / 100.0,
+                    backgroundColor: isDark ? Colors.white10 : Colors.grey.shade200,
+                    color: ColorTheme.success,
+                    minHeight: 8,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+
+                  const SizedBox(height: 20),
+                  const Text("Módulos del Curso", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  const SizedBox(height: 10),
+
+                  // Lista de módulos
+                  ..._current.modules.map((m) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white.withOpacity(0.04) : Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: m.isCompleted ? ColorTheme.success.withOpacity(0.4) : Colors.transparent,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            m.title,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: m.isCompleted ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            m.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
+                            color: m.isCompleted ? ColorTheme.success : Colors.grey,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              m.title,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: m.isCompleted ? FontWeight.bold : FontWeight.normal,
+                              ),
                             ),
                           ),
+                          Text(
+                            "${m.durationMinutes} min",
+                            style: const TextStyle(fontSize: 11, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ] else ...[
+                  const SizedBox(height: 20),
+                  const Divider(),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("Estado de la Capacitación", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _current.status.toLowerCase().contains("vigente")
+                              ? Colors.green.withOpacity(0.15)
+                              : Colors.blue.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        Text(
-                          "${m.durationMinutes} min",
-                          style: const TextStyle(fontSize: 11, color: Colors.grey),
+                        child: Text(
+                          _current.status,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: _current.status.toLowerCase().contains("vigente") ? Colors.green : Colors.blue,
+                          ),
                         ),
-                      ],
-                    ),
-                  );
-                }),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -681,7 +606,9 @@ class _TrainingDetailSheetState extends State<_TrainingDetailSheet> {
               width: double.infinity,
               height: 48,
               child: ElevatedButton.icon(
-                onPressed: _isUpdating ? null : _advanceCourse,
+                onPressed: (_current.totalModules > 0 && _current.modules.isNotEmpty)
+                    ? (_isUpdating ? null : _advanceCourse)
+                    : () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColorTheme.primary,
                   foregroundColor: Colors.white,
@@ -689,11 +616,15 @@ class _TrainingDetailSheetState extends State<_TrainingDetailSheet> {
                 ),
                 icon: _isUpdating
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : Icon(_current.completedModules >= _current.totalModules ? Icons.verified : Icons.play_arrow),
+                    : Icon((_current.totalModules == 0 || _current.modules.isEmpty || _current.completedModules >= _current.totalModules)
+                        ? Icons.check_circle_outline
+                        : Icons.play_arrow),
                 label: Text(
-                  _current.completedModules >= _current.totalModules
-                      ? "Capacitación Completada"
-                      : "Continuar Capacitación (Avanzar Módulo)",
+                  (_current.totalModules == 0 || _current.modules.isEmpty)
+                      ? "Entendido / Cerrar"
+                      : (_current.completedModules >= _current.totalModules
+                          ? "Capacitación Completada"
+                          : "Continuar Capacitación (Avanzar Módulo)"),
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -707,4 +638,293 @@ class _TrainingDetailSheetState extends State<_TrainingDetailSheet> {
 
 // Compatibility Alias
 typedef StatsView = TrainingView;
+
+class InlineTrainingVideoPlayer extends StatefulWidget {
+  final String videoUrl;
+  const InlineTrainingVideoPlayer({super.key, required this.videoUrl});
+
+  @override
+  State<InlineTrainingVideoPlayer> createState() => _InlineTrainingVideoPlayerState();
+}
+
+class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
+  VideoPlayerController? _videoPlayerController;
+  ChewieController? _chewieController;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _initVideo();
+  }
+
+  List<Uri> _generateCandidateUris(String rawVideoUrl) {
+    String cleaned = rawVideoUrl.trim();
+    while (cleaned.endsWith('/')) {
+      cleaned = cleaned.substring(0, cleaned.length - 1).trim();
+    }
+
+    final List<String> rawPaths = [];
+
+    if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) {
+      final parsed = Uri.tryParse(cleaned);
+      if (parsed != null) {
+        rawPaths.add(parsed.path);
+      } else {
+        rawPaths.add(cleaned);
+      }
+    } else {
+      rawPaths.add(cleaned.startsWith('/') ? cleaned : '/$cleaned');
+    }
+
+    final String base = AppConfig.apiBaseURL.endsWith('/')
+        ? AppConfig.apiBaseURL.substring(0, AppConfig.apiBaseURL.length - 1)
+        : AppConfig.apiBaseURL;
+
+    final List<String> fullUrls = [];
+
+    for (final p in rawPaths) {
+      final String decodedPath = Uri.decodeFull(p);
+      
+      // Candidate A: Normal path
+      fullUrls.add('$base$decodedPath');
+
+      // Candidate B: Spaces replaced by underscores (Django get_valid_filename convention)
+      final String pathUnderscore = decodedPath.replaceAll(' ', '_').replaceAll('%20', '_');
+      fullUrls.add('$base$pathUnderscore');
+
+      // Candidate C: If path doesn't start with /media/, add /media prefix
+      if (!decodedPath.startsWith('/media/')) {
+        fullUrls.add('$base/media$decodedPath');
+        fullUrls.add('$base/media$pathUnderscore');
+      }
+
+      // Candidate D: If path starts with /capacitaciones/, replace with /media/capacitaciones/
+      if (decodedPath.startsWith('/capacitaciones/')) {
+        final mediaPath = decodedPath.replaceFirst('/capacitaciones/', '/media/capacitaciones/');
+        fullUrls.add('$base$mediaPath');
+        fullUrls.add('$base${mediaPath.replaceAll(' ', '_').replaceAll('%20', '_')}');
+      }
+
+      // Candidate E: If path contains /files/, try without /files/ or /media/files/
+      if (decodedPath.contains('/files/')) {
+        final mediaFiles = decodedPath.replaceFirst('/files/', '/media/files/');
+        fullUrls.add('$base$mediaFiles');
+        fullUrls.add('$base${mediaFiles.replaceAll(' ', '_').replaceAll('%20', '_')}');
+      }
+    }
+
+    final List<Uri> uris = [];
+    final Set<String> seen = {};
+    for (final urlStr in fullUrls) {
+      try {
+        final decoded = Uri.decodeFull(urlStr);
+        final encoded = Uri.encodeFull(decoded);
+        if (seen.add(encoded)) {
+          uris.add(Uri.parse(encoded));
+        }
+      } catch (_) {}
+    }
+
+    return uris;
+  }
+
+  Future<void> _initVideo() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final token = await SessionManager.shared.getToken();
+      final Map<String, String> headers = {
+        'Accept': '*/*',
+      };
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Token $token';
+      }
+
+      String rawUrl = widget.videoUrl.trim();
+      Uri? primaryUri;
+      if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+        primaryUri = Uri.tryParse(rawUrl);
+      }
+
+      // Approach 1: Try direct VideoPlayerController.networkUrl with pre-injected ?token= and Authorization header
+      if (primaryUri != null) {
+        try {
+          _videoPlayerController = VideoPlayerController.networkUrl(
+            primaryUri,
+            httpHeaders: headers,
+          );
+
+          await _videoPlayerController!.initialize();
+
+          final double aspect = _videoPlayerController!.value.aspectRatio > 0
+              ? _videoPlayerController!.value.aspectRatio
+              : (16 / 9);
+
+          _chewieController = ChewieController(
+            videoPlayerController: _videoPlayerController!,
+            aspectRatio: aspect,
+            autoPlay: true,
+            looping: false,
+            allowFullScreen: true,
+            allowMuting: true,
+            showControls: true,
+          );
+
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
+          return;
+        } catch (directError) {
+          debugPrint('Notice direct networkUrl attempt: $directError');
+        }
+      }
+
+      // Approach 2: Candidate URI resolution & HTTP fetch to local Blob/File URL (for Web CORS)
+      final candidateUris = _generateCandidateUris(widget.videoUrl);
+      for (final uri in candidateUris) {
+        try {
+          final response = await http.get(uri, headers: headers).timeout(const Duration(seconds: 15));
+          if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+            final bytes = response.bodyBytes;
+            final sample = String.fromCharCodes(bytes.take(100)).toLowerCase();
+            if (!sample.contains('<html') && !sample.contains('<!doctype')) {
+              final String sourceUrl = await createBlobOrFileUrl(bytes);
+              if (sourceUrl.startsWith('blob:') || sourceUrl.startsWith('http')) {
+                _videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(sourceUrl));
+              } else {
+                _videoPlayerController = VideoPlayerController.file(File(sourceUrl));
+              }
+
+              await _videoPlayerController!.initialize();
+
+              final double aspect = _videoPlayerController!.value.aspectRatio > 0
+                  ? _videoPlayerController!.value.aspectRatio
+                  : (16 / 9);
+
+              _chewieController = ChewieController(
+                videoPlayerController: _videoPlayerController!,
+                aspectRatio: aspect,
+                autoPlay: true,
+                looping: false,
+                allowFullScreen: true,
+                allowMuting: true,
+                showControls: true,
+              );
+
+              if (mounted) {
+                setState(() {
+                  _isLoading = false;
+                });
+              }
+              return;
+            }
+          }
+        } catch (httpErr) {
+          debugPrint('Candidate fetch notice for $uri: $httpErr');
+        }
+      }
+
+      throw Exception("No se pudo cargar el video desde las fuentes de servidor.");
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = "No se pudo reproducir el video. Verifique que el archivo exista en el servidor y su formato sea compatible.";
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _chewieController?.dispose();
+    _videoPlayerController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Container(
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: ColorTheme.primary),
+              SizedBox(height: 12),
+              Text(
+                "Cargando clase en video...",
+                style: TextStyle(color: Colors.white70, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Container(
+        height: 200,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 32),
+              const SizedBox(height: 8),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.white, fontSize: 11),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: _initVideo,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text("Reintentar", style: TextStyle(fontSize: 12)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorTheme.primary,
+                  foregroundColor: Colors.white,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_chewieController != null) {
+      return Container(
+        height: 210,
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Chewie(controller: _chewieController!),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+}
 

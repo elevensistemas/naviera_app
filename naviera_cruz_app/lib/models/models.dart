@@ -82,27 +82,65 @@ class Post {
   final String id;
   final String authorId;
   final String authorName;
+  final String title;
   final String content;
   final DateTime timestamp;
   final PostType type;
+  final String? imageUrl;
 
   Post({
     required this.id,
     required this.authorId,
     required this.authorName,
+    this.title = '',
     required this.content,
     required this.timestamp,
     required this.type,
+    this.imageUrl,
   });
 
   factory Post.fromJson(Map<String, dynamic> json) {
+    String authorNameStr = json['author_name']?.toString() ?? '';
+    String authorIdStr = json['author_id']?.toString() ?? '';
+
+    if (json['user_detail'] is Map<String, dynamic>) {
+      final userDetail = json['user_detail'] as Map<String, dynamic>;
+      authorIdStr = userDetail['id']?.toString() ?? authorIdStr;
+      final firstName = userDetail['first_name']?.toString() ?? '';
+      final lastName = userDetail['last_name']?.toString() ?? '';
+      final fullName = "$firstName $lastName".trim();
+      authorNameStr = fullName.isNotEmpty ? fullName : (userDetail['username']?.toString() ?? authorNameStr);
+    }
+    if (authorNameStr.isEmpty) {
+      authorNameStr = "Comunicados Institucionales";
+    }
+
+    final titleStr = json['title']?.toString() ?? '';
+    final descriptionStr = json['description']?.toString() ?? json['content']?.toString() ?? '';
+    
+    String textContent = descriptionStr;
+    if (textContent.isEmpty) {
+      textContent = titleStr;
+    }
+
+    final dateRaw = json['starts_at'] ?? json['created_at'] ?? json['timestamp'];
+    final parsedDate = dateRaw != null ? DateTime.tryParse(dateRaw.toString()) ?? DateTime.now() : DateTime.now();
+
+    PostType postType = PostTypeExtension.fromString(json['type']?.toString() ?? '');
+    final importance = json['importance'];
+    if (importance != null && (importance == 1 || importance == '1' || importance == 'high')) {
+      postType = PostType.alert;
+    }
+
     return Post(
       id: json['id']?.toString() ?? '',
-      authorId: json['author_id']?.toString() ?? '',
-      authorName: json['author_name'] ?? '',
-      content: json['content'] ?? '',
-      timestamp: json['timestamp'] != null ? DateTime.parse(json['timestamp']) : DateTime.now(),
-      type: PostTypeExtension.fromString(json['type'] ?? ''),
+      authorId: authorIdStr,
+      authorName: authorNameStr,
+      title: titleStr,
+      content: textContent,
+      timestamp: parsedDate,
+      type: postType,
+      imageUrl: json['image']?.toString() ?? json['image_url']?.toString(),
     );
   }
 }
@@ -160,6 +198,9 @@ class Ship {
   final String name;
   final ShipStatus status;
   final double totalCargo;
+  final double totalWater;
+  final double totalSlop;
+  final double totalCarbon;
   final double latitude;
   final double longitude;
   final String? cameraUrl;
@@ -170,6 +211,9 @@ class Ship {
     required this.name,
     required this.status,
     required this.totalCargo,
+    this.totalWater = 0.0,
+    this.totalSlop = 0.0,
+    this.totalCarbon = 0.0,
     required this.latitude,
     required this.longitude,
     this.cameraUrl,
@@ -181,6 +225,9 @@ class Ship {
     String? name,
     ShipStatus? status,
     double? totalCargo,
+    double? totalWater,
+    double? totalSlop,
+    double? totalCarbon,
     double? latitude,
     double? longitude,
     String? cameraUrl,
@@ -191,6 +238,9 @@ class Ship {
       name: name ?? this.name,
       status: status ?? this.status,
       totalCargo: totalCargo ?? this.totalCargo,
+      totalWater: totalWater ?? this.totalWater,
+      totalSlop: totalSlop ?? this.totalSlop,
+      totalCarbon: totalCarbon ?? this.totalCarbon,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       cameraUrl: cameraUrl ?? this.cameraUrl,
@@ -204,13 +254,20 @@ class Ship {
     if (camerasJson is List) {
       camerasList = camerasJson.map((e) => ShipCamera.fromJson(e)).toList();
     }
+    final carbonVal = (json['total_carbon'] as num?)?.toDouble() ?? (json['total_cargo'] as num?)?.toDouble() ?? 0.0;
+    final waterVal = (json['total_water'] as num?)?.toDouble() ?? 0.0;
+    final slopVal = (json['total_slop'] as num?)?.toDouble() ?? 0.0;
+
     return Ship(
       id: json['id']?.toString() ?? '',
       name: json['name'] ?? json['description'] ?? json['code'] ?? '',
       status: json['status'] != null
           ? ShipStatusExtension.fromString(json['status'])
           : (json['active'] == true ? ShipStatus.active : ShipStatus.docked),
-      totalCargo: (json['total_carbon'] as num?)?.toDouble() ?? (json['total_cargo'] as num?)?.toDouble() ?? 0.0,
+      totalCargo: carbonVal,
+      totalCarbon: carbonVal,
+      totalWater: waterVal,
+      totalSlop: slopVal,
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       cameraUrl: json['camera_url'],
@@ -295,15 +352,141 @@ class CrewMember {
   final String shipId;
   final String name;
   final String role;
+  final String situation;
+  final String situationCode;
+  final bool isOnBoard;
+  final String? startDate;
+  final String? endDate;
+  final String? photoUrl;
+  final int? daysOnBoard;
+  final int orderIndex;
 
   CrewMember({
     required this.id,
     required this.shipId,
     required this.name,
     required this.role,
+    this.situation = "Embarcado",
+    this.situationCode = "EMB",
+    this.isOnBoard = true,
+    this.startDate,
+    this.endDate,
+    this.photoUrl,
+    this.daysOnBoard,
+    this.orderIndex = 999,
   });
 
+  int get calculatedDays {
+    if (daysOnBoard != null) {
+      return daysOnBoard!;
+    }
+    if (startDate != null && startDate!.isNotEmpty) {
+      final parsedDate = DateTime.tryParse(startDate!);
+      if (parsedDate != null) {
+        final diff = DateTime.now().difference(parsedDate).inDays;
+        return diff >= 0 ? diff + 1 : 0;
+      }
+    }
+    return 0;
+  }
+
   factory CrewMember.fromJson(Map<String, dynamic> json) {
+    String nameStr = json['name']?.toString() ?? '';
+    if (nameStr.isEmpty && (json['first_name'] != null || json['last_name'] != null)) {
+      nameStr = "${json['first_name'] ?? ''} ${json['last_name'] ?? ''}".trim();
+    }
+    if (nameStr.isEmpty && json['crew_member_detail'] is Map<String, dynamic>) {
+      final detail = json['crew_member_detail'] as Map<String, dynamic>;
+      final fn = detail['first_name']?.toString() ?? '';
+      final ln = detail['last_name']?.toString() ?? '';
+      nameStr = "$fn $ln".trim();
+      if (nameStr.isEmpty) {
+        nameStr = detail['name']?.toString() ?? '';
+      }
+    }
+    if (nameStr.isEmpty) {
+      nameStr = "Tripulante";
+    }
+
+    String roleStr = json['role']?.toString() ?? '';
+    int orderIdx = 999;
+    if (json['position_detail'] is Map<String, dynamic>) {
+      final posDetail = json['position_detail'] as Map<String, dynamic>;
+      roleStr = posDetail['name']?.toString() ?? posDetail['short_name']?.toString() ?? '';
+      if (posDetail['order_index'] != null) {
+        orderIdx = (posDetail['order_index'] as num?)?.toInt() ?? int.tryParse(posDetail['order_index'].toString()) ?? 999;
+      }
+    }
+    if (roleStr.isEmpty && json['position'] != null) {
+      roleStr = json['position']?.toString() ?? '';
+    }
+    if (orderIdx == 999 && json['order_index'] != null) {
+      orderIdx = (json['order_index'] as num?)?.toInt() ?? int.tryParse(json['order_index'].toString()) ?? 999;
+    }
+    if (roleStr.isEmpty) {
+      roleStr = "Personal de Flota";
+    }
+
+    String situationName = "Embarcado";
+    String situationCode = "EMB";
+    bool? isOnBoardExplicit;
+    String? startDt;
+    String? endDt;
+    int? daysOnBoardVal;
+
+    if (json['is_on_board'] is bool) {
+      isOnBoardExplicit = json['is_on_board'] as bool;
+    }
+
+    final sitDetail = json['current_situation_detail'] ?? json['situation_detail'] ?? json['situation'];
+    if (sitDetail is Map<String, dynamic>) {
+      startDt = sitDetail['start_date']?.toString() ?? sitDetail['starts_at']?.toString();
+      endDt = sitDetail['end_date']?.toString() ?? sitDetail['ends_at']?.toString();
+
+      if (sitDetail['is_on_board'] is bool) {
+        isOnBoardExplicit = sitDetail['is_on_board'] as bool;
+      }
+
+      if (sitDetail['days_on_board'] != null) {
+        daysOnBoardVal = (sitDetail['days_on_board'] as num?)?.toInt() ?? int.tryParse(sitDetail['days_on_board'].toString());
+      }
+
+      final typeDetail = sitDetail['situation_type_detail'] ?? sitDetail['situation_type'] ?? sitDetail['type'];
+      if (typeDetail is Map<String, dynamic>) {
+        situationName = typeDetail['name']?.toString() ?? typeDetail['short_description']?.toString() ?? situationName;
+        situationCode = typeDetail['short_description']?.toString() ?? typeDetail['code']?.toString() ?? situationCode;
+        if (typeDetail['is_on_board'] is bool) {
+          isOnBoardExplicit = typeDetail['is_on_board'] as bool;
+        }
+      } else if (typeDetail is String && typeDetail.isNotEmpty) {
+        situationName = typeDetail;
+      }
+    } else if (sitDetail is String && sitDetail.isNotEmpty) {
+      situationName = sitDetail;
+    }
+
+    if (json['situation_name'] != null && json['situation_name'].toString().isNotEmpty) {
+      situationName = json['situation_name'].toString();
+    }
+
+    if (daysOnBoardVal == null && json['days_on_board'] != null) {
+      daysOnBoardVal = (json['days_on_board'] as num?)?.toInt() ?? int.tryParse(json['days_on_board'].toString());
+    }
+
+    bool isOnBoardFinal;
+    if (isOnBoardExplicit != null) {
+      isOnBoardFinal = isOnBoardExplicit;
+    } else {
+      final sitLower = situationName.toLowerCase();
+      if (sitLower.contains('franco') || sitLower.contains('licenc') || sitLower.contains('baja') || sitLower.contains('tierra') || sitLower.contains('desembarc')) {
+        isOnBoardFinal = false;
+      } else {
+        isOnBoardFinal = true;
+      }
+    }
+
+    final photo = json['photo']?.toString() ?? json['avatar_url']?.toString() ?? json['image']?.toString();
+
     return CrewMember(
       id: json['id']?.toString() ?? '',
       shipId: json['ship_id']?.toString() ??
@@ -311,11 +494,16 @@ class CrewMember {
           json['current_ship_detail']?['id']?.toString() ??
           json['current_situation_detail']?['ship']?.toString() ??
           '',
-      name: json['name'] ?? '',
-      role: json['role'] ??
-          json['position_detail']?['name'] ??
-          json['position_detail']?['short_name'] ??
-          '',
+      name: nameStr,
+      role: roleStr,
+      situation: situationName,
+      situationCode: situationCode,
+      isOnBoard: isOnBoardFinal,
+      startDate: startDt,
+      endDate: endDt,
+      photoUrl: photo,
+      daysOnBoard: daysOnBoardVal,
+      orderIndex: orderIdx,
     );
   }
 }
@@ -556,15 +744,17 @@ class Goal {
   });
 
   factory Goal.fromJson(Map<String, dynamic> json) {
-    final Map<String, dynamic> goalData = json['goal_detail'] is Map<String, dynamic>
-        ? json['goal_detail'] as Map<String, dynamic>
-        : json;
+    final Map<String, dynamic> goalData = json['goal'] is Map<String, dynamic>
+        ? json['goal'] as Map<String, dynamic>
+        : (json['goal_detail'] is Map<String, dynamic>
+            ? json['goal_detail'] as Map<String, dynamic>
+            : json);
 
     return Goal(
       id: json['id']?.toString() ?? goalData['id']?.toString() ?? '',
       description: goalData['description'] ?? json['description'] ?? '',
-      expectedValue: json['expected_value']?.toString() ?? goalData['expected_value']?.toString() ?? '',
-      achievedValue: json['achieved_value']?.toString() ?? goalData['achieved_value']?.toString(),
+      expectedValue: json['expected_value']?.toString() ?? goalData['expected_value']?.toString() ?? json['progress']?.toString() ?? '',
+      achievedValue: json['achieved_value']?.toString() ?? goalData['achieved_value']?.toString() ?? json['progress']?.toString(),
       weightedValue: json['weighted_value']?.toString() ?? goalData['weighted_value']?.toString() ?? '',
       targetDate: json['target_date'] ?? goalData['target_date'] ?? '',
       goalType: goalData['goal_type'] ?? json['goal_type'] ?? '',
@@ -631,16 +821,17 @@ class TrainingModule {
 
   factory TrainingModule.fromJson(Map<String, dynamic> json) {
     return TrainingModule(
-      id: (json['id'] as num?)?.toInt() ?? 0,
-      title: json['title'] ?? '',
-      durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 15,
-      isCompleted: json['is_completed'] == true,
+      id: (json['id'] as num?)?.toInt() ?? (json['pk'] as num?)?.toInt() ?? 0,
+      title: json['title'] ?? json['titulo'] ?? json['nombre'] ?? '',
+      durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? (json['duracion_minutos'] as num?)?.toInt() ?? 15,
+      isCompleted: json['is_completed'] == true || json['completado'] == true,
     );
   }
 }
 
 class Training {
   final int id;
+  final String slug;
   final String title;
   final String code;
   final int hours;
@@ -656,6 +847,7 @@ class Training {
 
   Training({
     required this.id,
+    this.slug = '',
     required this.title,
     required this.code,
     required this.hours,
@@ -663,10 +855,10 @@ class Training {
     required this.completionRate,
     required this.status,
     this.description = '',
-    this.instructor = 'Cap. Instructor STCW',
+    this.instructor = '',
     this.videoUrl,
     this.completedModules = 0,
-    this.totalModules = 4,
+    this.totalModules = 0,
     this.modules = const [],
   });
 
@@ -680,9 +872,11 @@ class Training {
     double? completionRate,
     List<TrainingModule>? modules,
     String? status,
+    String? videoUrl,
   }) {
     return Training(
       id: id,
+      slug: slug,
       title: title,
       code: code,
       hours: hours,
@@ -691,7 +885,7 @@ class Training {
       status: status ?? this.status,
       description: description,
       instructor: instructor,
-      videoUrl: videoUrl,
+      videoUrl: videoUrl ?? this.videoUrl,
       completedModules: completedModules ?? this.completedModules,
       totalModules: totalModules,
       modules: modules ?? this.modules,
@@ -699,23 +893,76 @@ class Training {
   }
 
   factory Training.fromJson(Map<String, dynamic> json) {
-    var rawMods = json['modules'] as List? ?? [];
+    var rawMods = json['modules'] as List? ?? json['modulos'] as List? ?? [];
     List<TrainingModule> modLists = rawMods.map((m) => TrainingModule.fromJson(m)).toList();
     
-    int doneMods = (json['completed_modules'] as num?)?.toInt() ?? (rawMods.where((m) => m['is_completed'] == true).length);
-    int totMods = (json['total_modules'] as num?)?.toInt() ?? (modLists.isNotEmpty ? modLists.length : 4);
+    int doneMods = (json['completed_modules'] as num?)?.toInt() ??
+                   (json['modulos_completados'] as num?)?.toInt() ??
+                   (rawMods.where((m) => m['is_completed'] == true || m['completado'] == true).length);
+    int totMods = (json['total_modules'] as num?)?.toInt() ??
+                  (json['modulos_totales'] as num?)?.toInt() ??
+                  modLists.length;
+
+    double rate = (json['completion_rate'] as num?)?.toDouble() ??
+                  (json['porcentaje_cumplimiento'] as num?)?.toDouble() ??
+                  (json['progress'] as num?)?.toDouble() ?? 0.0;
+
+    String? vUrl = json['video_url']?.toString() ??
+                   json['url_video']?.toString() ??
+                   json['video']?.toString() ??
+                   json['file']?.toString() ??
+                   json['file_url']?.toString() ??
+                   json['url']?.toString() ??
+                   json['archivo']?.toString();
+
+    if ((vUrl == null || vUrl.trim().isEmpty) && json['files'] is List && (json['files'] as List).isNotEmpty) {
+      for (final f in (json['files'] as List)) {
+        if (f is Map<String, dynamic>) {
+          final candidate = f['url']?.toString() ??
+                            f['file']?.toString() ??
+                            f['file_url']?.toString() ??
+                            f['video_url']?.toString() ??
+                            f['archivo']?.toString();
+          if (candidate != null && candidate.trim().isNotEmpty) {
+            vUrl = candidate;
+            break;
+          }
+        } else if (f is String && f.trim().isNotEmpty) {
+          vUrl = f;
+          break;
+        }
+      }
+    }
+
+    if (vUrl != null && vUrl.trim().isNotEmpty) {
+      String cleanUrl = vUrl.trim();
+      if (!cleanUrl.contains('?')) {
+        while (cleanUrl.endsWith('/')) {
+          cleanUrl = cleanUrl.substring(0, cleanUrl.length - 1).trim();
+        }
+      }
+      vUrl = cleanUrl;
+    } else {
+      vUrl = null;
+    }
+
+    final slugStr = json['slug']?.toString() ?? json['id']?.toString() ?? '';
+    final parsedId = (json['id'] as num?)?.toInt() ??
+                     int.tryParse(json['id']?.toString() ?? '') ??
+                     slugStr.hashCode;
 
     return Training(
-      id: (json['id'] as num?)?.toInt() ?? 0,
-      title: json['title'] ?? '',
-      code: json['code'] ?? '',
-      hours: (json['hours'] as num?)?.toInt() ?? 0,
-      sector: json['sector'] ?? 'General',
-      completionRate: (json['completion_rate'] as num?)?.toDouble() ?? 0.0,
-      status: json['status'] ?? 'Vigente',
-      description: json['description'] ?? 'Capacitación STCW reglamentaria para personal marítimo de puente y máquinas.',
-      instructor: json['instructor'] ?? 'Cap. Marcos Benítez (Instructor Máster)',
-      videoUrl: json['video_url'] ?? 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      id: parsedId,
+      slug: slugStr,
+      title: json['title'] ?? json['titulo'] ?? json['nombre'] ?? json['name'] ?? '',
+      code: json['code'] ?? json['codigo'] ?? '',
+      hours: (json['hours'] as num?)?.toInt() ?? (json['duracion_horas'] as num?)?.toInt() ?? (json['horas'] as num?)?.toInt() ?? 0,
+      sector: json['sector'] ?? json['categoria'] ?? 'General',
+      completionRate: rate,
+      status: json['status'] ?? json['estado'] ?? 'pending',
+      description: json['description'] ?? json['descripcion'] ?? '',
+      instructor: json['instructor'] ?? json['instructor_name'] ?? json['profesor'] ?? json['docente'] ?? '',
+      videoUrl: vUrl,
       completedModules: doneMods,
       totalModules: totMods,
       modules: modLists,

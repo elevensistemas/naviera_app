@@ -78,6 +78,47 @@ class _HomeViewState extends State<HomeView> {
     return "${date.day}/${date.month}/${date.year}";
   }
 
+  void _showImageDialog(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.black.withOpacity(0.9),
+        insetPadding: const EdgeInsets.all(12),
+        child: Stack(
+          alignment: Alignment.topRight,
+          children: [
+            Center(
+              child: InteractiveViewer(
+                panEnabled: true,
+                minScale: 0.8,
+                maxScale: 4.0,
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const Center(
+                    child: Text("Error al cargar la imagen", style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 10,
+              right: 10,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.black54,
+                  shape: const CircleBorder(),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTabButton(BuildContext context, int index, String title) {
     final isSelected = _activeTab == index;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -271,6 +312,54 @@ class _HomeViewState extends State<HomeView> {
                                               color: textColor,
                                             ),
                                           ),
+
+                                          if (post.imageUrl != null && post.imageUrl!.isNotEmpty) ...[
+                                            const SizedBox(height: 12),
+                                            GestureDetector(
+                                              onTap: () => _showImageDialog(context, post.imageUrl!),
+                                              child: Stack(
+                                                alignment: Alignment.bottomRight,
+                                                children: [
+                                                  Container(
+                                                    constraints: const BoxConstraints(maxHeight: 280),
+                                                    width: double.infinity,
+                                                    decoration: BoxDecoration(
+                                                      borderRadius: BorderRadius.circular(10),
+                                                      color: Colors.black.withOpacity(0.03),
+                                                    ),
+                                                    child: ClipRRect(
+                                                      borderRadius: BorderRadius.circular(10),
+                                                      child: Image.network(
+                                                        post.imageUrl!,
+                                                        width: double.infinity,
+                                                        fit: BoxFit.contain,
+                                                        errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    margin: const EdgeInsets.all(8),
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black.withOpacity(0.65),
+                                                      borderRadius: BorderRadius.circular(12),
+                                                    ),
+                                                    child: const Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        Icon(Icons.zoom_in, color: Colors.white, size: 14),
+                                                        SizedBox(width: 4),
+                                                        Text(
+                                                          "Toca para ampliar",
+                                                          style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
                                           const SizedBox(height: 16),
                                           Divider(
                                             height: 1, 

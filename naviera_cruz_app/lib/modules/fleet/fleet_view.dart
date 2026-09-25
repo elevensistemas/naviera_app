@@ -212,24 +212,7 @@ class _FleetViewState extends State<FleetView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Carga Total",
-                      style: TypographyTheme.caption(context).copyWith(color: secondaryTextColor),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "${ship.totalCargo.toInt()} tons",
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      "Ubicación",
+                      "Ubicación Flota",
                       style: TypographyTheme.caption(context).copyWith(color: secondaryTextColor),
                     ),
                     const SizedBox(height: 4),
@@ -237,13 +220,52 @@ class _FleetViewState extends State<FleetView> {
                       "Lat: ${ship.latitude.toStringAsFixed(2)}, Lon: ${ship.longitude.toStringAsFixed(2)}",
                       style: TextStyle(
                         fontSize: 12,
-                        color: secondaryTextColor,
-                        fontWeight: FontWeight.w500,
+                        color: textColor,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ],
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: dividerColor),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildResourceMetric(
+                    context: context,
+                    icon: Icons.local_gas_station_outlined,
+                    color: Colors.orange,
+                    label: "Combustible",
+                    value: ship.totalCarbon > 0
+                        ? "${ship.totalCarbon.toStringAsFixed(1)} t"
+                        : (ship.totalCargo > 0 ? "${ship.totalCargo.toInt()} t" : "0 t"),
+                  ),
+                  Container(height: 30, width: 1, color: dividerColor),
+                  _buildResourceMetric(
+                    context: context,
+                    icon: Icons.water_drop_outlined,
+                    color: Colors.blue,
+                    label: "Agua",
+                    value: "${ship.totalWater.toStringAsFixed(1)} m³",
+                  ),
+                  Container(height: 30, width: 1, color: dividerColor),
+                  _buildResourceMetric(
+                    context: context,
+                    icon: Icons.opacity_outlined,
+                    color: Colors.teal,
+                    label: "Slop",
+                    value: "${ship.totalSlop.toStringAsFixed(1)} m³",
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             
@@ -308,6 +330,46 @@ class _FleetViewState extends State<FleetView> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildResourceMetric({
+    required BuildContext context,
+    required IconData icon,
+    required Color color,
+    required String label,
+    required String value,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Column(
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: isDark ? Colors.white70 : Colors.black54,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
+        ),
+      ],
     );
   }
 }

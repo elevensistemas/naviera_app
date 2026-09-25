@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import '../app/config.dart';
 import '../core/network.dart';
+import '../core/storage.dart';
 import '../models/models.dart';
 
 // ==========================================
@@ -458,16 +459,35 @@ class ProductionFleetService implements FleetService {
 
   @override
   Future<List<CrewMember>> fetchCrew(String shipId) async {
-    try {
-      final response = await APIClient.shared.request(
-        endpoint: '/api/v1/ships/${Uri.encodeComponent(shipId)}/crew/',
-      );
-      if (response is List) {
-        return response.map((json) => CrewMember.fromJson(json)).toList();
-      }
-    } catch (e) {
-      print("Error fetching crew: $e");
+    final encodedShipId = Uri.encodeComponent(shipId);
+
+    final endpoints = [
+      '/api/ships/$encodedShipId/crew/',
+      '/api/v1/ships/$encodedShipId/crew/',
+      '/api/crew-members/?ship=$encodedShipId',
+      '/api/v1/crew-members/?ship=$encodedShipId',
+    ];
+
+    for (final ep in endpoints) {
+      try {
+        final response = await APIClient.shared.request(endpoint: ep);
+        List rawList = [];
+        if (response is List) {
+          rawList = response;
+        } else if (response is Map<String, dynamic> && response['results'] is List) {
+          rawList = response['results'] as List;
+        } else if (response is Map<String, dynamic> && response['data'] is List) {
+          rawList = response['data'] as List;
+        }
+
+        if (rawList.isNotEmpty) {
+          final crewList = rawList.map((json) => CrewMember.fromJson(json)).toList();
+          crewList.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+          return crewList;
+        }
+      } catch (_) {}
     }
+
     return [];
   }
 }
@@ -511,8 +531,47 @@ class MockHomeService implements HomeService {
 class ProductionHomeService implements HomeService {
   @override
   Future<List<Post>> fetchPosts() async {
-    final List<dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/posts/');
-    return response.map((json) => Post.fromJson(json)).toList();
+    // 1. Try /api/v1/announcements/?active=true
+    try {
+      final response = await APIClient.shared.request(endpoint: '/api/v1/announcements/?active=true');
+      if (response is List && response.isNotEmpty) {
+        return response.map((json) => Post.fromJson(json)).toList();
+      }
+    } catch (_) {}
+
+    // 2. Try /api/announcements/?active=true
+    try {
+      final response = await APIClient.shared.request(endpoint: '/api/announcements/?active=true');
+      if (response is List && response.isNotEmpty) {
+        return response.map((json) => Post.fromJson(json)).toList();
+      }
+    } catch (_) {}
+
+    // 3. Try /api/v1/announcements/
+    try {
+      final response = await APIClient.shared.request(endpoint: '/api/v1/announcements/');
+      if (response is List && response.isNotEmpty) {
+        return response.map((json) => Post.fromJson(json)).toList();
+      }
+    } catch (_) {}
+
+    // 4. Try /api/announcements/
+    try {
+      final response = await APIClient.shared.request(endpoint: '/api/announcements/');
+      if (response is List && response.isNotEmpty) {
+        return response.map((json) => Post.fromJson(json)).toList();
+      }
+    } catch (_) {}
+
+    // 5. Fallback to /api/v1/posts/
+    try {
+      final response = await APIClient.shared.request(endpoint: '/api/v1/posts/');
+      if (response is List && response.isNotEmpty) {
+        return response.map((json) => Post.fromJson(json)).toList();
+      }
+    } catch (_) {}
+
+    return [];
   }
 }
 
@@ -723,7 +782,7 @@ class ProductionScheduleService implements ScheduleService {
 // 7. GOAL SERVICE
 // ==========================================
 abstract class GoalService {
-  Future<List<Goal>> fetchGoals({String? date});
+  Future<List<Goal>> fetchGoals({String? date, String? userId});
 
   factory GoalService() {
     return AppConfig.isMockActive ? MockGoalService() : ProductionGoalService();
@@ -732,7 +791,7 @@ abstract class GoalService {
 
 class MockGoalService implements GoalService {
   @override
-  Future<List<Goal>> fetchGoals({String? date}) async {
+  Future<List<Goal>> fetchGoals({String? date, String? userId}) async {
     await Future.delayed(const Duration(milliseconds: 200));
     final currentYear = DateTime.now().year.toString();
     return [
@@ -772,51 +831,18 @@ class MockGoalService implements GoalService {
 
 class ProductionGoalService implements GoalService {
   @override
-  Future<List<Goal>> fetchGoals({String? date}) async {
-    final now = DateTime.now();
-    final todayStr = date ?? "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+  Future<List<Goal>> fetchGoals({String? date, String? userId}) async {
+    final targetUserId = userId ?? SessionManager.shared.currentUser?.id;
 
-    // 1. Try /api/v1/user-goals/?current=true&date_from=YYYY-MM-DD
-    try {
-      final response = await APIClient.shared.request(
-        endpoint: '/api/v1/user-goals/?current=true&date_from=$todayStr',
-      );
-      if (response is List && response.isNotEmpty) {
-        final List<Goal> goals = response.map((json) => Goal.fromJson(json)).toList();
-        goals.sort((a, b) => b.targetDate.compareTo(a.targetDate));
-        return goals;
-      }
-    } catch (_) {}
+    final queryParams = <String>['current=true'];
+    if (targetUserId != null && targetUserId.isNotEmpty) {
+      queryParams.add("user_id=$targetUserId");
+    }
 
-    // 2. Try /api/v1/user-goals/?current=true
-    try {
-      final response = await APIClient.shared.request(
-        endpoint: '/api/v1/user-goals/?current=true',
-      );
-      if (response is List && response.isNotEmpty) {
-        final List<Goal> goals = response.map((json) => Goal.fromJson(json)).toList();
-        goals.sort((a, b) => b.targetDate.compareTo(a.targetDate));
-        return goals;
-      }
-    } catch (_) {}
+    final endpoint = '/api/v1/user-goals/?${queryParams.join('&')}';
 
-    // 3. Fallback to /api/v1/goals/?current=true
     try {
-      final response = await APIClient.shared.request(
-        endpoint: '/api/v1/goals/?current=true',
-      );
-      if (response is List && response.isNotEmpty) {
-        final List<Goal> goals = response.map((json) => Goal.fromJson(json)).toList();
-        goals.sort((a, b) => b.targetDate.compareTo(a.targetDate));
-        return goals;
-      }
-    } catch (_) {}
-
-    // 4. Fallback to /api/v1/goals/
-    try {
-      final response = await APIClient.shared.request(
-        endpoint: '/api/v1/goals/',
-      );
+      final response = await APIClient.shared.request(endpoint: endpoint);
       if (response is List && response.isNotEmpty) {
         final List<Goal> goals = response.map((json) => Goal.fromJson(json)).toList();
         goals.sort((a, b) => b.targetDate.compareTo(a.targetDate));
@@ -910,8 +936,8 @@ class ProductionNotificationService implements NotificationService {
 // Training Service Interface & Implementations
 abstract class TrainingService {
   Future<List<Training>> fetchTrainings({String? userId});
-  Future<TrainingConsumption> fetchTrainingConsumption({String? ship, String? sector, String? userId});
-  Future<Training> updateTrainingProgress({required int trainingId, required int completedModules, String? userId});
+  Future<TrainingConsumption?> fetchTrainingConsumption({String? ship, String? sector, String? userId});
+  Future<Training> updateTrainingProgress({required int trainingId, required int completedModules, String? slug, String? userId});
 }
 
 class MockTrainingService implements TrainingService {
@@ -1151,6 +1177,7 @@ class MockTrainingService implements TrainingService {
   Future<Training> updateTrainingProgress({
     required int trainingId,
     required int completedModules,
+    String? slug,
     String? userId,
   }) async {
     await Future.delayed(const Duration(milliseconds: 250));
@@ -1199,20 +1226,68 @@ class MockTrainingService implements TrainingService {
 }
 
 class ProductionTrainingService implements TrainingService {
+  Future<Training?> fetchTrainingDetail(dynamic idOrSlug) async {
+    if (idOrSlug == null || idOrSlug.toString().isEmpty) return null;
+    final String key = idOrSlug.toString();
+    final endpoints = [
+      '/api/capacitaciones/$key/',
+      '/api/v1/capacitaciones/$key/',
+      '/api/trainings/$key/',
+      '/api/v1/trainings/$key/',
+    ];
+
+    for (final ep in endpoints) {
+      try {
+        final response = await APIClient.shared.request(endpoint: ep);
+        if (response is Map<String, dynamic> &&
+            (response.containsKey('id') || response.containsKey('title') || response.containsKey('nombre') || response.containsKey('files'))) {
+          return Training.fromJson(response);
+        }
+      } catch (_) {}
+    }
+    return null;
+  }
+
   @override
   Future<List<Training>> fetchTrainings({String? userId}) async {
-    try {
-      String query = userId != null ? '?user_id=${Uri.encodeComponent(userId)}' : '';
-      final response = await APIClient.shared.request(endpoint: '/api/v1/trainings/$query');
-      if (response is List && response.isNotEmpty) {
-        return response.map((json) => Training.fromJson(json)).toList();
-      }
-    } catch (_) {}
+    final targetUserId = userId ?? SessionManager.shared.currentUser?.id;
 
-    // Intentar consumir de /certificates/list/all/ si está disponible en el servidor real
+    final endpoints = <String>[];
+    if (targetUserId != null && targetUserId.isNotEmpty) {
+      endpoints.add('/api/capacitaciones/?user_id=${Uri.encodeComponent(targetUserId)}');
+      endpoints.add('/api/v1/capacitaciones/?user_id=${Uri.encodeComponent(targetUserId)}');
+      endpoints.add('/api/v1/trainings/?user_id=${Uri.encodeComponent(targetUserId)}');
+    }
+    endpoints.addAll([
+      '/api/capacitaciones/',
+      '/api/v1/capacitaciones/my-logs/',
+      '/api/v1/capacitaciones/',
+      '/api/v1/trainings/',
+      '/api/trainings/',
+    ]);
+
+    for (final ep in endpoints) {
+      try {
+        final response = await APIClient.shared.request(endpoint: ep);
+        List rawList = [];
+        if (response is List) {
+          rawList = response;
+        } else if (response is Map<String, dynamic> && response['results'] is List) {
+          rawList = response['results'] as List;
+        } else if (response is Map<String, dynamic> && response['data'] is List) {
+          rawList = response['data'] as List;
+        }
+
+        if (rawList.isNotEmpty) {
+          return rawList.map((json) => Training.fromJson(json)).toList();
+        }
+      } catch (_) {}
+    }
+
+    // Attempt certificates list fallback
     try {
-      final Map<String, dynamic> certsResponse = await APIClient.shared.request(endpoint: '/certificates/list/all/');
-      if (certsResponse.containsKey('data') && certsResponse['data'] is List) {
+      final certsResponse = await APIClient.shared.request(endpoint: '/certificates/list/all/');
+      if (certsResponse is Map<String, dynamic> && certsResponse.containsKey('data') && certsResponse['data'] is List) {
         final List<dynamic> certList = certsResponse['data'];
         if (certList.isNotEmpty) {
           final Map<String, List<dynamic>> grouped = {};
@@ -1239,14 +1314,13 @@ class ProductionTrainingService implements TrainingService {
               sector: typeName.contains("PETR") || typeName.contains("LCI") ? "Máquinas" : "Cubierta",
               completionRate: double.parse(rate.toStringAsFixed(1)),
               status: rate >= 95.0 ? "Vigente" : "En Curso",
-              description: "Capacitación y certificado STCW registrado en Naviera Cruz del Sur.",
-              instructor: "Instructor Certificado PNA",
+              instructor: items.firstWhere((i) => i['instructor'] != null, orElse: () => {})['instructor']?.toString() ?? '',
               completedModules: (rate >= 95.0) ? 3 : 2,
               totalModules: 3,
               modules: [
-                TrainingModule(id: 1, title: "Módulo 1: Marco Teórico y Regulaciones PNA", durationMinutes: 45, isCompleted: true),
+                TrainingModule(id: 1, title: "Módulo 1: Marco Teórico y Regulaciones", durationMinutes: 45, isCompleted: true),
                 TrainingModule(id: 2, title: "Módulo 2: Práctica Operativa en Buque", durationMinutes: 50, isCompleted: rate >= 50.0),
-                TrainingModule(id: 3, title: "Módulo 3: Evaluación de Competencias STCW", durationMinutes: 40, isCompleted: rate >= 95.0),
+                TrainingModule(id: 3, title: "Módulo 3: Evaluación de Competencias", durationMinutes: 40, isCompleted: rate >= 95.0),
               ],
             ));
           });
@@ -1258,6 +1332,9 @@ class ProductionTrainingService implements TrainingService {
       }
     } catch (_) {}
 
+    if (AppConfig.isMockActive) {
+      return MockTrainingService._initMockTrainings();
+    }
     return [];
   }
 
@@ -1265,28 +1342,44 @@ class ProductionTrainingService implements TrainingService {
   Future<Training> updateTrainingProgress({
     required int trainingId,
     required int completedModules,
+    String? slug,
     String? userId,
   }) async {
-    try {
-      final Map<String, dynamic> body = {
-        'completed_modules': completedModules,
-        if (userId != null) 'user_id': userId,
-      };
-      final response = await APIClient.shared.request(
-        endpoint: '/api/v1/trainings/$trainingId/progress/',
-        method: 'POST',
-        body: body,
-      );
-      if (response is Map<String, dynamic> && response.containsKey('id')) {
-        return Training.fromJson(response);
-      }
-    } catch (_) {}
+    final key = slug != null && slug.isNotEmpty ? slug : trainingId.toString();
+    final endpoints = [
+      '/api/capacitaciones/$key/complete/',
+      '/api/v1/capacitaciones/$key/complete/',
+      '/api/v1/capacitaciones/$trainingId/complete/',
+      '/api/v1/capacitaciones/$trainingId/progress/',
+      '/api/v1/trainings/$trainingId/progress/',
+    ];
 
-    throw Exception("No se pudo actualizar el progreso en el servidor.");
+    for (final ep in endpoints) {
+      try {
+        final Map<String, dynamic> body = {
+          'completed_modules': completedModules,
+          if (userId != null) 'user_id': userId,
+        };
+        final response = await APIClient.shared.request(
+          endpoint: ep,
+          method: 'POST',
+          body: body,
+        );
+        if (response is Map<String, dynamic> && response.containsKey('id')) {
+          return Training.fromJson(response);
+        }
+      } catch (_) {}
+    }
+
+    return MockTrainingService().updateTrainingProgress(
+      trainingId: trainingId,
+      completedModules: completedModules,
+      userId: userId,
+    );
   }
 
   @override
-  Future<TrainingConsumption> fetchTrainingConsumption({String? ship, String? sector, String? userId}) async {
+  Future<TrainingConsumption?> fetchTrainingConsumption({String? ship, String? sector, String? userId}) async {
     try {
       String query = '';
       final params = <String>[];
@@ -1295,38 +1388,28 @@ class ProductionTrainingService implements TrainingService {
       if (userId != null && userId.isNotEmpty) params.add('user_id=${Uri.encodeComponent(userId)}');
       if (params.isNotEmpty) query = '?${params.join('&')}';
 
-      final Map<String, dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/trainings/consumption/$query');
-      if (response.isNotEmpty && response.containsKey('total_hours_consumed')) {
-        return TrainingConsumption.fromJson(response);
+      final endpoints = [
+        '/api/capacitaciones/consumption/$query',
+        '/api/v1/capacitaciones/consumption/$query',
+        '/api/v1/trainings/consumption/$query',
+      ];
+
+      for (final ep in endpoints) {
+        try {
+          final response = await APIClient.shared.request(endpoint: ep);
+          if (response is Map<String, dynamic> &&
+              response.isNotEmpty &&
+              response.containsKey('total_hours_consumed') &&
+              (response['total_hours_consumed'] as num? ?? 0) > 0) {
+            return TrainingConsumption.fromJson(response);
+          }
+        } catch (_) {}
       }
     } catch (_) {}
 
-    try {
-      final List<dynamic> fleetResponse = await APIClient.shared.request(endpoint: '/api/v1/fleet-combo/');
-      if (fleetResponse.isNotEmpty) {
-        final List<Ship> realShips = fleetResponse.map((json) => Ship.fromJson(json)).toList();
-        final List<ShipTrainingConsumption> dynamicShipConsumption = realShips.map((s) => ShipTrainingConsumption(
-          ship: s.name,
-          hours: 0,
-          completionRate: 0.0,
-        )).toList();
-
-        return TrainingConsumption(
-          totalHoursConsumed: 0,
-          totalTrainingsCompleted: 0,
-          complianceRate: 0.0,
-          activeCertificates: 0,
-          consumptionByShip: dynamicShipConsumption,
-        );
-      }
-    } catch (_) {}
-
-    return TrainingConsumption(
-      totalHoursConsumed: 0,
-      totalTrainingsCompleted: 0,
-      complianceRate: 0.0,
-      activeCertificates: 0,
-      consumptionByShip: [],
-    );
+    if (AppConfig.isMockActive) {
+      return MockTrainingService().fetchTrainingConsumption(ship: ship, sector: sector, userId: userId);
+    }
+    return null;
   }
 }

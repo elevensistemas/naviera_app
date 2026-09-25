@@ -175,19 +175,7 @@ class _ScheduleViewState extends State<ScheduleView> {
             ),
           ),
 
-          // Tabs Switcher: Intranet Operations Dashboard vs Detalle de Operaciones
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-            child: Row(
-              children: [
-                _buildTabButton(0, "Dashboard de Operaciones"),
-                const SizedBox(width: 8),
-                _buildTabButton(1, "Detalle de Operaciones"),
-              ],
-            ),
-          ),
-
-          // Dynamic Body Content
+          // Dynamic Body Content (Dashboard de Operaciones)
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
@@ -196,9 +184,7 @@ class _ScheduleViewState extends State<ScheduleView> {
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(16.0),
-                      child: _activeTabIndex == 0
-                          ? _buildOperationsDashboardLayout(context)
-                          : _buildOperationsDetailList(context, textColor, secondaryTextColor),
+                      child: _buildOperationsDashboardLayout(context),
                     ),
                   ),
           ),
@@ -246,9 +232,29 @@ class _ScheduleViewState extends State<ScheduleView> {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Columna 1: Raizen Diarias + WFS Diarias
+              // Columna 1: Cargas Programadas (Raizen + WFS)
               Expanded(
                 flex: 35,
+                child: _buildProgrammedLoadsCard(context),
+              ),
+              const SizedBox(width: 16),
+
+              // Columna 2: Cantidad de Buques por Período + Cargas Anual
+              Expanded(
+                flex: 35,
+                child: Column(
+                  children: [
+                    _buildPeriodShipsLoadedCard(context),
+                    const SizedBox(height: 16),
+                    _buildAnnualLoadsCard(context),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+
+              // Columna 3: Cargas Diarias Raizen + Cargas Diarias WFS
+              Expanded(
+                flex: 30,
                 child: Column(
                   children: [
                     _buildRaizenDailyLoadsCard(context),
@@ -257,26 +263,6 @@ class _ScheduleViewState extends State<ScheduleView> {
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
-
-              // Columna 2: Cargas Anual + Buques cargados del período
-              Expanded(
-                flex: 35,
-                child: Column(
-                  children: [
-                    _buildAnnualLoadsCard(context),
-                    const SizedBox(height: 16),
-                    _buildPeriodShipsLoadedCard(context),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-
-              // Columna 3: Cargas Programadas (Raizen + WFS)
-              Expanded(
-                flex: 30,
-                child: _buildProgrammedLoadsCard(context),
-              ),
             ],
           );
         }
@@ -284,15 +270,15 @@ class _ScheduleViewState extends State<ScheduleView> {
         // Diseño Adaptativo para Pantallas Normales / Móviles
         return Column(
           children: [
-            _buildRaizenDailyLoadsCard(context),
-            const SizedBox(height: 16),
-            _buildWfsDailyLoadsCard(context),
-            const SizedBox(height: 16),
-            _buildAnnualLoadsCard(context),
+            _buildProgrammedLoadsCard(context),
             const SizedBox(height: 16),
             _buildPeriodShipsLoadedCard(context),
             const SizedBox(height: 16),
-            _buildProgrammedLoadsCard(context),
+            _buildAnnualLoadsCard(context),
+            const SizedBox(height: 16),
+            _buildRaizenDailyLoadsCard(context),
+            const SizedBox(height: 16),
+            _buildWfsDailyLoadsCard(context),
           ],
         );
       },
