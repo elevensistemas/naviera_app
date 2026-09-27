@@ -225,7 +225,7 @@ class _FleetViewState extends State<FleetView> {
             },
           ),
           
-          // Ship Selection Tabs (Cápsulas compactas adaptables para que NANY no se corte en móviles)
+          // Ship Selection Tabs (Cápsulas predefinidas azul, gris y naranja adaptables para móvil)
           if (!_isLoading && _ships.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
@@ -239,15 +239,27 @@ class _FleetViewState extends State<FleetView> {
                   final Color chipBgColor;
                   final Color chipTextColor;
                   final Color chipIconColor;
+                  final Border chipBorder;
 
                   if (isSelected) {
                     chipBgColor = shipColor;
                     chipTextColor = Colors.white;
                     chipIconColor = Colors.white;
+                    chipBorder = Border.all(color: shipColor, width: 1.5);
                   } else {
-                    chipBgColor = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
-                    chipTextColor = isDark ? Colors.white70 : const Color(0xFF0F172A);
-                    chipIconColor = isDark ? Colors.white70 : const Color(0xFF0F172A);
+                    chipBgColor = isDark
+                        ? shipColor.withValues(alpha: 0.25)
+                        : shipColor.withValues(alpha: 0.12);
+                    chipTextColor = isDark
+                        ? Colors.white
+                        : shipColor;
+                    chipIconColor = isDark
+                        ? Colors.white70
+                        : shipColor;
+                    chipBorder = Border.all(
+                      color: shipColor.withValues(alpha: isDark ? 0.5 : 0.35),
+                      width: 1.5,
+                    );
                   }
 
                   return Expanded(
@@ -265,12 +277,13 @@ class _FleetViewState extends State<FleetView> {
                           decoration: BoxDecoration(
                             color: chipBgColor,
                             borderRadius: BorderRadius.circular(24),
+                            border: chipBorder,
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                Icons.directions_boat,
+                                Icons.directions_boat_filled_rounded,
                                 size: isMobile ? 15 : 17,
                                 color: chipIconColor,
                               ),
@@ -283,7 +296,7 @@ class _FleetViewState extends State<FleetView> {
                                     style: TextStyle(
                                       color: chipTextColor,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: isMobile ? 12 : 13.5,
+                                      fontSize: isMobile ? 11.5 : 13.5,
                                       letterSpacing: 0.2,
                                     ),
                                   ),

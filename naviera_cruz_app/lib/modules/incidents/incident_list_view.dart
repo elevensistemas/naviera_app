@@ -92,6 +92,14 @@ class _IncidentListViewState extends State<IncidentListView> {
     return 'Personal Naviera';
   }
 
+  Color _getIncidentShipColor(String name) {
+    final upper = name.toUpperCase();
+    if (upper.contains('ALFA')) return const Color(0xFF0057B8); // Blue
+    if (upper.contains('GUSTAVO')) return const Color(0xFF64748B); // Slate / Grey
+    if (upper.contains('NANY')) return const Color(0xFFED8B00); // Orange
+    return const Color(0xFF0284C7); // Default Ocean Blue for 'Todos'
+  }
+
   List<Incident> get _filteredIncidents {
     if (_selectedShipFilter == 'Todos') return _incidents;
     final filterTarget = _selectedShipFilter.toUpperCase().trim();
@@ -178,7 +186,7 @@ class _IncidentListViewState extends State<IncidentListView> {
         ? "Control de incidentes y reporte de novedades en tiempo real."
         : "Registro de novedades de seguridad del buque $_selectedShipFilter.";
 
-    final filtersList = ['Todos', 'ALFA C', 'NANY', 'GUSTAVO U'];
+    final filtersList = ['Todos', 'ALFA C', 'GUSTAVO U', 'NANY'];
 
     return Scaffold(
       backgroundColor: bodyBg,
@@ -291,7 +299,7 @@ class _IncidentListViewState extends State<IncidentListView> {
                           ),
                           const SizedBox(height: 24),
 
-                          // Section Title & Vessel Filter Chips
+                          // Section Title & Vessel Filter Chips Header
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -311,40 +319,71 @@ class _IncidentListViewState extends State<IncidentListView> {
                           ),
                           const SizedBox(height: 10),
 
-                          // Vessel Filter Chips
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: filtersList.map((shipFilter) {
-                                final isSelected = _selectedShipFilter == shipFilter;
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: ChoiceChip(
-                                    avatar: isSelected
-                                        ? const Icon(Icons.check, size: 14, color: Colors.white)
-                                        : const Icon(Icons.directions_boat, size: 14, color: Colors.grey),
-                                    label: Text(
-                                      shipFilter,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: isSelected ? Colors.white : secondaryTextColor,
+                          // Vessel Filter Buttons Centered & Responsive (No Horiz Scroll Cutoff)
+                          Row(
+                            children: filtersList.map((shipFilter) {
+                              final isSelected = _selectedShipFilter == shipFilter;
+                              final shipColor = _getIncidentShipColor(shipFilter);
+
+                              final Color chipBg = isSelected
+                                  ? shipColor
+                                  : (isDark ? shipColor.withValues(alpha: 0.22) : shipColor.withValues(alpha: 0.12));
+                              final Color chipText = isSelected
+                                  ? Colors.white
+                                  : (isDark ? Colors.white : shipColor);
+                              final Color chipIcon = isSelected
+                                  ? Colors.white
+                                  : (isDark ? Colors.white70 : shipColor);
+
+                              return Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedShipFilter = shipFilter;
+                                      });
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: chipBg,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: isSelected ? shipColor : shipColor.withValues(alpha: isDark ? 0.45 : 0.35),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            shipFilter == 'Todos' ? Icons.apps_rounded : Icons.directions_boat_filled_rounded,
+                                            size: 13,
+                                            color: chipIcon,
+                                          ),
+                                          const SizedBox(width: 3),
+                                          Flexible(
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Text(
+                                                shipFilter,
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: chipText,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    selected: isSelected,
-                                    selectedColor: ColorTheme.primary,
-                                    backgroundColor: isDark ? Colors.white10 : Colors.grey.shade200,
-                                    onSelected: (selected) {
-                                      if (selected) {
-                                        setState(() {
-                                          _selectedShipFilter = shipFilter;
-                                        });
-                                      }
-                                    },
                                   ),
-                                );
-                              }).toList(),
-                            ),
+                                ),
+                              );
+                            }).toList(),
                           ),
                           const SizedBox(height: 14),
 
@@ -449,27 +488,33 @@ class _IncidentListViewState extends State<IncidentListView> {
                                       // Footer Row: Ship Badge & Reporter Info
                                       Row(
                                         children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: ColorTheme.primary.withOpacity(0.12),
-                                              borderRadius: BorderRadius.circular(8),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                const Icon(Icons.directions_boat_filled, size: 14, color: ColorTheme.primary),
-                                                const SizedBox(width: 6),
-                                                Text(
-                                                  "Barco: $shipDisplay",
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
-                                                    color: ColorTheme.primary,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
+                                          Builder(
+                                            builder: (context) {
+                                              final shipCol = _getIncidentShipColor(shipDisplay);
+                                              return Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: shipCol.withValues(alpha: isDark ? 0.2 : 0.12),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  border: Border.all(color: shipCol.withValues(alpha: 0.35)),
                                                 ),
-                                              ],
-                                            ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(Icons.directions_boat_filled_rounded, size: 14, color: shipCol),
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      "Barco: $shipDisplay",
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: shipCol,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
                                           ),
                                           const Spacer(),
                                           Row(
