@@ -568,35 +568,7 @@ class _ScheduleViewState extends State<ScheduleView> {
                           ],
                         ),
                       ),
-                      InkWell(
-                        onTap: () => _showDetailModal(context, "Cargas Programadas Raizen", "Raizen"),
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            children: [
-                              Text(
-                                "Ver detalle",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white70 : const Color(0xFF475569),
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                size: 16,
-                                color: isDark ? Colors.white70 : const Color(0xFF475569),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -986,35 +958,7 @@ class _ScheduleViewState extends State<ScheduleView> {
                           ],
                         ),
                       ),
-                      InkWell(
-                        onTap: () => _showDetailModal(context, "Cargas Programadas WFS", "WFS"),
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.white10 : const Color(0xFFFFF7ED),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            children: [
-                              Text(
-                                "Ver detalle",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark ? Colors.white70 : const Color(0xFF475569),
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                Icons.chevron_right_rounded,
-                                size: 16,
-                                color: isDark ? Colors.white70 : const Color(0xFF475569),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+
                     ],
                   ),
                   const SizedBox(height: 20),
