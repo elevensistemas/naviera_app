@@ -111,7 +111,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "Obligatorio",
         description: "Guía de seguridad OCIMF Megomp para operaciones de amarre en muelles y monoboyas.",
         instructor: "Cap. Esteban Valdez (Instructor STCW)",
-        videoUrl: "https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
         completedModules: 2,
         totalModules: 4,
         videoPositionSeconds: 3600,
@@ -133,7 +133,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "Completado",
         description: "Inspección de plumas, grúas, estrobos y grilletes según normativa internacional marítima.",
         instructor: "Ing. Gabriel Rossi",
-        videoUrl: "https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
         completedModules: 3,
         totalModules: 3,
         videoPositionSeconds: 3600,
@@ -154,7 +154,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "En progreso",
         description: "Cultura de seguridad, reporte de cuasi-accidentes (Near Miss) y condiciones inseguras a bordo.",
         instructor: "Lic. Roberto Soria",
-        videoUrl: "https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
         completedModules: 1,
         totalModules: 3,
         videoPositionSeconds: 720,
@@ -175,7 +175,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "Nuevo",
         description: "Procedimientos Lockout/Tagout (LOTO), aislamiento de tableros eléctricos y protección en salas de máquinas.",
         instructor: "Ing. Carlos Benítez",
-        videoUrl: "https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
         completedModules: 0,
         totalModules: 4,
         videoPositionSeconds: 0,
@@ -197,7 +197,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "En progreso",
         description: "Prácticas seguras en maniobras de cubierta, elementos de protección personal (EPP) y comunicación.",
         instructor: "Cap. Marcos Benítez",
-        videoUrl: "https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
         completedModules: 1,
         totalModules: 5,
         videoPositionSeconds: 720,
@@ -1105,49 +1105,137 @@ class InlineTrainingVideoPlayer extends StatefulWidget {
 }
 
 class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
-  late VideoPlayerController _controller;
+  VideoPlayerController? _controller;
+  ChewieController? _chewieController;
   bool _isInitialized = false;
   bool _hasError = false;
+  int _attemptIndex = 0;
+
+  late final List<String> _fallbackUrls;
 
   @override
   void initState() {
     super.initState();
+    _fallbackUrls = [
+      widget.videoUrl,
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    ];
     _initController();
   }
 
-  void _initController() async {
+  Future<void> _initController() async {
+    setState(() {
+      _hasError = false;
+      _isInitialized = false;
+    });
+
+    final targetUrl = _attemptIndex < _fallbackUrls.length ? _fallbackUrls[_attemptIndex] : _fallbackUrls.last;
+
     try {
-      final Uri uri = Uri.parse(widget.videoUrl);
+      final Uri uri = Uri.parse(targetUrl);
       _controller = VideoPlayerController.networkUrl(uri);
-      await _controller.initialize();
+      await _controller!.initialize();
+
       if (mounted) {
+        _chewieController = ChewieController(
+          videoPlayerController: _controller!,
+          aspectRatio: _controller!.value.aspectRatio > 0 ? _controller!.value.aspectRatio : 16 / 9,
+          autoPlay: true,
+          looping: false,
+          showControls: true,
+          placeholder: Container(
+            color: Colors.black,
+            child: const Center(
+              child: CircularProgressIndicator(color: Color(0xFF0088FF)),
+            ),
+          ),
+          errorBuilder: (context, errorMessage) {
+            return _buildErrorStateWidget();
+          },
+        );
+
         setState(() {
           _isInitialized = true;
         });
-        _controller.play();
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _hasError = true;
-        });
+      if (_attemptIndex + 1 < _fallbackUrls.length) {
+        _attemptIndex++;
+        await _initController();
+      } else {
+        if (mounted) {
+          setState(() {
+            _hasError = true;
+          });
+        }
       }
     }
+  }
+
+  Widget _buildErrorStateWidget() {
+    return Container(
+      height: 210,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF334155)),
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.video_camera_back_rounded, color: Color(0xFF38BDF8), size: 42),
+              const SizedBox(height: 8),
+              const Text(
+                "Transmisión de Clase STCW",
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                "No se pudo cargar la transmisión en vivo.",
+                style: TextStyle(color: Colors.white70, fontSize: 11),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                onPressed: () {
+                  _attemptIndex = 0;
+                  _initController();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0088FF),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+                icon: const Icon(Icons.refresh_rounded, size: 16),
+                label: const Text("Reintentar Video", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   void dispose() {
-    if (_isInitialized) {
-      _controller.dispose();
-    }
+    _chewieController?.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     if (_hasError) {
+      return _buildErrorStateWidget();
+    }
+
+    if (!_isInitialized || _chewieController == null) {
       return Container(
-        height: 200,
+        height: 210,
         decoration: BoxDecoration(
           color: Colors.black,
           borderRadius: BorderRadius.circular(16),
@@ -1156,11 +1244,11 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.video_collection_outlined, color: Colors.white70, size: 48),
-              SizedBox(height: 8),
+              CircularProgressIndicator(color: Color(0xFF0088FF)),
+              SizedBox(height: 12),
               Text(
-                "Transmisión de Clase STCW en Vivo",
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                "Cargando clase STCW...",
+                style: TextStyle(color: Colors.white70, fontSize: 12),
               ),
             ],
           ),
@@ -1168,75 +1256,15 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
       );
     }
 
-    if (!_isInitialized) {
-      return Container(
-        height: 200,
-        decoration: BoxDecoration(
-          color: Colors.black,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Center(
-          child: CircularProgressIndicator(color: Color(0xFF0088FF)),
-        ),
-      );
-    }
-
     return Container(
-      height: 200,
+      height: 210,
       decoration: BoxDecoration(
         color: Colors.black,
         borderRadius: BorderRadius.circular(16),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Center(
-              child: AspectRatio(
-                aspectRatio: _controller.value.aspectRatio > 0 ? _controller.value.aspectRatio : 16 / 9,
-                child: VideoPlayer(_controller),
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: VideoProgressIndicator(
-                _controller,
-                allowScrubbing: true,
-                colors: const VideoProgressColors(
-                  playedColor: Color(0xFF0088FF),
-                  bufferedColor: Colors.white30,
-                  backgroundColor: Colors.white10,
-                ),
-              ),
-            ),
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  if (_controller.value.isPlaying) {
-                    _controller.pause();
-                  } else {
-                    _controller.play();
-                  }
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: const BoxDecoration(
-                  color: Colors.black45,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  _controller.value.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
-            ),
-          ],
-        ),
+        child: Chewie(controller: _chewieController!),
       ),
     );
   }
