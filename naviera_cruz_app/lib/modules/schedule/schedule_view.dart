@@ -480,35 +480,18 @@ class _ScheduleViewState extends State<ScheduleView> {
               top: 0,
               left: 0,
               right: 0,
-              height: 76,
+              height: 64,
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                   gradient: LinearGradient(
                     colors: [
-                      const Color(0xFF0066FF).withValues(alpha: isDark ? 0.35 : 0.22),
-                      const Color(0xFF38BDF8).withValues(alpha: isDark ? 0.12 : 0.08),
+                      const Color(0xFF0066FF).withValues(alpha: isDark ? 0.16 : 0.08),
+                      const Color(0xFF0066FF).withValues(alpha: isDark ? 0.04 : 0.01),
                       Colors.transparent,
                     ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: -28,
-              left: -28,
-              child: Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFF0066FF).withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
                 ),
               ),
@@ -870,35 +853,18 @@ class _ScheduleViewState extends State<ScheduleView> {
               top: 0,
               left: 0,
               right: 0,
-              height: 76,
+              height: 64,
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                   gradient: LinearGradient(
                     colors: [
-                      const Color(0xFFFF6B00).withValues(alpha: isDark ? 0.35 : 0.22),
-                      const Color(0xFFFF8C00).withValues(alpha: isDark ? 0.12 : 0.08),
+                      const Color(0xFFFF6B00).withValues(alpha: isDark ? 0.16 : 0.08),
+                      const Color(0xFFFF6B00).withValues(alpha: isDark ? 0.04 : 0.01),
                       Colors.transparent,
                     ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: -28,
-              left: -28,
-              child: Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFFFF6B00).withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
                 ),
               ),
@@ -1280,35 +1246,18 @@ class _ScheduleViewState extends State<ScheduleView> {
               top: 0,
               left: 0,
               right: 0,
-              height: 76,
+              height: 64,
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                   gradient: LinearGradient(
                     colors: [
-                      const Color(0xFF0284C7).withValues(alpha: isDark ? 0.35 : 0.22),
-                      const Color(0xFF38BDF8).withValues(alpha: isDark ? 0.12 : 0.08),
+                      const Color(0xFF0284C7).withValues(alpha: isDark ? 0.16 : 0.08),
+                      const Color(0xFF0284C7).withValues(alpha: isDark ? 0.04 : 0.01),
                       Colors.transparent,
                     ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: -28,
-              left: -28,
-              child: Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFF0284C7).withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
                 ),
               ),
@@ -1416,35 +1365,18 @@ class _ScheduleViewState extends State<ScheduleView> {
               top: 0,
               left: 0,
               right: 0,
-              height: 76,
+              height: 64,
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                   gradient: LinearGradient(
                     colors: [
-                      const Color(0xFF6366F1).withValues(alpha: isDark ? 0.35 : 0.22),
-                      const Color(0xFF818CF8).withValues(alpha: isDark ? 0.12 : 0.08),
+                      const Color(0xFF6366F1).withValues(alpha: isDark ? 0.16 : 0.08),
+                      const Color(0xFF6366F1).withValues(alpha: isDark ? 0.04 : 0.01),
                       Colors.transparent,
                     ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: -28,
-              left: -28,
-              child: Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFF6366F1).withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
                 ),
               ),
@@ -1562,35 +1494,18 @@ class _ScheduleViewState extends State<ScheduleView> {
               top: 0,
               left: 0,
               right: 0,
-              height: 76,
+              height: 64,
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                   gradient: LinearGradient(
                     colors: [
-                      const Color(0xFF0066FF).withValues(alpha: isDark ? 0.35 : 0.22),
-                      const Color(0xFF38BDF8).withValues(alpha: isDark ? 0.12 : 0.08),
+                      const Color(0xFF0066FF).withValues(alpha: isDark ? 0.16 : 0.08),
+                      const Color(0xFF0066FF).withValues(alpha: isDark ? 0.04 : 0.01),
                       Colors.transparent,
                     ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: -28,
-              left: -28,
-              child: Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFF0066FF).withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
                 ),
               ),
@@ -1720,35 +1635,18 @@ class _ScheduleViewState extends State<ScheduleView> {
               top: 0,
               left: 0,
               right: 0,
-              height: 76,
+              height: 64,
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                   gradient: LinearGradient(
                     colors: [
-                      const Color(0xFFFF6B00).withValues(alpha: isDark ? 0.35 : 0.22),
-                      const Color(0xFFFF8C00).withValues(alpha: isDark ? 0.12 : 0.08),
+                      const Color(0xFFFF6B00).withValues(alpha: isDark ? 0.16 : 0.08),
+                      const Color(0xFFFF6B00).withValues(alpha: isDark ? 0.04 : 0.01),
                       Colors.transparent,
                     ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: -28,
-              left: -28,
-              child: Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      const Color(0xFFFF6B00).withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
                 ),
               ),
@@ -1987,34 +1885,70 @@ class _RaizenBarChartPainter extends CustomPainter {
     );
 
     final double xTarget = leftMargin + (targetKtons / maxScale) * chartWidth;
+    
+    // Bold, glowing crimson target line
     final paintDashed = Paint()
-      ..color = isDark ? Colors.white70 : const Color(0xFF0F172A)
-      ..strokeWidth = 2.0;
+      ..color = const Color(0xFFEF4444)
+      ..strokeWidth = 2.5;
 
-    double dashY = yBar - 16;
-    const double dashWidth = 4;
-    const double dashSpace = 4;
-    while (dashY < yBar + barHeight + 10) {
+    double dashY = yBar - 4;
+    const double dashWidth = 5;
+    const double dashSpace = 3;
+    while (dashY < yBar + barHeight + 8) {
       canvas.drawLine(Offset(xTarget, dashY), Offset(xTarget, dashY + dashWidth), paintDashed);
       dashY += dashWidth + dashSpace;
     }
 
-    final paintBadgeBg = Paint()..color = isDark ? const Color(0xFF38BDF8) : const Color(0xFF0B192C);
-    const badgeW = 68.0;
+    // Top & Bottom target dots
+    final paintDotFill = Paint()..color = const Color(0xFFEF4444);
+    final paintDotBorder = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(Offset(xTarget, yBar + barHeight + 4), 3.5, paintDotFill);
+    canvas.drawCircle(Offset(xTarget, yBar + barHeight + 4), 3.5, paintDotBorder);
+
+    // Highly visible badge: "🎯 OBJETIVO 15k"
+    const badgeW = 92.0;
     const badgeH = 22.0;
-    final rectBadge = Rect.fromCenter(center: Offset(xTarget, yBar - 14), width: badgeW, height: badgeH);
-    canvas.drawRRect(RRect.fromRectAndRadius(rectBadge, const Radius.circular(6)), paintBadgeBg);
+    final rectBadge = Rect.fromCenter(center: Offset(xTarget, yBar - 15), width: badgeW, height: badgeH);
+    
+    final paintBadgeBg = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFFDC2626), Color(0xFF991B1B)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(rectBadge);
+      
+    final paintBadgeBorder = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+
+    // Badge shadow & background
+    canvas.drawRRect(RRect.fromRectAndRadius(rectBadge.shift(const Offset(0, 1.5)), const Radius.circular(11)), Paint()..color = Colors.black26);
+    canvas.drawRRect(RRect.fromRectAndRadius(rectBadge, const Radius.circular(11)), paintBadgeBg);
+    canvas.drawRRect(RRect.fromRectAndRadius(rectBadge, const Radius.circular(11)), paintBadgeBorder);
+
+    // Pin indicator triangle pointing down
+    final pathTriangle = Path()
+      ..moveTo(xTarget - 4, yBar - 4)
+      ..lineTo(xTarget + 4, yBar - 4)
+      ..lineTo(xTarget, yBar)
+      ..close();
+    canvas.drawPath(pathTriangle, paintDotFill);
 
     final textBadgePainter = TextPainter(
-      text: TextSpan(
-        text: "Objetivo ${targetKtons.toStringAsFixed(2)}k",
-        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: isDark ? Colors.black : Colors.white),
+      text: const TextSpan(
+        text: "🎯 OBJETIVO 15k",
+        style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 0.2),
       ),
       textAlign: TextAlign.center,
       textDirection: TextDirection.ltr,
     );
     textBadgePainter.layout();
-    textBadgePainter.paint(canvas, Offset(xTarget - textBadgePainter.width / 2, yBar - 14 - textBadgePainter.height / 2));
+    textBadgePainter.paint(canvas, Offset(xTarget - textBadgePainter.width / 2, yBar - 15 - textBadgePainter.height / 2));
   }
 
   @override
@@ -2114,34 +2048,70 @@ class _WfsStackedBarChartPainter extends CustomPainter {
     tN.paint(canvas, Offset(leftMargin + widthGustavo + widthNany / 2 - tN.width / 2, yBar + barHeight / 2 - tN.height / 2));
 
     final double xTarget = leftMargin + (targetKtons / maxScale) * chartWidth;
+    
+    // Bold, glowing crimson target line
     final paintDashed = Paint()
-      ..color = Colors.red
-      ..strokeWidth = 2.0;
+      ..color = const Color(0xFFEF4444)
+      ..strokeWidth = 2.5;
 
-    double dashY = yBar - 16;
-    const double dashWidth = 4;
-    const double dashSpace = 4;
-    while (dashY < yBar + barHeight + 10) {
+    double dashY = yBar - 4;
+    const double dashWidth = 5;
+    const double dashSpace = 3;
+    while (dashY < yBar + barHeight + 8) {
       canvas.drawLine(Offset(xTarget, dashY), Offset(xTarget, dashY + dashWidth), paintDashed);
       dashY += dashWidth + dashSpace;
     }
 
-    final paintBadgeBg = Paint()..color = isDark ? Colors.white24 : const Color(0xFFE2E8F0);
-    const badgeW = 60.0;
-    const badgeH = 20.0;
-    final rectBadge = Rect.fromCenter(center: Offset(xTarget, yBar - 14), width: badgeW, height: badgeH);
-    canvas.drawRRect(RRect.fromRectAndRadius(rectBadge, const Radius.circular(6)), paintBadgeBg);
+    // Top & Bottom target dots
+    final paintDotFill = Paint()..color = const Color(0xFFEF4444);
+    final paintDotBorder = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawCircle(Offset(xTarget, yBar + barHeight + 4), 3.5, paintDotFill);
+    canvas.drawCircle(Offset(xTarget, yBar + barHeight + 4), 3.5, paintDotBorder);
+
+    // Highly visible badge: "🎯 OBJETIVO 15k"
+    const badgeW = 92.0;
+    const badgeH = 22.0;
+    final rectBadge = Rect.fromCenter(center: Offset(xTarget, yBar - 15), width: badgeW, height: badgeH);
+    
+    final paintBadgeBg = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFFDC2626), Color(0xFF991B1B)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(rectBadge);
+      
+    final paintBadgeBorder = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+
+    // Badge shadow & background
+    canvas.drawRRect(RRect.fromRectAndRadius(rectBadge.shift(const Offset(0, 1.5)), const Radius.circular(11)), Paint()..color = Colors.black26);
+    canvas.drawRRect(RRect.fromRectAndRadius(rectBadge, const Radius.circular(11)), paintBadgeBg);
+    canvas.drawRRect(RRect.fromRectAndRadius(rectBadge, const Radius.circular(11)), paintBadgeBorder);
+
+    // Pin indicator triangle pointing down
+    final pathTriangle = Path()
+      ..moveTo(xTarget - 4, yBar - 4)
+      ..lineTo(xTarget + 4, yBar - 4)
+      ..lineTo(xTarget, yBar)
+      ..close();
+    canvas.drawPath(pathTriangle, paintDotFill);
 
     final textBadgePainter = TextPainter(
-      text: TextSpan(
-        text: "Objetivo ${targetKtons.toInt()}k",
-        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+      text: const TextSpan(
+        text: "🎯 OBJETIVO 15k",
+        style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 0.2),
       ),
       textAlign: TextAlign.center,
       textDirection: TextDirection.ltr,
     );
     textBadgePainter.layout();
-    textBadgePainter.paint(canvas, Offset(xTarget - textBadgePainter.width / 2, yBar - 14 - textBadgePainter.height / 2));
+    textBadgePainter.paint(canvas, Offset(xTarget - textBadgePainter.width / 2, yBar - 15 - textBadgePainter.height / 2));
   }
 
   @override
