@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'ncs_header_data.dart';
+import 'logo.dart';
 import '../core/storage.dart';
 import '../modules/notifications/notifications_view.dart';
 import '../modules/profile/profile_view.dart';
@@ -109,12 +110,18 @@ class NcsHeroHeader extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (Navigator.canPop(context))
+                          if (Navigator.canPop(context)) ...[
                             _HeaderActionButton(
                               icon: Icons.arrow_back_rounded,
                               tooltip: 'Volver',
                               onTap: () => Navigator.pop(context),
                             ),
+                            const SizedBox(width: 8),
+                          ],
+                          const NavieraLogo(
+                            size: 26,
+                            isWhiteVersion: true,
+                          ),
                         ],
                       ),
 
