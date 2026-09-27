@@ -197,14 +197,14 @@ class _FleetViewState extends State<FleetView> {
         ? _ships[_selectedShipIndex]
         : null;
 
-    final String bannerTitle = currentShip != null
-        ? (_selectedShipIndex == 0 ? "Flota y operaciones" : "Buque ${currentShip.name}")
-        : "Flota y operaciones";
+    final String shipDisplayName = currentShip != null
+        ? (currentShip.name.startsWith('BT ') ? currentShip.name : "BT ${currentShip.name}")
+        : "BT ALFA C";
+
+    final String bannerTitle = shipDisplayName;
 
     final String bannerSubtitle = currentShip != null
-        ? (_selectedShipIndex == 0
-            ? "Monitoreo en tiempo real de nuestra flota."
-            : "Monitoreo en tiempo real • IMO ${currentShip.imoNumber}")
+        ? "Monitoreo en tiempo real • IMO ${currentShip.imoNumber}"
         : "Monitoreo en tiempo real de nuestra flota.";
 
     return Scaffold(
@@ -361,7 +361,7 @@ class _FleetViewState extends State<FleetView> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      ship.name,
+                      ship.name.startsWith('BT ') ? ship.name : "BT ${ship.name}",
                       style: TypographyTheme.headline(context).copyWith(
                         color: textColor,
                         fontWeight: FontWeight.bold,
