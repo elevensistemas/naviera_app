@@ -431,7 +431,7 @@ class _HomeViewState extends State<HomeView> {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Header Date + Menu dots (Sin la cápsula de "Aviso Importante")
           Row(
@@ -454,29 +454,37 @@ class _HomeViewState extends State<HomeView> {
           ),
           const SizedBox(height: 10),
 
-          // Title ("Save the Date" mostrado una sola vez)
-          Text(
-            titleText,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-              letterSpacing: -0.3,
+          // Title & Subtitle Centered
+          Center(
+            child: Column(
+              children: [
+                Text(
+                  titleText,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                if (subtitleText.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitleText,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: captionColor,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          if (subtitleText.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              subtitleText,
-              style: TextStyle(
-                fontSize: 14,
-                color: captionColor,
-              ),
-            ),
-          ],
           const SizedBox(height: 14),
 
-          // Mini 16:9 AspectRatio Banner Card (Clean, Prolijo, Tap to Zoom)
+          // Mini 16:9 AspectRatio Banner Card (Clean, Prolijo, BoxFit.contain to prevent text cropping)
           GestureDetector(
             onTap: () {
               if (post.imageUrl != null && post.imageUrl!.isNotEmpty) {
@@ -489,6 +497,7 @@ class _HomeViewState extends State<HomeView> {
               aspectRatio: 16 / 9,
               child: Container(
                 decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF020617) : const Color(0xFF0F172A),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
@@ -509,15 +518,15 @@ class _HomeViewState extends State<HomeView> {
                         child: (post.imageUrl != null && post.imageUrl!.isNotEmpty)
                             ? Image.network(
                                 post.imageUrl!,
-                                fit: BoxFit.cover,
+                                fit: BoxFit.contain,
                                 errorBuilder: (context, error, stackTrace) => Image.memory(
                                   saveTheDateImageBytes,
-                                  fit: BoxFit.cover,
+                                  fit: BoxFit.contain,
                                 ),
                               )
                             : Image.memory(
                                 saveTheDateImageBytes,
-                                fit: BoxFit.cover,
+                                fit: BoxFit.contain,
                               ),
                       ),
                       // Zoom hint pill on bottom right
