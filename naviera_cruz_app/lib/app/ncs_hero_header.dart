@@ -209,7 +209,7 @@ class NcsHeroHeader extends StatelessWidget {
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: isMobile ? 23.0 : 26.0,
-                            fontWeight: FontWeight.extrabold,
+                            fontWeight: FontWeight.w800,
                             letterSpacing: -0.5,
                             shadows: const [
                               Shadow(
