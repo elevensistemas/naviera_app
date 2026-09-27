@@ -109,15 +109,12 @@ class NcsHeroHeader extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (Navigator.canPop(context)) ...[
+                          if (Navigator.canPop(context))
                             _HeaderActionButton(
                               icon: Icons.arrow_back_rounded,
                               tooltip: 'Volver',
                               onTap: () => Navigator.pop(context),
                             ),
-                            const SizedBox(width: 10),
-                          ],
-                          _buildNcsLogo(),
                         ],
                       ),
 
@@ -259,85 +256,7 @@ class NcsHeroHeader extends StatelessWidget {
     );
   }
 
-  /// Construye el logo corporativo de Naviera Cruz del Sur (Matriz de puntos + texto)
-  Widget _buildNcsLogo() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 26,
-          height: 26,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(4, (r) {
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(4, (c) {
-                  final bool isFilled = (r == 0 && c == 2) || (r == 3 && c == 0);
-                  return Container(
-                    width: 4.5,
-                    height: 4.5,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isFilled ? Colors.white : Colors.transparent,
-                      border: Border.all(color: Colors.white, width: 1.0),
-                    ),
-                  );
-                }),
-              );
-            }),
-          ),
-        ),
-        const SizedBox(width: 7),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Text(
-              "NAVIERA",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 7.0,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.6,
-                height: 1.0,
-              ),
-            ),
-            Text(
-              "CRUZ",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 9.5,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.4,
-                height: 1.0,
-              ),
-            ),
-            Text(
-              "DEL",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 7.0,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.6,
-                height: 1.0,
-              ),
-            ),
-            Text(
-              "SUR",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 9.5,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.4,
-                height: 1.0,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+
 }
 
 class _HeaderActionButton extends StatelessWidget {
