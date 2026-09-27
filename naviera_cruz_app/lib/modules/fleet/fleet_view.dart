@@ -452,9 +452,90 @@ class _FleetViewState extends State<FleetView> {
               ],
             ),
             
-            // Programa de Carga Card (Disposición horizontal compacta lado a lado)
+            // Video Player or Fallback for SBS camera (Invertido: ahora posicionado donde estaba el Programa de Carga)
+            const SizedBox(height: 12),
+            if (ship.cameraUrl != null && ship.cameraUrl!.isNotEmpty)
+              SBSCameraPlayer(
+                key: ValueKey(ship.cameraUrl),
+                url: ship.cameraUrl!,
+              )
+            else
+              Container(
+                height: 150,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.videocam_off_outlined, color: Colors.grey, size: 30),
+                      const SizedBox(height: 6),
+                      Text(
+                        "Cámara SBS no disponible",
+                        style: TypographyTheme.caption(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            
+            Divider(height: 24, color: dividerColor),
+
+            // Resources Container with Progress Bars (combustible, agua, slop) matching user design
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: dividerColor),
+                boxShadow: isDark
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+              ),
+              child: Row(
+                children: [
+                  _buildResourceMetric(
+                    context: context,
+                    icon: Icons.local_gas_station_rounded,
+                    color: const Color(0xFFED8B00), // Orange
+                    label: "Combustible",
+                    value: _getFuelValue(ship),
+                    progressPercentage: _getFuelPercentage(ship),
+                  ),
+                  Container(height: 36, width: 1, margin: const EdgeInsets.symmetric(horizontal: 12), color: dividerColor),
+                  _buildResourceMetric(
+                    context: context,
+                    icon: Icons.water_drop_rounded,
+                    color: const Color(0xFF0057B8), // Blue
+                    label: "Agua",
+                    value: _getWaterValue(ship),
+                    progressPercentage: _getWaterPercentage(ship),
+                  ),
+                  Container(height: 36, width: 1, margin: const EdgeInsets.symmetric(horizontal: 12), color: dividerColor),
+                  _buildResourceMetric(
+                    context: context,
+                    icon: Icons.opacity_rounded,
+                    color: const Color(0xFF00A86B), // Green/Teal
+                    label: "Slop",
+                    value: _getSlopValue(ship),
+                    progressPercentage: _getSlopPercentage(ship),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Programa de Carga Card (Invertido: ahora posicionado debajo de los recursos)
             if (ship.targetShips.isNotEmpty) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -536,86 +617,6 @@ class _FleetViewState extends State<FleetView> {
                 ),
               ),
             ],
-            Divider(height: 24, color: dividerColor),
-
-            // Resources Container with Progress Bars (combustible, agua, slop) matching user design
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: dividerColor),
-                boxShadow: isDark
-                    ? []
-                    : [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-              ),
-              child: Row(
-                children: [
-                  _buildResourceMetric(
-                    context: context,
-                    icon: Icons.local_gas_station_rounded,
-                    color: const Color(0xFFED8B00), // Orange
-                    label: "Combustible",
-                    value: _getFuelValue(ship),
-                    progressPercentage: _getFuelPercentage(ship),
-                  ),
-                  Container(height: 36, width: 1, margin: const EdgeInsets.symmetric(horizontal: 12), color: dividerColor),
-                  _buildResourceMetric(
-                    context: context,
-                    icon: Icons.water_drop_rounded,
-                    color: const Color(0xFF0057B8), // Blue
-                    label: "Agua",
-                    value: _getWaterValue(ship),
-                    progressPercentage: _getWaterPercentage(ship),
-                  ),
-                  Container(height: 36, width: 1, margin: const EdgeInsets.symmetric(horizontal: 12), color: dividerColor),
-                  _buildResourceMetric(
-                    context: context,
-                    icon: Icons.opacity_rounded,
-                    color: const Color(0xFF00A86B), // Green/Teal
-                    label: "Slop",
-                    value: _getSlopValue(ship),
-                    progressPercentage: _getSlopPercentage(ship),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // Video Player or Fallback for SBS camera
-            if (ship.cameraUrl != null && ship.cameraUrl!.isNotEmpty)
-              SBSCameraPlayer(
-                key: ValueKey(ship.cameraUrl),
-                url: ship.cameraUrl!,
-              )
-            else
-              Container(
-                height: 150,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.videocam_off_outlined, color: Colors.grey, size: 30),
-                      const SizedBox(height: 6),
-                      Text(
-                        "Cámara SBS no disponible",
-                        style: TypographyTheme.caption(context),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             
             const SizedBox(height: 16),
 
@@ -691,14 +692,18 @@ class _FleetViewState extends State<FleetView> {
           // Top Row: Icon + Label
           Row(
             children: [
-              Icon(icon, size: 18, color: color),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? Colors.white70 : Colors.black54,
-                  fontWeight: FontWeight.w500,
+              Icon(icon, size: 15, color: color),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],

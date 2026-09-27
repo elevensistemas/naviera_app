@@ -151,7 +151,7 @@ class _ScheduleViewState extends State<ScheduleView> {
                     onTap: () => _selectDateRange(context),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       decoration: BoxDecoration(
                         color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
                         borderRadius: BorderRadius.circular(8),
@@ -159,22 +159,29 @@ class _ScheduleViewState extends State<ScheduleView> {
                       ),
                       child: Row(
                         children: [
-                          const Text("Desde  ", style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
-                          Text(_formatDate(_startDate), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor)),
-                          const Spacer(),
-                          const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                          const Text("Desde ", style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                          Flexible(
+                            child: Text(
+                              _formatDate(_startDate),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.calendar_today, size: 13, color: Colors.grey),
                         ],
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: InkWell(
                     onTap: () => _selectDateRange(context),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       decoration: BoxDecoration(
                         color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
                         borderRadius: BorderRadius.circular(8),
@@ -182,10 +189,17 @@ class _ScheduleViewState extends State<ScheduleView> {
                       ),
                       child: Row(
                         children: [
-                          const Text("Hasta  ", style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
-                          Text(_formatDate(_endDate), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor)),
-                          const Spacer(),
-                          const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                          const Text("Hasta ", style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)),
+                          Flexible(
+                            child: Text(
+                              _formatDate(_endDate),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColor),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.calendar_today, size: 13, color: Colors.grey),
                         ],
                       ),
                     ),

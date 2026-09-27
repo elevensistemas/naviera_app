@@ -279,13 +279,17 @@ class _HomeViewState extends State<HomeView> {
                                     size: 18,
                                     color: _activeTab == 0 ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    "Novedades",
-                                    style: TextStyle(
-                                      color: _activeTab == 0 ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      "Novedades",
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: _activeTab == 0 ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -302,7 +306,7 @@ class _HomeViewState extends State<HomeView> {
                             },
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
                               decoration: BoxDecoration(
                                 color: _activeTab == 1 ? ColorTheme.primary : Colors.transparent,
                                 borderRadius: BorderRadius.circular(24),
@@ -312,16 +316,20 @@ class _HomeViewState extends State<HomeView> {
                                 children: [
                                   Icon(
                                     Icons.track_changes_outlined,
-                                    size: 18,
+                                    size: 17,
                                     color: _activeTab == 1 ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    "Mis Objetivos",
-                                    style: TextStyle(
-                                      color: _activeTab == 1 ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      "Mis Objetivos",
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: _activeTab == 1 ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ),
                                 ],

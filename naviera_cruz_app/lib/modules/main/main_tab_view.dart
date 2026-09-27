@@ -63,7 +63,7 @@ class NavieraBottomBar extends StatelessWidget {
       _NavItemData(label: "Flota", icon: Icons.anchor_outlined, activeIcon: Icons.anchor_rounded),
       _NavItemData(label: "Programa", icon: Icons.calendar_today_outlined, activeIcon: Icons.calendar_month_rounded),
       _NavItemData(label: "Seguridad", icon: Icons.shield_outlined, activeIcon: Icons.shield_rounded),
-      _NavItemData(label: "Capacitaciones", icon: Icons.school_outlined, activeIcon: Icons.school_rounded),
+      _NavItemData(label: "Cursos", icon: Icons.school_outlined, activeIcon: Icons.school_rounded),
       _NavItemData(label: "Chat", icon: Icons.chat_bubble_outline_rounded, activeIcon: Icons.chat_bubble_rounded),
     ];
 
