@@ -1311,36 +1311,129 @@ class _ScheduleViewState extends State<ScheduleView> {
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0284C7).withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
           children: [
-            _buildCardHeader(
-              title: "Buques cargados del período",
-              icon: Icons.directions_boat_filled_rounded,
-            ),
-            const SizedBox(height: 8),
-            Center(
-              child: Text(
-                "Buques Cargados del Período",
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : Colors.grey),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 90,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF0284C7).withValues(alpha: isDark ? 0.35 : 0.22),
+                      const Color(0xFF38BDF8).withValues(alpha: isDark ? 0.12 : 0.08),
+                      Colors.transparent,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 170,
-              child: CustomPaint(
-                size: const Size(double.infinity, 170),
-                painter: _ShipsLoadedChartPainter(
-                  alfaCShips: alfaCShips,
-                  gustavoUShips: gustavoUShips,
-                  nanyShips: nanyShips,
-                  isDark: isDark,
+            Positioned(
+              top: -30,
+              left: -30,
+              child: Container(
+                width: 160,
+                height: 160,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFF0284C7).withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
+                  ),
                 ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0284C7), Color(0xFF0369A1)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF0284C7).withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.directions_boat_filled_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "Buques cargados del período",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Text(
+                      "Buques Cargados del Período",
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : Colors.grey),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 170,
+                    child: CustomPaint(
+                      size: const Size(double.infinity, 170),
+                      painter: _ShipsLoadedChartPainter(
+                        alfaCShips: alfaCShips,
+                        gustavoUShips: gustavoUShips,
+                        nanyShips: nanyShips,
+                        isDark: isDark,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -1354,30 +1447,124 @@ class _ScheduleViewState extends State<ScheduleView> {
   // ---------------------------------------------------------
   Widget _buildAnnualLoadsCard(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6366F1).withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
           children: [
-            _buildCardHeader(
-              title: "Cargas Anual",
-              icon: Icons.show_chart_rounded,
-            ),
-            const SizedBox(height: 8),
-            Center(
-              child: Text(
-                "Cargas Anual",
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : Colors.grey),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 90,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF6366F1).withValues(alpha: isDark ? 0.35 : 0.22),
+                      const Color(0xFF818CF8).withValues(alpha: isDark ? 0.12 : 0.08),
+                      Colors.transparent,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 170,
-              child: CustomPaint(
-                size: const Size(double.infinity, 170),
-                painter: _AnnualLineChartPainter(isDark),
+            Positioned(
+              top: -30,
+              left: -30,
+              child: Container(
+                width: 160,
+                height: 160,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFF6366F1).withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF6366F1).withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.show_chart_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "Cargas Anual",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Text(
+                      "Cargas Anual",
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : Colors.grey),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 170,
+                    child: CustomPaint(
+                      size: const Size(double.infinity, 170),
+                      painter: _AnnualLineChartPainter(isDark),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -1405,32 +1592,127 @@ class _ScheduleViewState extends State<ScheduleView> {
       return {'date': dateStr, 'val': dailyMap[dateStr] ?? 0.0};
     }).toList();
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0057B8).withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
           children: [
-            _buildCardHeader(
-              title: "Cargas diarias Raizen",
-              icon: Icons.bar_chart_rounded,
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: const Color(0xFF0057B8), borderRadius: BorderRadius.circular(8)),
-                child: const Text("Alfa C", style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 90,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF0066FF).withValues(alpha: isDark ? 0.35 : 0.22),
+                      const Color(0xFF38BDF8).withValues(alpha: isDark ? 0.12 : 0.08),
+                      Colors.transparent,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 12),
-            const Center(
-              child: Text("Cargas Diarias Raizen", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+            Positioned(
+              top: -30,
+              left: -30,
+              child: Container(
+                width: 160,
+                height: 160,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFF0066FF).withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 170,
-              child: CustomPaint(
-                size: const Size(double.infinity, 170),
-                painter: _RaizenDailyChartPainter(datesList),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0066FF), Color(0xFF0052D4)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF0066FF).withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.bar_chart_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "Cargas diarias Raizen",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(color: const Color(0xFF0057B8), borderRadius: BorderRadius.circular(8)),
+                        child: const Text("Alfa C", style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Center(
+                    child: Text("Cargas Diarias Raizen", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 170,
+                    child: CustomPaint(
+                      size: const Size(double.infinity, 170),
+                      painter: _RaizenDailyChartPainter(datesList),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -1468,57 +1750,152 @@ class _ScheduleViewState extends State<ScheduleView> {
       };
     }).toList();
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF6B00).withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
           children: [
-            _buildCardHeader(
-              title: "Cargas diarias WFS",
-              icon: Icons.stacked_bar_chart_rounded,
-              trailing: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(color: const Color(0xFF64748B), borderRadius: BorderRadius.circular(6)),
-                    child: const Text("Gustavo U", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 90,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFFF6B00).withValues(alpha: isDark ? 0.35 : 0.22),
+                      const Color(0xFFFF8C00).withValues(alpha: isDark ? 0.12 : 0.08),
+                      Colors.transparent,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  const SizedBox(width: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(color: const Color(0xFFED8B00), borderRadius: BorderRadius.circular(6)),
-                    child: const Text("Nany", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                  ),
-                ],
+                ),
               ),
             ),
-            const SizedBox(height: 12),
-            const Center(
-              child: Text("Cargas Diarias WFS", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+            Positioned(
+              top: -30,
+              left: -30,
+              child: Container(
+                width: 160,
+                height: 160,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFFFF6B00).withValues(alpha: 0.35),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
             ),
-            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFF6B00), Color(0xFFED8B00)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.stacked_bar_chart_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "Cargas diarias WFS",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(color: const Color(0xFF64748B), borderRadius: BorderRadius.circular(6)),
+                            child: const Text("Gustavo U", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                          ),
+                          const SizedBox(width: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(color: const Color(0xFFED8B00), borderRadius: BorderRadius.circular(6)),
+                            child: const Text("Nany", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Center(
+                    child: Text("Cargas Diarias WFS", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+                  ),
+                  const SizedBox(height: 8),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(width: 10, height: 10, color: const Color(0xFFED8B00)),
-                const SizedBox(width: 4),
-                const Text("NANY", style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-                const SizedBox(width: 16),
-                Container(width: 10, height: 10, color: const Color(0xFF64748B)),
-                const SizedBox(width: 4),
-                const Text("GUSTAVO U", style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(width: 10, height: 10, color: const Color(0xFFED8B00)),
+                      const SizedBox(width: 4),
+                      const Text("NANY", style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 16),
+                      Container(width: 10, height: 10, color: const Color(0xFF64748B)),
+                      const SizedBox(width: 4),
+                      const Text("GUSTAVO U", style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
 
-            SizedBox(
-              height: 170,
-              child: CustomPaint(
-                size: const Size(double.infinity, 170),
-                painter: _WfsDailyChartPainter(wfsDates),
+                  SizedBox(
+                    height: 170,
+                    child: CustomPaint(
+                      size: const Size(double.infinity, 170),
+                      painter: _WfsDailyChartPainter(wfsDates),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
