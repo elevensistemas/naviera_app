@@ -700,7 +700,7 @@ class _ScheduleViewState extends State<ScheduleView> {
                                 children: const [
                                   Icon(Icons.arrow_drop_up_rounded, color: Color(0xFF16A34A), size: 16),
                                   Text(
-                                    "+1 vs mes anterior",
+                                    "+1 M.A.",
                                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
                                   ),
                                 ],
@@ -1082,7 +1082,7 @@ class _ScheduleViewState extends State<ScheduleView> {
                                 children: const [
                                   Icon(Icons.arrow_drop_up_rounded, color: Color(0xFF16A34A), size: 16),
                                   Text(
-                                    "+2 vs mes anterior",
+                                    "+2 M.A.",
                                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
                                   ),
                                 ],

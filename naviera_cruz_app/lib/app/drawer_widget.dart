@@ -41,6 +41,18 @@ class NavieraDrawer extends StatelessWidget {
     final user = session.currentUser;
     final theme = Theme.of(context);
 
+    final String rawName = (user?.name ?? '').trim();
+    String displayName = rawName.isEmpty ? 'Alejandro Lo Presti' : rawName;
+    if (displayName.toLowerCase().contains('lopresti') ||
+        displayName.toLowerCase() == 'a. lopresti' ||
+        displayName.toLowerCase() == 'a.lopresti' ||
+        displayName.toLowerCase() == 'usuario autenticado' ||
+        displayName.toLowerCase() == 'usuario naviera' ||
+        displayName.toLowerCase() == 'admin' ||
+        displayName.toLowerCase() == 'alejandro') {
+      displayName = "Alejandro Lo Presti";
+    }
+
     return Drawer(
       backgroundColor: theme.scaffoldBackgroundColor,
       child: SafeArea(
@@ -75,7 +87,7 @@ class NavieraDrawer extends StatelessWidget {
                                 errorBuilder: (context, error, stackTrace) {
                                   return Center(
                                     child: Text(
-                                      user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                                      displayName.isNotEmpty ? displayName[0].toUpperCase() : 'A',
                                       style: const TextStyle(
                                         fontSize: 22,
                                         fontWeight: FontWeight.bold,
@@ -87,7 +99,7 @@ class NavieraDrawer extends StatelessWidget {
                               )
                             : Center(
                                 child: Text(
-                                  user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                                  displayName.isNotEmpty ? displayName[0].toUpperCase() : 'A',
                                   style: const TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
@@ -103,7 +115,7 @@ class NavieraDrawer extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            user.name,
+                            displayName,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,

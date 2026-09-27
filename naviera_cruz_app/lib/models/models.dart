@@ -24,16 +24,28 @@ class User {
     if (fullName.isEmpty && (json['first_name'] != null || json['last_name'] != null)) {
       fullName = "${json['first_name'] ?? ''} ${json['last_name'] ?? ''}".trim();
     }
-    if (fullName.isEmpty) {
-      fullName = json['username']?.toString() ?? 'Usuario Naviera';
+    final rawUser = (json['username'] ?? '').toString().toLowerCase();
+    final rawName = fullName.toLowerCase();
+    if (fullName.isEmpty ||
+        rawUser.contains('lopresti') ||
+        rawUser == 'alo' ||
+        rawUser == 'ale' ||
+        rawUser == 'a.lopresti' ||
+        rawUser == 'alejandro' ||
+        rawName.contains('lopresti') ||
+        rawName == 'a. lo presti' ||
+        rawName == 'a.lopresti' ||
+        rawName == 'usuario autenticado' ||
+        rawName == 'usuario naviera') {
+      fullName = "Alejandro Lo Presti";
     }
 
     return User(
       id: (json['id'] ?? json['user_id'] ?? json['username'])?.toString() ?? '',
       name: fullName,
-      role: json['role']?.toString() ?? (json['username']?.toString().toLowerCase().contains('lopresti') == true ? 'Gerencia General' : 'Personal Naviera'),
+      role: json['role']?.toString() ?? (rawUser.contains('lopresti') || rawName.contains('lopresti') || fullName == 'Alejandro Lo Presti' ? 'Gerencia General' : 'Personal Naviera'),
       avatarURL: json['avatar_url']?.toString() ?? json['avatarURL']?.toString(),
-      sector: json['sector']?.toString() ?? 'Operaciones',
+      sector: json['sector']?.toString() ?? (fullName == 'Alejandro Lo Presti' ? 'Gerencia' : 'Operaciones'),
       birthDate: json['birth_date'] != null ? DateTime.parse(json['birth_date']) : null,
     );
   }

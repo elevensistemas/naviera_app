@@ -13,12 +13,16 @@ class NcsHeroHeader extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback? onTap;
+  final bool? showBackButton;
+  final VoidCallback? onBackTap;
 
   const NcsHeroHeader({
     super.key,
     required this.title,
     required this.subtitle,
     this.onTap,
+    this.showBackButton,
+    this.onBackTap,
   });
 
   static const String assetPath = 'assets/images/header_bg.png';
@@ -110,14 +114,33 @@ class NcsHeroHeader extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (Navigator.canPop(context)) ...[
-                            _HeaderActionButton(
-                              icon: Icons.arrow_back_rounded,
-                              tooltip: 'Volver',
-                              onTap: () => Navigator.pop(context),
-                            ),
-                            const SizedBox(width: 8),
-                          ],
+                          Builder(
+                            builder: (ctx) {
+                              final route = ModalRoute.of(ctx);
+                              final bool canSafelyPop = route != null && route.canPop && !route.isFirst;
+                              final bool shouldShowBack = showBackButton ?? canSafelyPop;
+
+                              if (!shouldShowBack) return const SizedBox.shrink();
+
+                              return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _HeaderActionButton(
+                                    icon: Icons.arrow_back_rounded,
+                                    tooltip: 'Volver',
+                                    onTap: () {
+                                      if (onBackTap != null) {
+                                        onBackTap!();
+                                      } else if (Navigator.canPop(ctx) && !(route?.isFirst ?? false)) {
+                                        Navigator.pop(ctx);
+                                      }
+                                    },
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                              );
+                            },
+                          ),
                           const NavieraLogo(
                             size: 26,
                             isWhiteVersion: true,

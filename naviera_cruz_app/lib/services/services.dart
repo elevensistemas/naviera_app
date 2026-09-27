@@ -26,10 +26,10 @@ class MockAuthService implements AuthService {
     final u = username.trim().toLowerCase();
 
     final validUsers = {
-      'a.lopresti': User(id: 'a.lopresti', name: 'A. Lo Presti', role: 'Gerencia General', sector: 'Gerencia'),
-      'alejandro': User(id: 'alejandro', name: 'A. Lo Presti', role: 'Gerencia General', sector: 'Gerencia'),
-      'm.piccinini': User(id: 'm.piccinini', name: 'M. Piccinini', role: 'Director de Operaciones', sector: 'Operaciones'),
-      'admin': User(id: 'admin', name: 'Administrador', role: 'Sistemas', sector: 'Sistemas'),
+      'a.lopresti': User(id: 'a.lopresti', name: 'Alejandro Lo Presti', role: 'Gerencia General', sector: 'Gerencia'),
+      'alejandro': User(id: 'alejandro', name: 'Alejandro Lo Presti', role: 'Gerencia General', sector: 'Gerencia'),
+      'm.piccinini': User(id: 'm.piccinini', name: 'Mauricio Piccinini', role: 'Director de Operaciones', sector: 'Operaciones'),
+      'admin': User(id: 'admin', name: 'Alejandro Lo Presti', role: 'Gerencia General', sector: 'Gerencia'),
     };
 
     if (validUsers.containsKey(u)) {

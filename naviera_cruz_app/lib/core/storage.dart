@@ -63,8 +63,9 @@ class SessionManager with ChangeNotifier {
         } else {
           _currentUser = User(
             id: "1",
-            name: "Usuario Autenticado",
-            role: "Personal Naviera",
+            name: "Alejandro Lo Presti",
+            role: "Gerencia General",
+            sector: "Gerencia",
             avatarURL: "https://i.pravatar.cc/150?img=60",
           );
         }
