@@ -504,53 +504,36 @@ class _FleetViewState extends State<FleetView> {
             
             Divider(height: 24, color: dividerColor),
 
-            // Resources Container with Progress Bars (combustible, agua, slop) matching user design
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: dividerColor),
-                boxShadow: isDark
-                    ? []
-                    : [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.03),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-              ),
-              child: Row(
-                children: [
-                  _buildResourceMetric(
-                    context: context,
-                    icon: Icons.local_gas_station_rounded,
-                    color: const Color(0xFFED8B00), // Orange
-                    label: "Combustible",
-                    value: _getFuelValue(ship),
-                    progressPercentage: _getFuelPercentage(ship),
-                  ),
-                  Container(height: 36, width: 1, margin: const EdgeInsets.symmetric(horizontal: 12), color: dividerColor),
-                  _buildResourceMetric(
-                    context: context,
-                    icon: Icons.water_drop_rounded,
-                    color: const Color(0xFF0057B8), // Blue
-                    label: "Agua",
-                    value: _getWaterValue(ship),
-                    progressPercentage: _getWaterPercentage(ship),
-                  ),
-                  Container(height: 36, width: 1, margin: const EdgeInsets.symmetric(horizontal: 12), color: dividerColor),
-                  _buildResourceMetric(
-                    context: context,
-                    icon: Icons.opacity_rounded,
-                    color: const Color(0xFF00A86B), // Green/Teal
-                    label: "Slop",
-                    value: _getSlopValue(ship),
-                    progressPercentage: _getSlopPercentage(ship),
-                  ),
-                ],
-              ),
+            // Resources Row with glowing cards (Combustible, Agua, Slop) matching top header glow effect
+            Row(
+              children: [
+                _buildResourceMetric(
+                  context: context,
+                  icon: Icons.local_gas_station_rounded,
+                  color: const Color(0xFFED8B00), // Orange
+                  label: "Combustible",
+                  value: _getFuelValue(ship),
+                  progressPercentage: _getFuelPercentage(ship),
+                ),
+                const SizedBox(width: 8),
+                _buildResourceMetric(
+                  context: context,
+                  icon: Icons.water_drop_rounded,
+                  color: const Color(0xFF0057B8), // Blue
+                  label: "Agua",
+                  value: _getWaterValue(ship),
+                  progressPercentage: _getWaterPercentage(ship),
+                ),
+                const SizedBox(width: 8),
+                _buildResourceMetric(
+                  context: context,
+                  icon: Icons.opacity_rounded,
+                  color: const Color(0xFF00A86B), // Green/Teal
+                  label: "Slop",
+                  value: _getSlopValue(ship),
+                  progressPercentage: _getSlopPercentage(ship),
+                ),
+              ],
             ),
             
             // Programa de Carga Card (Invertido: ahora posicionado debajo de los recursos)
@@ -706,61 +689,132 @@ class _FleetViewState extends State<FleetView> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top Row: Icon + Label
-          Row(
-            children: [
-              Icon(icon, size: 15, color: color),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isDark ? Colors.white70 : Colors.black54,
-                    fontWeight: FontWeight.w600,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: color.withValues(alpha: isDark ? 0.35 : 0.22),
+            width: 1,
+          ),
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
                   ),
+                ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Stack(
+            children: [
+              // Top-left header gradient wash effect
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 40,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        color.withValues(alpha: isDark ? 0.35 : 0.22),
+                        color.withValues(alpha: isDark ? 0.10 : 0.05),
+                        Colors.transparent,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: -20,
+                left: -20,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        color.withValues(alpha: 0.30),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Top Row: Icon + Label
+                    Row(
+                      children: [
+                        Icon(icon, size: 14, color: color),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark ? Colors.white70 : Colors.black87,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+
+                    // Value
+                    Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Progress Bar Pill
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: Container(
+                        height: 6,
+                        width: double.infinity,
+                        color: isDark ? Colors.white10 : Colors.grey.shade200,
+                        child: FractionallySizedBox(
+                          alignment: Alignment.centerLeft,
+                          widthFactor: progressPercentage.clamp(0.0, 1.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  color,
+                                  color.withValues(alpha: 0.8),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-
-          // Value
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // Progress Bar Pill
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: Container(
-              height: 6,
-              width: double.infinity,
-              color: isDark ? Colors.white10 : Colors.grey.shade200,
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: progressPercentage.clamp(0.0, 1.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
