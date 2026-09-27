@@ -559,23 +559,23 @@ class _ScheduleViewState extends State<ScheduleView> {
                   Row(
                     children: [
                       Container(
-                        width: 48,
-                        height: 48,
+                        width: 40,
+                        height: 40,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: const Color(0xFF0057B8),
                           boxShadow: [
                             BoxShadow(
                               color: const Color(0xFF0057B8).withValues(alpha: 0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
                         child: const Icon(
                           Icons.directions_boat_filled_rounded,
                           color: Colors.white,
-                          size: 26,
+                          size: 22,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -603,36 +603,36 @@ class _ScheduleViewState extends State<ScheduleView> {
                       ),
 
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0066FF).withValues(alpha: 0.06),
+                          color: const Color(0xFF0066FF).withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(6),
+                              padding: const EdgeInsets.all(5),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF0066FF),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(Icons.inventory_2_rounded, size: 16, color: Colors.white),
+                              child: const Icon(Icons.inventory_2_rounded, size: 15, color: Colors.white),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 6),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   "${raizenTotal.toStringAsFixed(2)}k",
                                   style: TextStyle(
-                                    fontSize: 15,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.bold,
                                     color: textColor,
                                   ),
                                 ),
                                 Text(
                                   "k tons",
-                                  style: TextStyle(fontSize: 10, color: secondaryTextColor),
+                                  style: TextStyle(fontSize: 9, color: secondaryTextColor),
                                 ),
                               ],
                             ),

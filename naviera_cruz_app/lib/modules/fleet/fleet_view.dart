@@ -623,7 +623,7 @@ class _FleetViewState extends State<FleetView> {
 
                     // Content Padding with 3 metrics & vertical dividers
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                       child: Row(
                         children: [
                           _buildResourceMetric(
@@ -634,7 +634,7 @@ class _FleetViewState extends State<FleetView> {
                             value: _getFuelValue(ship),
                             progressPercentage: _getFuelPercentage(ship),
                           ),
-                          Container(height: 38, width: 1, margin: const EdgeInsets.symmetric(horizontal: 12), color: dividerColor),
+                          Container(height: 38, width: 1, margin: const EdgeInsets.symmetric(horizontal: 8), color: dividerColor),
                           _buildResourceMetric(
                             context: context,
                             icon: Icons.water_drop_rounded,
@@ -643,7 +643,7 @@ class _FleetViewState extends State<FleetView> {
                             value: _getWaterValue(ship),
                             progressPercentage: _getWaterPercentage(ship),
                           ),
-                          Container(height: 38, width: 1, margin: const EdgeInsets.symmetric(horizontal: 12), color: dividerColor),
+                          Container(height: 38, width: 1, margin: const EdgeInsets.symmetric(horizontal: 8), color: dividerColor),
                           _buildResourceMetric(
                             context: context,
                             icon: Icons.opacity_rounded,
@@ -822,14 +822,17 @@ class _FleetViewState extends State<FleetView> {
               Icon(icon, size: 14, color: color),
               const SizedBox(width: 4),
               Expanded(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isDark ? Colors.white70 : Colors.black87,
-                    fontWeight: FontWeight.w600,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? Colors.white70 : Colors.black87,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
