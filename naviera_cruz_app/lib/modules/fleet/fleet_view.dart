@@ -190,6 +190,8 @@ class _FleetViewState extends State<FleetView> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final bodyBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bool isMobile = screenWidth < 600;
 
     final currentShip = (_ships.isNotEmpty && _selectedShipIndex < _ships.length)
         ? _ships[_selectedShipIndex]
