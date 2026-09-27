@@ -681,13 +681,17 @@ class _ScheduleViewState extends State<ScheduleView> {
                                   ),
                                   const SizedBox(width: 6),
                                   Expanded(
-                                    child: Text(
-                                      "Viajes estimados",
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                      "Viajes",
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(fontSize: 11, color: secondaryTextColor),
                                     ),
                                   ),
+                                ),
                                 ],
                               ),
                               const SizedBox(height: 8),
@@ -732,13 +736,17 @@ class _ScheduleViewState extends State<ScheduleView> {
                                   ),
                                   const SizedBox(width: 6),
                                   Expanded(
-                                    child: Text(
-                                      "Promedio por viaje",
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                      "Promedio",
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(fontSize: 11, color: secondaryTextColor),
                                     ),
                                   ),
+                                ),
                                 ],
                               ),
                               const SizedBox(height: 8),
@@ -778,13 +786,17 @@ class _ScheduleViewState extends State<ScheduleView> {
                                   ),
                                   const SizedBox(width: 6),
                                   Expanded(
-                                    child: Text(
-                                      "Progreso mensual",
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                      "Progreso",
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(fontSize: 11, color: secondaryTextColor),
                                     ),
                                   ),
+                                ),
                                 ],
                               ),
                               const SizedBox(height: 8),
@@ -1063,13 +1075,17 @@ class _ScheduleViewState extends State<ScheduleView> {
                                   ),
                                   const SizedBox(width: 6),
                                   Expanded(
-                                    child: Text(
-                                      "Viajes estimados",
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                      "Viajes",
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(fontSize: 11, color: secondaryTextColor),
                                     ),
                                   ),
+                                ),
                                 ],
                               ),
                               const SizedBox(height: 8),
@@ -1114,13 +1130,17 @@ class _ScheduleViewState extends State<ScheduleView> {
                                   ),
                                   const SizedBox(width: 6),
                                   Expanded(
-                                    child: Text(
-                                      "Promedio por viaje",
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                      "Promedio",
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(fontSize: 11, color: secondaryTextColor),
                                     ),
                                   ),
+                                ),
                                 ],
                               ),
                               const SizedBox(height: 8),
@@ -1160,13 +1180,17 @@ class _ScheduleViewState extends State<ScheduleView> {
                                   ),
                                   const SizedBox(width: 6),
                                   Expanded(
-                                    child: Text(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
                                       "Distribución",
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(fontSize: 11, color: secondaryTextColor),
                                     ),
                                   ),
+                                ),
                                 ],
                               ),
                               const SizedBox(height: 6),
@@ -1176,7 +1200,11 @@ class _ScheduleViewState extends State<ScheduleView> {
                                   Container(width: 7, height: 7, color: const Color(0xFF64748B)),
                                   const SizedBox(width: 3),
                                   Expanded(
-                                    child: Text("GUSTAVO U", style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: secondaryTextColor), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                       child: Text("GUSTAVO U", style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: secondaryTextColor), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                     ),
                                   ),
                                 ],
                               ),
@@ -1187,7 +1215,11 @@ class _ScheduleViewState extends State<ScheduleView> {
                                   Container(width: 7, height: 7, color: const Color(0xFFFF6B00)),
                                   const SizedBox(width: 3),
                                   Expanded(
-                                    child: Text("NANY", style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: secondaryTextColor), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                       child: Text("NANY", style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: secondaryTextColor), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                     ),
                                   ),
                                 ],
                               ),
