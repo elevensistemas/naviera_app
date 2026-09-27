@@ -588,11 +588,19 @@ class _ScheduleViewState extends State<ScheduleView> {
                         height: 48,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFF0066FF).withValues(alpha: 0.3), width: 2),
-                          image: const DecorationImage(
-                            image: NetworkImage("https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=200&auto=format&fit=crop"),
-                            fit: BoxFit.cover,
-                          ),
+                          color: const Color(0xFF0057B8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF0057B8).withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.directions_boat_filled_rounded,
+                          color: Colors.white,
+                          size: 26,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -1016,11 +1024,19 @@ class _ScheduleViewState extends State<ScheduleView> {
                         height: 40,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFF64748B), width: 1.5),
-                          image: const DecorationImage(
-                            image: NetworkImage("https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=200&auto=format&fit=crop"),
-                            fit: BoxFit.cover,
-                          ),
+                          color: const Color(0xFF64748B),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF64748B).withValues(alpha: 0.3),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.directions_boat_filled_rounded,
+                          color: Colors.white,
+                          size: 22,
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -1033,11 +1049,19 @@ class _ScheduleViewState extends State<ScheduleView> {
                         height: 40,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFFFF6B00), width: 1.5),
-                          image: const DecorationImage(
-                            image: NetworkImage("https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=200&auto=format&fit=crop"),
-                            fit: BoxFit.cover,
-                          ),
+                          color: const Color(0xFFFF6B00),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.directions_boat_filled_rounded,
+                          color: Colors.white,
+                          size: 22,
                         ),
                       ),
                       const SizedBox(width: 6),
