@@ -477,16 +477,36 @@ class _ScheduleViewState extends State<ScheduleView> {
         child: Stack(
           children: [
             Positioned(
-              top: -40,
-              left: -40,
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 90,
               child: Container(
-                width: 180,
-                height: 180,
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF0066FF).withValues(alpha: isDark ? 0.35 : 0.22),
+                      const Color(0xFF38BDF8).withValues(alpha: isDark ? 0.12 : 0.08),
+                      Colors.transparent,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: -30,
+              left: -30,
+              child: Container(
+                width: 160,
+                height: 160,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF0066FF).withValues(alpha: 0.15),
+                      const Color(0xFF0066FF).withValues(alpha: 0.35),
                       Colors.transparent,
                     ],
                   ),
@@ -664,45 +684,7 @@ class _ScheduleViewState extends State<ScheduleView> {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 10),
 
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 34,
-                            height: 34,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                CircularProgressIndicator(
-                                  value: 1.0,
-                                  strokeWidth: 3.5,
-                                  backgroundColor: const Color(0xFF0066FF).withValues(alpha: 0.15),
-                                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0066FF)),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "100%",
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: textColor,
-                                ),
-                              ),
-                              Text(
-                                "del objetivo",
-                                style: TextStyle(fontSize: 10, color: secondaryTextColor),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -913,16 +895,36 @@ class _ScheduleViewState extends State<ScheduleView> {
         child: Stack(
           children: [
             Positioned(
-              top: -40,
-              left: -40,
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 90,
               child: Container(
-                width: 180,
-                height: 180,
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFFF6B00).withValues(alpha: isDark ? 0.35 : 0.22),
+                      const Color(0xFFFF8C00).withValues(alpha: isDark ? 0.12 : 0.08),
+                      Colors.transparent,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: -30,
+              left: -30,
+              child: Container(
+                width: 160,
+                height: 160,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFFFF6B00).withValues(alpha: 0.15),
+                      const Color(0xFFFF6B00).withValues(alpha: 0.35),
                       Colors.transparent,
                     ],
                   ),
@@ -1108,45 +1110,7 @@ class _ScheduleViewState extends State<ScheduleView> {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
 
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                CircularProgressIndicator(
-                                  value: 1.0,
-                                  strokeWidth: 3.5,
-                                  backgroundColor: const Color(0xFFFF6B00).withValues(alpha: 0.15),
-                                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF6B00)),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "100%",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: textColor,
-                                ),
-                              ),
-                              Text(
-                                "del objetivo",
-                                style: TextStyle(fontSize: 9, color: secondaryTextColor),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
