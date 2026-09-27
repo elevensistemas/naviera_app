@@ -52,6 +52,7 @@ const Trainings = () => {
             status: "Vigente",
             description: "Capacitación obligatoria Convenio STCW VI/1. 71 tripulantes registrados con 98.6% de cumplimiento en la flota.",
             instructor: "Dra. Elena Silva (Médico Naval PNA)",
+            video_url: "https://navieracruzdelsur.dyndns.org:6570/capacitaciones/amarre-efectivo-ocimf/",
             modules: [
               { id: 1, title: "Módulo 1: Reanimación Cardiopulmonar (RCP) y Soporte Vital", duration: 45, is_completed: true },
               { id: 2, title: "Módulo 2: Control de Hemorragias, Fracturas y Quemaduras", duration: 40, is_completed: true },
@@ -70,6 +71,7 @@ const Trainings = () => {
             status: "Vigente",
             description: "Instrucción de sofocación de incendios a bordo. 71 tripulantes auditados con 98.6% vigencia.",
             instructor: "Ing. Bombero Naval Gabriel Rossi",
+            video_url: "https://navieracruzdelsur.dyndns.org:6570/capacitaciones/equipo-de-izado/",
             modules: [
               { id: 1, title: "Módulo 1: Química del Fuego y Agentes Extintores", duration: 40, is_completed: true },
               { id: 2, title: "Módulo 2: Uso de Equipos ERA y mangueras de alta presión", duration: 50, is_completed: true },
@@ -88,6 +90,7 @@ const Trainings = () => {
             status: "Vigente",
             description: "Zafarrancho de abandono y supervivencia en el mar. 70 tripulantes con 97.1% de certificaciones activas.",
             instructor: "Cap. Esteban Valdez (Instructor Máster STCW)",
+            video_url: "https://navieracruzdelsur.dyndns.org:6570/capacitaciones/la-importancia-de-reportar/",
             modules: [
               { id: 1, title: "Módulo 1: Zafarrancho y Despliegue de Balsas Salvavidas", duration: 50, is_completed: true },
               { id: 2, title: "Módulo 2: Uso de Trajes de Inmersión y Chalecos", duration: 40, is_completed: true },
@@ -106,6 +109,7 @@ const Trainings = () => {
             status: "Vigente",
             description: "Prevención de riesgos laborales y gestión del trabajo en equipo a bordo. 70 tripulantes evaluados.",
             instructor: "Lic. Marítimo Roberto Soria",
+            video_url: "https://navieracruzdelsur.dyndns.org:6570/capacitaciones/peligros-electricos/",
             modules: [
               { id: 1, title: "Módulo 1: Prevención de Riesgos de Trabajo a Bordo", duration: 45, is_completed: true },
               { id: 2, title: "Módulo 2: Gestión de la Fatiga y Relaciones Humanas", duration: 40, is_completed: true },
@@ -124,6 +128,7 @@ const Trainings = () => {
             status: "Vigente",
             description: "Manejo seguro de cargas de hidrocarburos LSFO y MGO. 69 tripulantes capacitados.",
             instructor: "Cap. Marcos Benítez",
+            video_url: "https://navieracruzdelsur.dyndns.org:6570/capacitaciones/seguridad-en-operaciones/",
             modules: [
               { id: 1, title: "Módulo 1: Física y Química de Cargas Líquidas", duration: 50, is_completed: true },
               { id: 2, title: "Módulo 2: Sistemas de Inerteado y Transferencia", duration: 60, is_completed: true },

@@ -1170,13 +1170,7 @@ class Training {
     }
 
     if (vUrl != null && vUrl.trim().isNotEmpty) {
-      String cleanUrl = vUrl.trim();
-      if (!cleanUrl.contains('?')) {
-        while (cleanUrl.endsWith('/')) {
-          cleanUrl = cleanUrl.substring(0, cleanUrl.length - 1).trim();
-        }
-      }
-      vUrl = cleanUrl;
+      vUrl = vUrl.trim();
     } else {
       vUrl = null;
     }
