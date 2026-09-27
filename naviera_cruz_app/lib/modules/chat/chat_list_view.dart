@@ -358,48 +358,51 @@ class _ChatListViewState extends State<ChatListView> {
                   const SizedBox(height: 16),
 
                   // Row 2: Top 2 Action Cards (Asistente IA NCS + Nuevo chat)
-                  Row(
-                    children: [
-                      // Card 1: Asistente IA NCS
-                      Expanded(
-                        child: _buildActionCard(
-                          context: context,
-                          title: "Asistente IA NCS",
-                          subtitle: "Asistente IA (Voz y Texto)",
-                          icon: Icons.auto_awesome_rounded,
-                          iconBgColor: isDark ? const Color(0xFF7C2D12) : const Color(0xFFFFEDD5),
-                          iconColor: isDark ? const Color(0xFFF97316) : const Color(0xFFEA580C),
-                          cardBgColor: isDark ? const Color(0xFF451A03).withOpacity(0.4) : const Color(0xFFFFF7ED),
-                          borderColor: isDark ? const Color(0xFF7C2D12) : const Color(0xFFFFEDD5),
-                          arrowColor: isDark ? const Color(0xFFF97316) : const Color(0xFFEA580C),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const AIChatView()),
-                            );
-                          },
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Card 1: Asistente IA NCS
+                        Expanded(
+                          child: _buildActionCard(
+                            context: context,
+                            title: "Asistente IA NCS",
+                            subtitle: "Asistente IA (Voz y Texto)",
+                            icon: Icons.auto_awesome_rounded,
+                            iconBgColor: isDark ? const Color(0xFF7C2D12) : const Color(0xFFFFEDD5),
+                            iconColor: isDark ? const Color(0xFFF97316) : const Color(0xFFEA580C),
+                            cardBgColor: isDark ? const Color(0xFF451A03).withOpacity(0.4) : const Color(0xFFFFF7ED),
+                            borderColor: isDark ? const Color(0xFF7C2D12) : const Color(0xFFFFEDD5),
+                            arrowColor: isDark ? const Color(0xFFF97316) : const Color(0xFFEA580C),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const AIChatView()),
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
+                        const SizedBox(width: 10),
 
-                      // Card 2: Nuevo chat
-                      Expanded(
-                        child: _buildActionCard(
-                          context: context,
-                          title: "Nuevo chat",
-                          subtitle: "Conversar con un usuario de la empresa.",
-                          icon: Icons.chat_bubble_rounded,
-                          iconBgColor: isDark ? const Color(0xFF1E3A8A) : const Color(0xFFDBEAFE),
-                          iconColor: isDark ? const Color(0xFF60A5FA) : const Color(0xFF0284C7),
-                          cardBgColor: isDark ? const Color(0xFF172554).withOpacity(0.4) : const Color(0xFFEFF6FF),
-                          borderColor: isDark ? const Color(0xFF1E3A8A) : const Color(0xFFBFDBFE),
-                          arrowColor: isDark ? const Color(0xFF60A5FA) : const Color(0xFF0284C7),
-                          onTap: () {
-                            _showNewChatModal(context);
-                          },
+                        // Card 2: Nuevo chat
+                        Expanded(
+                          child: _buildActionCard(
+                            context: context,
+                            title: "Nuevo chat",
+                            subtitle: "Conversar con usuario de la empresa.",
+                            icon: Icons.chat_bubble_rounded,
+                            iconBgColor: isDark ? const Color(0xFF1E3A8A) : const Color(0xFFDBEAFE),
+                            iconColor: isDark ? const Color(0xFF60A5FA) : const Color(0xFF0284C7),
+                            cardBgColor: isDark ? const Color(0xFF172554).withOpacity(0.4) : const Color(0xFFEFF6FF),
+                            borderColor: isDark ? const Color(0xFF1E3A8A) : const Color(0xFFBFDBFE),
+                            arrowColor: isDark ? const Color(0xFF60A5FA) : const Color(0xFF0284C7),
+                            onTap: () {
+                              _showNewChatModal(context);
+                            },
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 20),
 
@@ -604,46 +607,59 @@ class _ChatListViewState extends State<ChatListView> {
     required Color arrowColor,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(14.0),
+        height: 80, // Dimensiones de borde e iconos idénticas para ambas tarjetas
+        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
         decoration: BoxDecoration(
           color: cardBgColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: borderColor),
+          border: Border.all(color: borderColor, width: 1.2),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              width: 42,
-              height: 42,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
                 color: iconBgColor,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: iconColor, size: 22),
+              child: Icon(icon, color: iconColor, size: 20),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
+                  // Título dinámico adaptativo para no cortar la palabra "Asistente" en 2 renglones
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: textColor,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
-                      color: Color(0xFF64748B),
-                      height: 1.2,
+                      color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                      height: 1.15,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -652,7 +668,7 @@ class _ChatListViewState extends State<ChatListView> {
               ),
             ),
             const SizedBox(width: 4),
-            Icon(Icons.chevron_right, size: 18, color: arrowColor),
+            Icon(Icons.chevron_right, size: 16, color: arrowColor),
           ],
         ),
       ),
