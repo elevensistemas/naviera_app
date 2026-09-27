@@ -168,30 +168,21 @@ class NcsHeroHeader extends StatelessWidget {
                   ),
                 ),
 
-                // Textos dinámicos superpuestos sobre el mar
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    isMobile ? 18.0 : 22.0,
-                    isMobile ? 56.0 : 50.0,
-                    isMobile ? 18.0 : 22.0,
-                    14.0,
-                  ),
+                // Textos dinámicos del módulo fijados exactamente en la parte superior al lado del logo de la empresa
+                Positioned(
+                  top: isMobile ? 14.0 : 16.0,
+                  left: isMobile ? (Navigator.canPop(context) ? 52.0 : 72.0) : (Navigator.canPop(context) ? 60.0 : 82.0),
+                  right: isMobile ? 144.0 : 156.0,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      // Título dinámico del módulo
+                      // Título dinámico del módulo (Alineación superior fija e inmóvil entre pantallas)
                       AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 250),
+                        duration: const Duration(milliseconds: 200),
                         transitionBuilder: (child, animation) => FadeTransition(
                           opacity: animation,
-                          child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(0, 0.12),
-                              end: Offset.zero,
-                            ).animate(animation),
-                            child: child,
-                          ),
+                          child: child,
                         ),
                         child: Text(
                           title,
@@ -200,7 +191,7 @@ class NcsHeroHeader extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: isMobile ? 22 : 25,
+                            fontSize: isMobile ? 18.5 : 21.0,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.4,
                             shadows: const [
@@ -213,20 +204,25 @@ class NcsHeroHeader extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
 
-                      // Subtítulo dinámico del módulo
+                      // Subtítulo dinámico del módulo (Alineación superior fija e inmóvil entre pantallas)
                       AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 250),
+                        duration: const Duration(milliseconds: 200),
+                        transitionBuilder: (child, animation) => FadeTransition(
+                          opacity: animation,
+                          child: child,
+                        ),
                         child: Text(
                           subtitle,
                           key: ValueKey(subtitle),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.96),
-                            fontSize: isMobile ? 12.5 : 13.5,
+                            color: Colors.white.withOpacity(0.95),
+                            fontSize: isMobile ? 11.5 : 12.5,
                             fontWeight: FontWeight.w500,
+                            height: 1.2,
                             shadows: const [
                               Shadow(
                                 color: Colors.black87,
