@@ -553,27 +553,6 @@ class _HomeViewState extends State<HomeView> {
               ),
             ),
           ),
-          const SizedBox(height: 14),
-
-          // Author Row below banner
-          Row(
-            children: [
-              Icon(
-                Icons.account_circle_outlined,
-                size: 20,
-                color: captionColor,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                authorText,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: captionColor,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
