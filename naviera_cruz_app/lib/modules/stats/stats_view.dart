@@ -711,52 +711,7 @@ class _TrainingViewState extends State<TrainingView> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-
-                  // Info Wrap: General • 2 hrs • 4 módulos (Non-overflowing responsive Wrap)
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 2,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.menu_book_rounded, size: 11, color: Color(0xFF94A3B8)),
-                          const SizedBox(width: 3),
-                          Text(
-                            course.sector,
-                            style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
-                          ),
-                        ],
-                      ),
-                      const Text("•", style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.access_time_rounded, size: 11, color: Color(0xFF94A3B8)),
-                          const SizedBox(width: 3),
-                          Text(
-                            "${course.hours} hrs",
-                            style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
-                          ),
-                        ],
-                      ),
-                      const Text("•", style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.description_outlined, size: 11, color: Color(0xFF94A3B8)),
-                          const SizedBox(width: 3),
-                          Text(
-                            "${course.totalModules} módulos",
-                            style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
 
                   // Linear Progress Bar with % text (Bigger & more visible indicator bar)
                   Row(
