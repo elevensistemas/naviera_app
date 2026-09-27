@@ -498,9 +498,14 @@ class _TrainingViewState extends State<TrainingView> {
     required Color bgColor,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 6 : 10,
+        vertical: isMobile ? 10 : 12,
+      ),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(16),
@@ -515,14 +520,14 @@ class _TrainingViewState extends State<TrainingView> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(isMobile ? 5 : 8),
             decoration: BoxDecoration(
               color: iconColor.withOpacity(0.12),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: iconColor, size: 22),
+            child: Icon(icon, color: iconColor, size: isMobile ? 18 : 22),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: isMobile ? 5 : 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -531,20 +536,22 @@ class _TrainingViewState extends State<TrainingView> {
                 Text(
                   count,
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: isMobile ? 16 : 18,
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
                   ),
                 ),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: isMobile ? 9.5 : 10.5,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -600,10 +607,12 @@ class _TrainingViewState extends State<TrainingView> {
     final bool isCompleted = course.userProgressPercentage >= 100;
     final bool isObligatory = course.status.toLowerCase().contains('obligatorio');
     final double progressRatio = (course.userProgressPercentage / 100.0).clamp(0.0, 1.0);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bool isMobile = screenWidth < 600;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12.0),
-      padding: const EdgeInsets.all(12.0),
+      padding: EdgeInsets.all(isMobile ? 10.0 : 12.0),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(18),
@@ -627,10 +636,10 @@ class _TrainingViewState extends State<TrainingView> {
             // Left Thumbnail with cropped ultra-sharp NCS logo
             TrainingThumbnailWidget(
               courseId: course.id,
-              width: 110,
-              height: 65,
+              width: isMobile ? 88 : 110,
+              height: isMobile ? 58 : 65,
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: isMobile ? 8 : 12),
 
             // Middle Course Details Column
             Expanded(
@@ -695,7 +704,7 @@ class _TrainingViewState extends State<TrainingView> {
                   Text(
                     course.title,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: isMobile ? 13 : 14,
                       fontWeight: FontWeight.bold,
                       color: textColor,
                     ),
@@ -704,28 +713,46 @@ class _TrainingViewState extends State<TrainingView> {
                   ),
                   const SizedBox(height: 4),
 
-                  // Info Line: General • 2 hrs • 4 módulos
-                  Row(
+                  // Info Wrap: General • 2 hrs • 4 módulos (Non-overflowing responsive Wrap)
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 2,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      const Icon(Icons.menu_book_rounded, size: 12, color: Color(0xFF94A3B8)),
-                      const SizedBox(width: 4),
-                      Text(
-                        course.sector,
-                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.menu_book_rounded, size: 11, color: Color(0xFF94A3B8)),
+                          const SizedBox(width: 3),
+                          Text(
+                            course.sector,
+                            style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.access_time_rounded, size: 12, color: Color(0xFF94A3B8)),
-                      const SizedBox(width: 4),
-                      Text(
-                        "${course.hours} hrs",
-                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                      const Text("•", style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.access_time_rounded, size: 11, color: Color(0xFF94A3B8)),
+                          const SizedBox(width: 3),
+                          Text(
+                            "${course.hours} hrs",
+                            style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.description_outlined, size: 12, color: Color(0xFF94A3B8)),
-                      const SizedBox(width: 4),
-                      Text(
-                        "${course.totalModules} módulos",
-                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                      const Text("•", style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.description_outlined, size: 11, color: Color(0xFF94A3B8)),
+                          const SizedBox(width: 3),
+                          Text(
+                            "${course.totalModules} módulos",
+                            style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -759,7 +786,7 @@ class _TrainingViewState extends State<TrainingView> {
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: isMobile ? 4 : 8),
 
             // Far Right Action Button (Continuar / Iniciar / Revisar)
             Column(
@@ -767,8 +794,8 @@ class _TrainingViewState extends State<TrainingView> {
               children: [
                 const SizedBox(height: 12),
                 Container(
-                  width: 36,
-                  height: 36,
+                  width: isMobile ? 32 : 36,
+                  height: isMobile ? 32 : 36,
                   decoration: BoxDecoration(
                     color: isCompleted
                         ? const Color(0xFFDCFCE7)
@@ -778,7 +805,7 @@ class _TrainingViewState extends State<TrainingView> {
                   child: Icon(
                     isCompleted ? Icons.check_rounded : Icons.play_arrow_rounded,
                     color: isCompleted ? const Color(0xFF16A34A) : const Color(0xFF0088FF),
-                    size: 22,
+                    size: isMobile ? 19 : 22,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -787,7 +814,7 @@ class _TrainingViewState extends State<TrainingView> {
                       ? "Revisar"
                       : (course.userProgressPercentage > 0 ? "Continuar" : "Iniciar"),
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: isMobile ? 10 : 11,
                     fontWeight: FontWeight.bold,
                     color: isCompleted ? const Color(0xFF16A34A) : const Color(0xFF0088FF),
                   ),
