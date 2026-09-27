@@ -480,7 +480,7 @@ class _ScheduleViewState extends State<ScheduleView> {
               top: 0,
               left: 0,
               right: 0,
-              height: 90,
+              height: 62,
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -497,11 +497,11 @@ class _ScheduleViewState extends State<ScheduleView> {
               ),
             ),
             Positioned(
-              top: -30,
-              left: -30,
+              top: -25,
+              left: -25,
               child: Container(
-                width: 160,
-                height: 160,
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
@@ -898,7 +898,7 @@ class _ScheduleViewState extends State<ScheduleView> {
               top: 0,
               left: 0,
               right: 0,
-              height: 90,
+              height: 62,
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -915,11 +915,11 @@ class _ScheduleViewState extends State<ScheduleView> {
               ),
             ),
             Positioned(
-              top: -30,
-              left: -30,
+              top: -25,
+              left: -25,
               child: Container(
-                width: 160,
-                height: 160,
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
@@ -1336,7 +1336,7 @@ class _ScheduleViewState extends State<ScheduleView> {
               top: 0,
               left: 0,
               right: 0,
-              height: 90,
+              height: 62,
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -1353,11 +1353,11 @@ class _ScheduleViewState extends State<ScheduleView> {
               ),
             ),
             Positioned(
-              top: -30,
-              left: -30,
+              top: -25,
+              left: -25,
               child: Container(
-                width: 160,
-                height: 160,
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
@@ -1472,7 +1472,7 @@ class _ScheduleViewState extends State<ScheduleView> {
               top: 0,
               left: 0,
               right: 0,
-              height: 90,
+              height: 62,
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -1489,11 +1489,11 @@ class _ScheduleViewState extends State<ScheduleView> {
               ),
             ),
             Positioned(
-              top: -30,
-              left: -30,
+              top: -25,
+              left: -25,
               child: Container(
-                width: 160,
-                height: 160,
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
@@ -1618,7 +1618,7 @@ class _ScheduleViewState extends State<ScheduleView> {
               top: 0,
               left: 0,
               right: 0,
-              height: 90,
+              height: 62,
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -1635,11 +1635,11 @@ class _ScheduleViewState extends State<ScheduleView> {
               ),
             ),
             Positioned(
-              top: -30,
-              left: -30,
+              top: -25,
+              left: -25,
               child: Container(
-                width: 160,
-                height: 160,
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
@@ -1776,7 +1776,7 @@ class _ScheduleViewState extends State<ScheduleView> {
               top: 0,
               left: 0,
               right: 0,
-              height: 90,
+              height: 62,
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -1793,11 +1793,11 @@ class _ScheduleViewState extends State<ScheduleView> {
               ),
             ),
             Positioned(
-              top: -30,
-              left: -30,
+              top: -25,
+              left: -25,
               child: Container(
-                width: 160,
-                height: 160,
+                width: 120,
+                height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
