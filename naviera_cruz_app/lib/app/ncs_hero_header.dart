@@ -5,9 +5,9 @@ import '../core/storage.dart';
 import '../modules/notifications/notifications_view.dart';
 import '../modules/profile/profile_view.dart';
 
-/// Componente de cabecera reutilizable para la app Naviera Cruz del Sur.
-/// Carga la imagen del buque ALFA C y atardecer directamente en memoria
-/// para garantizar visualización instantánea en Flutter Web sin depender del dev server asset manifest.
+/// Componente de cabecera edge-to-edge (sin bordes laterales ni superiores) 
+/// para la app Naviera Cruz del Sur, diseñado para cubrir la parte superior del iPhone
+/// bajo la barra de estado/Notch/Dynamic Island.
 class NcsHeroHeader extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -28,156 +28,173 @@ class NcsHeroHeader extends StatelessWidget {
     final user = session.currentUser;
     final screenWidth = MediaQuery.of(context).size.width;
     final bool isMobile = screenWidth < 600;
-    final double headerHeight = isMobile ? 165.0 : (screenWidth * 0.16).clamp(160.0, 230.0);
 
-    return SafeArea(
-      bottom: false,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: double.infinity,
-          height: headerHeight,
-          margin: EdgeInsets.fromLTRB(
-            isMobile ? 14.0 : 16.0,
-            isMobile ? 10.0 : 10.0,
-            isMobile ? 14.0 : 16.0,
-            6.0,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.20),
-                blurRadius: 14,
-                offset: const Offset(0, 4),
-              ),
+    // Inset superior para la barra de estado (Notch / Dynamic Island en iOS)
+    final double statusBarHeight = MediaQuery.of(context).padding.top;
+    final double contentHeight = isMobile ? 150.0 : 165.0;
+    final double totalHeaderHeight = statusBarHeight + contentHeight;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        height: totalHeaderHeight,
+        margin: EdgeInsets.zero, // Cobertura total sin márgenes externos
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF001A38), // Deep Naviera Navy
+              Color(0xFF003D7A), // Royal Brand Blue
+              Color(0xFF023E8A), // Mid Sea Blue
+              Color(0xFFD97706), // Warm Sunset Amber
             ],
-            gradient: const LinearGradient(
-              colors: [
-                Color(0xFF001A38), // Deep Naviera Navy
-                Color(0xFF003D7A), // Royal Brand Blue
-                Color(0xFF023E8A), // Mid Sea Blue
-                Color(0xFFD97706), // Warm Sunset Amber
-              ],
-              stops: [0.0, 0.4, 0.7, 1.0],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
+            stops: [0.0, 0.4, 0.7, 1.0],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Stack(
-              children: [
-                // Renderizado garantizado en memoria anclado arriba a la derecha para ver la marca completa y el barco ALFA C
-                Positioned.fill(
-                  child: Image.memory(
-                    ncsHeaderImageBytes,
+        ),
+        child: Stack(
+          children: [
+            // Imagen de fondo en memoria anclada arriba a la derecha (cobertura total edge-to-edge)
+            Positioned.fill(
+              child: Image.memory(
+                ncsHeaderImageBytes,
+                fit: BoxFit.cover,
+                alignment: Alignment.topRight,
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.asset(
+                    assetPath,
                     fit: BoxFit.cover,
                     alignment: Alignment.topRight,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Image.asset(
-                        assetPath,
-                        fit: BoxFit.cover,
-                        alignment: Alignment.topRight,
-                        errorBuilder: (ctx, err, st) => const SizedBox.shrink(),
-                      );
-                    },
+                    errorBuilder: (ctx, err, st) => const SizedBox.shrink(),
+                  );
+                },
+              ),
+            ),
+
+            // Gradiente de contraste en el lado izquierdo para resaltar el título y el logo
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF001228).withOpacity(0.78),
+                      const Color(0xFF001F42).withOpacity(0.40),
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.55, 1.0],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
                   ),
                 ),
+              ),
+            ),
 
-                // Gradiente de legibilidad oscuro en el lado izquierdo para que el texto sea nítido y no tape el barco
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF001228).withOpacity(0.70),
-                          const Color(0xFF001F42).withOpacity(0.35),
-                          Colors.transparent,
-                        ],
-                        stops: const [0.0, 0.55, 1.0],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Botón Volver (Flecha atrás) en la esquina superior izquierda si se navega desde otro módulo
-                if (Navigator.canPop(context))
-                  Positioned(
-                    top: isMobile ? 10.0 : 12.0,
-                    left: isMobile ? 10.0 : 14.0,
-                    child: _HeaderActionButton(
-                      icon: Icons.arrow_back_rounded,
-                      tooltip: 'Volver',
-                      onTap: () => Navigator.pop(context),
-                    ),
-                  ),
-
-                // Botones de acción rápida en la cabecera: Notificaciones (Campanita), Modo Oscuro/Claro y Perfil / Menú Lateral
-                Positioned(
-                  top: isMobile ? 10.0 : 12.0,
-                  right: isMobile ? 10.0 : 14.0,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+            // Contenido dinámico iniciando justo DEBAJO de la barra de estado del dispositivo
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 18.0 : 24.0,
+                statusBarHeight + (isMobile ? 6.0 : 10.0),
+                isMobile ? 18.0 : 24.0,
+                14.0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Fila Superior: Logo / Flecha de retorno + Botones de acción rápida
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // 🔔 Notificaciones (Campanita)
-                      _HeaderActionButton(
-                        icon: Icons.notifications_outlined,
-                        tooltip: 'Notificaciones',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const NotificationsView()),
-                          );
-                        },
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (Navigator.canPop(context)) ...[
+                            _HeaderActionButton(
+                              icon: Icons.arrow_back_rounded,
+                              tooltip: 'Volver',
+                              onTap: () => Navigator.pop(context),
+                            ),
+                            const SizedBox(width: 10),
+                          ],
+                          _buildNcsLogo(),
+                        ],
                       ),
-                      const SizedBox(width: 8),
 
-                      // 🌙 Conmutador rápido de Modo Oscuro / Claro
-                      _HeaderActionButton(
-                        icon: session.isDarkMode ? Icons.wb_sunny_rounded : Icons.dark_mode_outlined,
-                        iconColor: session.isDarkMode ? const Color(0xFFFFD166) : Colors.white,
-                        tooltip: session.isDarkMode ? 'Modo Claro' : 'Modo Oscuro',
-                        onTap: () {
-                          session.toggleTheme(!session.isDarkMode);
-                        },
-                      ),
-                      const SizedBox(width: 8),
+                      // Botones de acción en la esquina derecha: Notificaciones (Campanita con indicador rojo) + Menú
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // 🔔 Campanita con punto rojo distintivo
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              _HeaderActionButton(
+                                icon: Icons.notifications_outlined,
+                                tooltip: 'Notificaciones',
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const NotificationsView()),
+                                  );
+                                },
+                              ),
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: Container(
+                                  width: 8.5,
+                                  height: 8.5,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEF4444), // Red dot
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 1.2),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 8),
 
-                      // 👤 Perfil del Usuario / Menú Lateral
-                      _HeaderActionButton(
-                        icon: Icons.person_outline_rounded,
-                        avatarLetter: (user != null && user.name.trim().isNotEmpty)
-                            ? user.name.trim()[0].toUpperCase()
-                            : null,
-                        tooltip: 'Perfil de Usuario y Menú',
-                        onTap: () {
-                          try {
-                            Scaffold.of(context).openEndDrawer();
-                          } catch (_) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const ProfileView()),
-                            );
-                          }
-                        },
+                          // 🌙 Conmutador rápido de Modo Oscuro / Claro
+                          _HeaderActionButton(
+                            icon: session.isDarkMode ? Icons.wb_sunny_rounded : Icons.dark_mode_outlined,
+                            iconColor: session.isDarkMode ? const Color(0xFFFFD166) : Colors.white,
+                            tooltip: session.isDarkMode ? 'Modo Claro' : 'Modo Oscuro',
+                            onTap: () {
+                              session.toggleTheme(!session.isDarkMode);
+                            },
+                          ),
+                          const SizedBox(width: 8),
+
+                          // ☰ Menú Hamburguesa / Perfil
+                          _HeaderActionButton(
+                            icon: Icons.menu_rounded,
+                            avatarLetter: (user != null && user.name.trim().isNotEmpty)
+                                ? user.name.trim()[0].toUpperCase()
+                                : null,
+                            tooltip: 'Menú Lateral',
+                            onTap: () {
+                              try {
+                                Scaffold.of(context).openEndDrawer();
+                              } catch (_) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const ProfileView()),
+                                );
+                              }
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ),
 
-                // Textos dinámicos del módulo fijados exactamente en la parte superior al lado del logo de la empresa
-                Positioned(
-                  top: isMobile ? 14.0 : 16.0,
-                  left: isMobile ? (Navigator.canPop(context) ? 52.0 : 72.0) : (Navigator.canPop(context) ? 60.0 : 82.0),
-                  right: isMobile ? 144.0 : 156.0,
-                  child: Column(
+                  // Fila Inferior: Título principal y subtítulo
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Título dinámico del módulo (Alineación superior fija e inmóvil entre pantallas)
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 200),
                         transitionBuilder: (child, animation) => FadeTransition(
@@ -191,9 +208,9 @@ class NcsHeroHeader extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: isMobile ? 18.5 : 21.0,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.4,
+                            fontSize: isMobile ? 23.0 : 26.0,
+                            fontWeight: FontWeight.extrabold,
+                            letterSpacing: -0.5,
                             shadows: const [
                               Shadow(
                                 color: Colors.black87,
@@ -205,8 +222,6 @@ class NcsHeroHeader extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 3),
-
-                      // Subtítulo dinámico del módulo (Alineación superior fija e inmóvil entre pantallas)
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 200),
                         transitionBuilder: (child, animation) => FadeTransition(
@@ -219,10 +234,10 @@ class NcsHeroHeader extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.95),
-                            fontSize: isMobile ? 11.5 : 12.5,
-                            fontWeight: FontWeight.w500,
-                            height: 1.2,
+                            color: Colors.white.withOpacity(0.92),
+                            fontSize: isMobile ? 12.0 : 13.0,
+                            fontWeight: FontWeight.w400,
+                            height: 1.25,
                             shadows: const [
                               Shadow(
                                 color: Colors.black87,
@@ -235,12 +250,92 @@ class NcsHeroHeader extends StatelessWidget {
                       ),
                     ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
+    );
+  }
+
+  /// Construye el logo corporativo de Naviera Cruz del Sur (Matriz de puntos + texto)
+  Widget _buildNcsLogo() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 26,
+          height: 26,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(4, (r) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(4, (c) {
+                  final bool isFilled = (r == 0 && c == 2) || (r == 3 && c == 0);
+                  return Container(
+                    width: 4.5,
+                    height: 4.5,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isFilled ? Colors.white : Colors.transparent,
+                      border: Border.all(color: Colors.white, width: 1.0),
+                    ),
+                  );
+                }),
+              );
+            }),
+          ),
+        ),
+        const SizedBox(width: 7),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Text(
+              "NAVIERA",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 7.0,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.6,
+                height: 1.0,
+              ),
+            ),
+            Text(
+              "CRUZ",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.4,
+                height: 1.0,
+              ),
+            ),
+            Text(
+              "DEL",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 7.0,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.6,
+                height: 1.0,
+              ),
+            ),
+            Text(
+              "SUR",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 9.5,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.4,
+                height: 1.0,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -273,19 +368,12 @@ class _HeaderActionButton extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: const Color(0xFF00152A).withOpacity(0.55),
+              color: Colors.white.withOpacity(0.20),
               shape: BoxShape.circle,
               border: Border.all(
-                color: Colors.white.withOpacity(0.30),
-                width: 1.2,
+                color: Colors.white.withOpacity(0.35),
+                width: 1.0,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.25),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Center(
               child: avatarLetter != null
@@ -309,4 +397,3 @@ class _HeaderActionButton extends StatelessWidget {
     );
   }
 }
-
