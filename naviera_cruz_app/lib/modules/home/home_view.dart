@@ -408,8 +408,12 @@ class _HomeViewState extends State<HomeView> {
     final itemBorder = isDark ? Colors.white10 : const Color(0xFFE2E8F0);
 
     final titleText = post.title.isNotEmpty ? post.title : "Save the Date";
-    final subtitleText = post.content.isNotEmpty ? post.content : "Un encuentro para disfrutar juntos";
-    final authorText = post.authorName.isNotEmpty ? post.authorName : "Alejandro Lo Presti";
+    final rawSubtitle = post.content.trim();
+    final bool isDuplicateSaveTheDate = rawSubtitle.toLowerCase() == titleText.toLowerCase() ||
+        rawSubtitle.toLowerCase() == 'save the date' ||
+        rawSubtitle.isEmpty;
+
+    final subtitleText = isDuplicateSaveTheDate ? "" : rawSubtitle;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16.0),
@@ -429,65 +433,28 @@ class _HomeViewState extends State<HomeView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Tag + Date + Menu dots
+          // Header Date + Menu dots (Sin la cápsula de "Aviso Importante")
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Tag Pill Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF451A03).withOpacity(0.5) : const Color(0xFFFEE2E2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF991B1B) : const Color(0xFFFCA5A5),
-                    width: 0.8,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.error_outline_rounded,
-                      size: 13,
-                      color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      "Aviso Importante",
-                      style: TextStyle(
-                        color: isDark ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626),
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+              Text(
+                _formatDate(post.timestamp),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: captionColor,
                 ),
               ),
-
-              // Date + Menu icon
-              Row(
-                children: [
-                  Text(
-                    _formatDate(post.timestamp),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: captionColor,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Icon(
-                    Icons.more_vert,
-                    size: 18,
-                    color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-                  ),
-                ],
+              Icon(
+                Icons.more_vert,
+                size: 18,
+                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
 
-          // Title
+          // Title ("Save the Date" mostrado una sola vez)
           Text(
             titleText,
             style: TextStyle(
@@ -497,16 +464,16 @@ class _HomeViewState extends State<HomeView> {
               letterSpacing: -0.3,
             ),
           ),
-          const SizedBox(height: 4),
-
-          // Subtitle / Content text
-          Text(
-            subtitleText,
-            style: TextStyle(
-              fontSize: 14,
-              color: captionColor,
+          if (subtitleText.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              subtitleText,
+              style: TextStyle(
+                fontSize: 14,
+                color: captionColor,
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: 14),
 
           // Mini 16:9 AspectRatio Banner Card (Clean, Prolijo, Tap to Zoom)
