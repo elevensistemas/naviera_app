@@ -103,6 +103,18 @@ class NcsHeroHeader extends StatelessWidget {
                   ),
                 ),
 
+                // Botón Volver (Flecha atrás) en la esquina superior izquierda si se navega desde otro módulo
+                if (Navigator.canPop(context))
+                  Positioned(
+                    top: isMobile ? 10.0 : 12.0,
+                    left: isMobile ? 10.0 : 14.0,
+                    child: _HeaderActionButton(
+                      icon: Icons.arrow_back_rounded,
+                      tooltip: 'Volver',
+                      onTap: () => Navigator.pop(context),
+                    ),
+                  ),
+
                 // Botones de acción rápida en la cabecera: Notificaciones (Campanita), Modo Oscuro/Claro y Perfil / Menú Lateral
                 Positioned(
                   top: isMobile ? 10.0 : 12.0,

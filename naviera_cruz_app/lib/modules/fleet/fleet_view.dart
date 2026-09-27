@@ -223,35 +223,34 @@ class _FleetViewState extends State<FleetView> {
             },
           ),
           
-          // Ship Selection Tabs (Capsules matching exact design)
+          // Ship Selection Tabs (Cápsulas compactas adaptables para que NANY no se corte en móviles)
           if (!_isLoading && _ships.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _ships.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final ship = entry.value;
-                    final isSelected = _selectedShipIndex == index;
-                    final shipColor = _getShipThemeColor(ship.name);
-                    
-                    final Color chipBgColor;
-                    final Color chipTextColor;
-                    final Color chipIconColor;
+              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+              child: Row(
+                children: _ships.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final ship = entry.value;
+                  final isSelected = _selectedShipIndex == index;
+                  final shipColor = _getShipThemeColor(ship.name);
+                  
+                  final Color chipBgColor;
+                  final Color chipTextColor;
+                  final Color chipIconColor;
 
-                    if (isSelected) {
-                      chipBgColor = shipColor;
-                      chipTextColor = Colors.white;
-                      chipIconColor = Colors.white;
-                    } else {
-                      chipBgColor = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
-                      chipTextColor = isDark ? Colors.white70 : const Color(0xFF0F172A);
-                      chipIconColor = isDark ? Colors.white70 : const Color(0xFF0F172A);
-                    }
+                  if (isSelected) {
+                    chipBgColor = shipColor;
+                    chipTextColor = Colors.white;
+                    chipIconColor = Colors.white;
+                  } else {
+                    chipBgColor = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+                    chipTextColor = isDark ? Colors.white70 : const Color(0xFF0F172A);
+                    chipIconColor = isDark ? Colors.white70 : const Color(0xFF0F172A);
+                  }
 
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 10.0),
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 3.0),
                       child: GestureDetector(
                         onTap: () {
                           setState(() {
@@ -260,35 +259,41 @@ class _FleetViewState extends State<FleetView> {
                         },
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                           decoration: BoxDecoration(
                             color: chipBgColor,
                             borderRadius: BorderRadius.circular(24),
                           ),
                           child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
                                 Icons.directions_boat,
-                                size: 18,
+                                size: isMobile ? 15 : 17,
                                 color: chipIconColor,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                ship.name.toUpperCase(),
-                                style: TextStyle(
-                                  color: chipTextColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  letterSpacing: 0.5,
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    ship.name.toUpperCase(),
+                                    style: TextStyle(
+                                      color: chipTextColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: isMobile ? 12 : 13.5,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ),
-                    );
-                  }).toList(),
-                ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           

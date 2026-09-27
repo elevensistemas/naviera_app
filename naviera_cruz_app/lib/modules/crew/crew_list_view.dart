@@ -258,6 +258,44 @@ class _CrewListViewState extends State<CrewListView> {
                           ),
                         ],
                       ),
+                      
+                      // Botón para volver atrás a la pantalla de Flota (Flecha colocada abajo de A BORDO)
+                      if (Navigator.canPop(context)) ...[
+                        const SizedBox(height: 12),
+                        InkWell(
+                          onTap: () => Navigator.pop(context),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.arrow_back_rounded,
+                                  size: 18,
+                                  color: textColor,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  "Volver a Flota",
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: textColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 16),
 
                       // Crew Members List (Cards on Mobile, Table or Cards on Web)
