@@ -366,8 +366,8 @@ class _ChatListViewState extends State<ChatListView> {
                         Expanded(
                           child: _buildActionCard(
                             context: context,
-                            title: "Asistente IA NCS",
-                            subtitle: "Asistente IA (Voz y Texto)",
+                            title: "Asistente IA",
+                            subtitle: "Asistente de Voz y Texto",
                             icon: Icons.auto_awesome_rounded,
                             iconBgColor: isDark ? const Color(0xFF7C2D12) : const Color(0xFFFFEDD5),
                             iconColor: isDark ? const Color(0xFFF97316) : const Color(0xFFEA580C),
@@ -389,7 +389,7 @@ class _ChatListViewState extends State<ChatListView> {
                           child: _buildActionCard(
                             context: context,
                             title: "Nuevo chat",
-                            subtitle: "Conversar con usuario de la empresa.",
+                            subtitle: "Conversar con usuarios",
                             icon: Icons.chat_bubble_rounded,
                             iconBgColor: isDark ? const Color(0xFF1E3A8A) : const Color(0xFFDBEAFE),
                             iconColor: isDark ? const Color(0xFF60A5FA) : const Color(0xFF0284C7),
@@ -639,18 +639,14 @@ class _ChatListViewState extends State<ChatListView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Título dinámico adaptativo para no cortar la palabra "Asistente" en 2 renglones
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      title,
-                      maxLines: 1,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                        color: textColor,
-                      ),
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: textColor,
                     ),
                   ),
                   const SizedBox(height: 2),
