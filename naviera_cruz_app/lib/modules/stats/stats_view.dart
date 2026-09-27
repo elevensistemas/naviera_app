@@ -111,7 +111,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "Obligatorio",
         description: "Guía de seguridad OCIMF Megomp para operaciones de amarre en muelles y monoboyas.",
         instructor: "Cap. Esteban Valdez (Instructor STCW)",
-        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
+        videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-cargo-container-ship-sailing-in-the-sea-41235-large.mp4",
         completedModules: 2,
         totalModules: 4,
         videoPositionSeconds: 3600,
@@ -154,7 +154,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "En progreso",
         description: "Cultura de seguridad, reporte de cuasi-accidentes (Near Miss) y condiciones inseguras a bordo.",
         instructor: "Lic. Roberto Soria",
-        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
+        videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-cargo-ship-sailing-near-the-coast-41233-large.mp4",
         completedModules: 1,
         totalModules: 3,
         videoPositionSeconds: 720,
@@ -1099,10 +1099,10 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
   void initState() {
     super.initState();
     _fallbackUrls = [
-      "https://vjs.zencdn.net/v/oceans.mp4",
-      widget.videoUrl,
+      if (widget.videoUrl.isNotEmpty) widget.videoUrl,
       "https://assets.mixkit.co/videos/preview/mixkit-cargo-container-ship-sailing-in-the-sea-41235-large.mp4",
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-cargo-ship-in-the-sea-41234-large.mp4",
+      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
     ];
     _initController();
   }
