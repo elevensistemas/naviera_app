@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
 import '../../app/theme.dart';
-import '../../app/bar_widget.dart';
+import '../../app/ncs_hero_header.dart';
+import '../../core/storage.dart';
 
 class NotificationsView extends StatefulWidget {
   const NotificationsView({super.key});
@@ -35,6 +36,8 @@ class _NotificationsViewState extends State<NotificationsView> {
         _notifications.clear();
         _notifications.addAll(list);
       });
+      final unreadCount = _notifications.where((n) => !n.isRead).length;
+      SessionManager.shared.setUnreadCount(unreadCount);
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
@@ -51,6 +54,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     try {
       final service = NotificationService();
       await service.markAllAsRead();
+      SessionManager.shared.clearUnreadCount();
       await _loadNotifications();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -67,6 +71,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     try {
       final service = NotificationService();
       await service.clearAll();
+      SessionManager.shared.clearUnreadCount();
       await _loadNotifications();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -83,6 +88,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     try {
       final service = NotificationService();
       await service.markAsRead(notification.id);
+      SessionManager.shared.decrementUnreadCount();
       // Local state update for immediate feedback
       setState(() {
         final index = _notifications.indexWhere((n) => n.id == notification.id);
@@ -119,36 +125,36 @@ class _NotificationsViewState extends State<NotificationsView> {
     final dividerColor = isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFF1F5F9);
 
     return Scaffold(
-      appBar: NavieraAppBar(
-        showBackButton: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.done_all, color: Colors.white),
-            tooltip: "Marcar todas como leídas",
-            onPressed: _markAllRead,
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_sweep_outlined, color: Colors.white),
-            tooltip: "Limpiar historial",
-            onPressed: _clearAll,
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title
+          const NcsHeroHeader(
+            title: "Notificaciones",
+            subtitle: "Historial de avisos y alertas del sistema.",
+          ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 8.0),
-            child: Text(
-              "Notificaciones",
-              style: TextStyle(
-                color: ColorTheme.primary,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                letterSpacing: -0.5,
-              ),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: _markAllRead,
+                  icon: const Icon(Icons.done_all, size: 18),
+                  label: const Text("Marcar leídas"),
+                  style: TextButton.styleFrom(
+                    foregroundColor: ColorTheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: _clearAll,
+                  icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+                  label: const Text("Limpiar"),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.redAccent,
+                  ),
+                ),
+              ],
             ),
           ),
 

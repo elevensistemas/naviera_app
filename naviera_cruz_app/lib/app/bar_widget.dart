@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'logo.dart';
 import 'theme.dart';
+import '../core/storage.dart';
 import '../modules/notifications/notifications_view.dart';
 
 class NavieraAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -15,6 +17,9 @@ class NavieraAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final session = Provider.of<SessionManager>(context);
+    final bool hasUnread = session.hasUnreadNotifications;
+
     return AppBar(
       backgroundColor: ColorTheme.primary,
       elevation: 0,
@@ -31,7 +36,7 @@ class NavieraAppBar extends StatelessWidget implements PreferredSizeWidget {
         isWhiteVersion: true,
       ),
       actions: actions ?? [
-        // Bell icon with orange dot
+        // Bell icon with orange dot (only when unread notifications exist)
         Stack(
           alignment: Alignment.center,
           children: [
@@ -44,18 +49,19 @@ class NavieraAppBar extends StatelessWidget implements PreferredSizeWidget {
                 );
               },
             ),
-            Positioned(
-              right: 12,
-              top: 12,
-              child: Container(
-                width: 7,
-                height: 7,
-                decoration: const BoxDecoration(
-                  color: ColorTheme.accent, // Orange dot
-                  shape: BoxShape.circle,
+            if (hasUnread)
+              Positioned(
+                right: 12,
+                top: 12,
+                child: Container(
+                  width: 7,
+                  height: 7,
+                  decoration: const BoxDecoration(
+                    color: ColorTheme.accent, // Orange dot
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
         // Hamburger menu

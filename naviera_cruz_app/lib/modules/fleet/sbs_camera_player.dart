@@ -9,7 +9,7 @@ class SBSCameraPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 180,
+      height: 210,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.black,

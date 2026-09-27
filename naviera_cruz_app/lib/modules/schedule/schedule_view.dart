@@ -3,6 +3,7 @@ import '../../models/models.dart';
 import '../../services/services.dart';
 import '../../app/theme.dart';
 import '../../app/bar_widget.dart';
+import '../../app/ncs_hero_header.dart';
 
 class ScheduleView extends StatefulWidget {
   const ScheduleView({super.key});
@@ -115,12 +116,31 @@ class _ScheduleViewState extends State<ScheduleView> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
     final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
+    final bodyBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+
+    final String bannerTitle = _activeTabIndex == 0
+        ? "Programado mensual"
+        : "Detalle de operaciones";
+    final String bannerSubtitle = _activeTabIndex == 0
+        ? "Planificación y consolidación mensual de operaciones."
+        : "Registro detallado por barco y fecha de viaje.";
 
     return Scaffold(
-      appBar: const NavieraAppBar(),
+      backgroundColor: bodyBg,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Reusable NcsHeroHeader
+          NcsHeroHeader(
+            title: bannerTitle,
+            subtitle: bannerSubtitle,
+            onTap: () {
+              setState(() {
+                _activeTabIndex = (_activeTabIndex + 1) % 2;
+              });
+            },
+          ),
+          
           // Date Filter Inputs (Desde / Hasta)
           Padding(
             padding: const EdgeInsets.fromLTRB(16.0, 10.0, 16.0, 6.0),
@@ -285,6 +305,45 @@ class _ScheduleViewState extends State<ScheduleView> {
     );
   }
 
+  Widget _buildCardHeader({
+    required String title,
+    required IconData icon,
+    Widget? trailing,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            color: const Color(0xFF0284C7),
+            size: 20,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        trailing ?? const Icon(
+          Icons.chevron_right_rounded,
+          color: Color(0xFF94A3B8),
+          size: 22,
+        ),
+      ],
+    );
+  }
+
   // 1. Cargas diarias Raizen Card (100% DINÁMICO de la API)
   Widget _buildRaizenDailyLoadsCard(BuildContext context) {
     final Map<String, double> dailyMap = {};
@@ -309,16 +368,14 @@ class _ScheduleViewState extends State<ScheduleView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Cargas diarias Raizen", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(color: const Color(0xFF0057B8), borderRadius: BorderRadius.circular(6)),
-                  child: const Text("Alfa C", style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                ),
-              ],
+            _buildCardHeader(
+              title: "Cargas diarias Raizen",
+              icon: Icons.bar_chart_rounded,
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(color: const Color(0xFF0057B8), borderRadius: BorderRadius.circular(6)),
+                child: const Text("Alfa C", style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+              ),
             ),
             const SizedBox(height: 12),
             const Center(
@@ -373,26 +430,24 @@ class _ScheduleViewState extends State<ScheduleView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Cargas diarias WFS", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(color: const Color(0xFF64748B), borderRadius: BorderRadius.circular(6)),
-                      child: const Text("Gustavo U", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                    ),
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(color: const Color(0xFFED8B00), borderRadius: BorderRadius.circular(6)),
-                      child: const Text("Nany", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
-              ],
+            _buildCardHeader(
+              title: "Cargas diarias WFS",
+              icon: Icons.stacked_bar_chart_rounded,
+              trailing: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(color: const Color(0xFF64748B), borderRadius: BorderRadius.circular(6)),
+                    child: const Text("Gustavo U", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(width: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(color: const Color(0xFFED8B00), borderRadius: BorderRadius.circular(6)),
+                    child: const Text("Nany", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 12),
             const Center(
@@ -429,6 +484,7 @@ class _ScheduleViewState extends State<ScheduleView> {
 
   // 3. Cargas Anual Card (100% DINÁMICO de la API)
   Widget _buildAnnualLoadsCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -436,15 +492,18 @@ class _ScheduleViewState extends State<ScheduleView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Cargas Anual", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            _buildCardHeader(
+              title: "Cargas Anual",
+              icon: Icons.show_chart_rounded,
+            ),
             const SizedBox(height: 8),
-            const Center(child: Text("Cargas Anual", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey))),
+            Center(child: Text("Cargas Anual", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : Colors.grey))),
             const SizedBox(height: 16),
             SizedBox(
               height: 160,
               child: CustomPaint(
                 size: const Size(double.infinity, 160),
-                painter: _AnnualLineChartPainter(),
+                painter: _AnnualLineChartPainter(isDark),
               ),
             ),
           ],
@@ -472,7 +531,10 @@ class _ScheduleViewState extends State<ScheduleView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Buques cargados del período", style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            _buildCardHeader(
+              title: "Buques cargados del período",
+              icon: Icons.directions_boat_filled_rounded,
+            ),
             const SizedBox(height: 8),
             const Center(child: Text("Buques Cargados del Período", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey))),
             const SizedBox(height: 16),
@@ -515,7 +577,10 @@ class _ScheduleViewState extends State<ScheduleView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Cargas Programadas", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            _buildCardHeader(
+              title: "Cargas Programadas",
+              icon: Icons.analytics_rounded,
+            ),
             const SizedBox(height: 16),
 
             // SUB-SECCIÓN 1: RAIZEN
@@ -800,6 +865,9 @@ class _WfsDailyChartPainter extends CustomPainter {
 
 // 3. Painter Cargas Anual (Evolución de Línea Continua 0k a 60k)
 class _AnnualLineChartPainter extends CustomPainter {
+  final bool isDark;
+  _AnnualLineChartPainter(this.isDark);
+
   @override
   void paint(Canvas canvas, Size size) {
     const double leftMargin = 30;
@@ -808,19 +876,21 @@ class _AnnualLineChartPainter extends CustomPainter {
     final double chartHeight = size.height - bottomMargin;
 
     final paintGrid = Paint()
-      ..color = Colors.grey.shade300
+      ..color = isDark ? Colors.white24 : Colors.grey.shade300
       ..strokeWidth = 0.5;
 
+    final lineColor = isDark ? const Color(0xFF38BDF8) : const Color(0xFF1E293B);
+
     final paintLine = Paint()
-      ..color = const Color(0xFF1E293B)
-      ..strokeWidth = 2.0
+      ..color = lineColor
+      ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke;
 
     final paintDot = Paint()
-      ..color = const Color(0xFF1E293B)
+      ..color = lineColor
       ..style = PaintingStyle.fill;
 
-    const textStyleAxis = TextStyle(fontSize: 8, color: Colors.grey);
+    final textStyleAxis = TextStyle(fontSize: 8, color: isDark ? Colors.white70 : Colors.grey);
 
     final yTicks = [0, 10, 20, 30, 40, 50, 60];
     for (var tick in yTicks) {
@@ -873,7 +943,7 @@ class _AnnualLineChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
 // 4. Painter Buques Cargados del Período (3 Columnas con la cifra real de la API adentro)

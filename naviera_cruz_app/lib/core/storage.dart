@@ -15,11 +15,31 @@ class SessionManager with ChangeNotifier {
   User? _currentUser;
   bool _isDarkMode = false;
   Set<String> _blockedUserIds = {};
+  int _unreadNotificationCount = 0;
 
   bool get isAuthenticated => _isAuthenticated;
   User? get currentUser => _currentUser;
   bool get isDarkMode => _isDarkMode;
   Set<String> get blockedUserIds => _blockedUserIds;
+  int get unreadNotificationCount => _unreadNotificationCount;
+  bool get hasUnreadNotifications => _unreadNotificationCount > 0;
+
+  void setUnreadCount(int count) {
+    _unreadNotificationCount = count < 0 ? 0 : count;
+    notifyListeners();
+  }
+
+  void decrementUnreadCount() {
+    if (_unreadNotificationCount > 0) {
+      _unreadNotificationCount--;
+      notifyListeners();
+    }
+  }
+
+  void clearUnreadCount() {
+    _unreadNotificationCount = 0;
+    notifyListeners();
+  }
 
   static const String _tokenKey = "com.navieracruz.authToken";
   static const String _userKey = "com.navieracruz.currentUser";

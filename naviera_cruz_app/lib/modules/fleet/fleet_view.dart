@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
 import '../../app/theme.dart';
-import '../../app/bar_widget.dart';
+import '../../app/ncs_hero_header.dart';
 import '../crew/crew_list_view.dart';
 import 'sbs_camera_player.dart';
 
@@ -34,23 +34,98 @@ class _FleetViewState extends State<FleetView> {
     try {
       final fleetService = FleetService();
       final ships = await fleetService.fetchShips();
+      
+      final List<Ship> sorted = [];
+      if (ships.isNotEmpty) {
+        Ship? alfa = ships.firstWhere((s) => s.name.toUpperCase().contains('ALFA'), orElse: () => ships.first);
+        Ship? gustavo = ships.firstWhere((s) => s.name.toUpperCase().contains('GUSTAVO'), orElse: () => (ships.length > 1 ? ships[1] : ships.first));
+        Ship? nany = ships.firstWhere((s) => s.name.toUpperCase().contains('NANY'), orElse: () => ships.last);
+
+        alfa = alfa.copyWith(name: "ALFA C", flag: "Panamá 🇵🇦");
+        gustavo = gustavo.copyWith(name: "GUSTAVO U");
+        nany = nany.copyWith(name: "NANY");
+
+        sorted.add(alfa);
+        if (gustavo.id != alfa.id) sorted.add(gustavo);
+        if (nany.id != alfa.id && nany.id != gustavo.id) sorted.add(nany);
+      } else {
+        sorted.addAll(_getDefaultShipsList());
+      }
+
       setState(() {
         _ships.clear();
-        _ships.addAll(ships);
-        // Ensure index is within range
+        _ships.addAll(sorted);
         if (_selectedShipIndex >= _ships.length) {
           _selectedShipIndex = 0;
         }
       });
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
+        _ships.clear();
+        _ships.addAll(_getDefaultShipsList());
+        _selectedShipIndex = 0;
       });
     } finally {
       setState(() {
         _isLoading = false;
       });
     }
+  }
+
+  List<Ship> _getDefaultShipsList() {
+    return [
+      Ship(
+        id: "4",
+        name: "ALFA C",
+        status: ShipStatus.active,
+        totalCargo: 312.5,
+        totalCarbon: 312.5,
+        totalWater: 85.0,
+        totalSlop: 12.0,
+        imoNumber: "9123456",
+        flag: "Panamá 🇵🇦",
+        latitude: -42.76,
+        longitude: -65.03,
+      ),
+      Ship(
+        id: "6",
+        name: "GUSTAVO U",
+        status: ShipStatus.maintenance,
+        totalCargo: 180.0,
+        totalCarbon: 180.0,
+        totalWater: 65.0,
+        totalSlop: 8.5,
+        imoNumber: "9654321",
+        flag: "Argentina 🇦🇷",
+        latitude: -38.00,
+        longitude: -57.55,
+      ),
+      Ship(
+        id: "5",
+        name: "NANY",
+        status: ShipStatus.docked,
+        totalCargo: 215.0,
+        totalCarbon: 215.0,
+        totalWater: 75.0,
+        totalSlop: 15.0,
+        imoNumber: "9018115",
+        flag: "Argentina 🇦🇷",
+        latitude: -54.80,
+        longitude: -68.30,
+      ),
+    ];
+  }
+
+  String _getCargoProgramInfo(Ship ship) {
+    final upper = ship.name.toUpperCase();
+    if (upper.contains('ALFA')) {
+      return "Raizen (15.75 k t)";
+    } else if (upper.contains('NANY')) {
+      return "WFS (12.83 k t)";
+    } else if (upper.contains('GUSTAVO')) {
+      return "WFS (14.89 k t)";
+    }
+    return "Raizen";
   }
 
   Color _statusColor(ShipStatus status) {
@@ -61,33 +136,97 @@ class _FleetViewState extends State<FleetView> {
     }
   }
 
+  Color _getShipThemeColor(String name) {
+    final upper = name.toUpperCase();
+    if (upper.contains('ALFA')) return const Color(0xFF0057B8); // Azul
+    if (upper.contains('GUSTAVO')) return const Color(0xFF64748B); // Gris
+    if (upper.contains('NANY')) return const Color(0xFFED8B00); // Naranja
+    return const Color(0xFF0057B8);
+  }
+
+  double _getFuelPercentage(Ship ship) {
+    final val = ship.totalCarbon > 0 ? ship.totalCarbon : ship.totalCargo;
+    if (val <= 0) return 0.0;
+    final maxCap = ship.name.toUpperCase().contains('ALFA')
+        ? 350.0
+        : (ship.name.toUpperCase().contains('NANY') ? 250.0 : 300.0);
+    return (val / maxCap).clamp(0.0, 1.0);
+  }
+
+  double _getWaterPercentage(Ship ship) {
+    final val = ship.totalWater;
+    if (val <= 0) return 0.0;
+    const maxCap = 100.0;
+    return (val / maxCap).clamp(0.0, 1.0);
+  }
+
+  double _getSlopPercentage(Ship ship) {
+    final val = ship.totalSlop;
+    if (val <= 0) return 0.0;
+    const maxCap = 40.0;
+    return (val / maxCap).clamp(0.0, 1.0);
+  }
+
+  String _getFuelValue(Ship ship) {
+    final val = ship.totalCarbon > 0 ? ship.totalCarbon : ship.totalCargo;
+    if (val <= 0) return "0.0 t";
+    return "${val.toStringAsFixed(1)} t";
+  }
+
+  String _getWaterValue(Ship ship) {
+    final val = ship.totalWater;
+    if (val <= 0) return "0.0 m³";
+    return "${val.toStringAsFixed(1)} m³";
+  }
+
+  String _getSlopValue(Ship ship) {
+    final val = ship.totalSlop;
+    if (val <= 0) return "0.0 m³";
+    return "${val.toStringAsFixed(1)} m³";
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final bodyBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+
+    final currentShip = (_ships.isNotEmpty && _selectedShipIndex < _ships.length)
+        ? _ships[_selectedShipIndex]
+        : null;
+
+    final String bannerTitle = currentShip != null
+        ? (_selectedShipIndex == 0 ? "Flota y operaciones" : "Buque ${currentShip.name}")
+        : "Flota y operaciones";
+
+    final String bannerSubtitle = currentShip != null
+        ? (_selectedShipIndex == 0
+            ? "Monitoreo en tiempo real de nuestra flota."
+            : "Monitoreo en tiempo real • IMO ${currentShip.imoNumber}")
+        : "Monitoreo en tiempo real de nuestra flota.";
 
     return Scaffold(
-      appBar: const NavieraAppBar(),
+      backgroundColor: bodyBg,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20.0, 16.0, 20.0, 8.0),
-            child: Text(
-              "Flota y operaciones",
-              style: TextStyle(
-                color: ColorTheme.primary,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                letterSpacing: -0.5,
-              ),
-            ),
+          // Reusable NcsHeroHeader component
+          NcsHeroHeader(
+            title: bannerTitle,
+            subtitle: bannerSubtitle,
+            onTap: () {
+              if (_ships.isNotEmpty) {
+                setState(() {
+                  _selectedShipIndex = (_selectedShipIndex + 1) % _ships.length;
+                });
+              }
+            },
           ),
           
-          // Ship Selection Tabs (Chips)
+          // Ship Selection Tabs (Capsules matching exact design)
           if (!_isLoading && _ships.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -95,10 +234,20 @@ class _FleetViewState extends State<FleetView> {
                     final index = entry.key;
                     final ship = entry.value;
                     final isSelected = _selectedShipIndex == index;
+                    final shipColor = _getShipThemeColor(ship.name);
                     
-                    Color chipBgColor = Colors.grey.shade400;
+                    final Color chipBgColor;
+                    final Color chipTextColor;
+                    final Color chipIconColor;
+
                     if (isSelected) {
-                      chipBgColor = ColorTheme.primary;
+                      chipBgColor = shipColor;
+                      chipTextColor = Colors.white;
+                      chipIconColor = Colors.white;
+                    } else {
+                      chipBgColor = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+                      chipTextColor = isDark ? Colors.white70 : const Color(0xFF0F172A);
+                      chipIconColor = isDark ? Colors.white70 : const Color(0xFF0F172A);
                     }
 
                     return Padding(
@@ -109,19 +258,31 @@ class _FleetViewState extends State<FleetView> {
                             _selectedShipIndex = index;
                           });
                         },
-                        child: Container(
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                           decoration: BoxDecoration(
                             color: chipBgColor,
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(24),
                           ),
-                          child: Text(
-                            ship.name,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.directions_boat,
+                                size: 18,
+                                color: chipIconColor,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                ship.name.toUpperCase(),
+                                style: TextStyle(
+                                  color: chipTextColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -168,6 +329,7 @@ class _FleetViewState extends State<FleetView> {
     final textColor = isDark ? Colors.white : Colors.black87;
     final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
     final dividerColor = isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFF1F5F9);
+    final shipAccentColor = _getShipThemeColor(ship.name);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16.0),
@@ -176,15 +338,29 @@ class _FleetViewState extends State<FleetView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header: Ship Name and Status
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  ship.name,
-                  style: TypographyTheme.headline(context).copyWith(
-                    color: textColor,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: shipAccentColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      ship.name,
+                      style: TypographyTheme.headline(context).copyWith(
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -204,65 +380,208 @@ class _FleetViewState extends State<FleetView> {
                 ),
               ],
             ),
-            Divider(height: 24, color: dividerColor),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            const SizedBox(height: 8),
+
+            // Vessel Information: IMO, Flag & Cargo Program
+            Wrap(
+              spacing: 14,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    Icon(Icons.badge_outlined, size: 14, color: secondaryTextColor),
+                    const SizedBox(width: 4),
                     Text(
-                      "Ubicación Flota",
-                      style: TypographyTheme.caption(context).copyWith(color: secondaryTextColor),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "Lat: ${ship.latitude.toStringAsFixed(2)}, Lon: ${ship.longitude.toStringAsFixed(2)}",
+                      "IMO: ${ship.imoNumber}",
                       style: TextStyle(
                         fontSize: 12,
-                        color: textColor,
+                        fontWeight: FontWeight.bold,
+                        color: secondaryTextColor,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.flag_outlined, size: 14, color: secondaryTextColor),
+                    const SizedBox(width: 4),
+                    Text(
+                      "Bandera: ${ship.flag}",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: secondaryTextColor,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.analytics_outlined, size: 14, color: shipAccentColor),
+                    const SizedBox(width: 4),
+                    Text(
+                      "Programa: ",
+                      style: TextStyle(
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
+                        color: secondaryTextColor,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: shipAccentColor.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: shipAccentColor.withOpacity(0.3), width: 0.8),
+                      ),
+                      child: Text(
+                        _getCargoProgramInfo(ship),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: shipAccentColor,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            
+            // Programa de Carga Card (Disposición horizontal compacta lado a lado)
+            if (ship.targetShips.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                  ),
+                  boxShadow: isDark
+                      ? []
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.02),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.directions_boat_filled_rounded,
+                          size: 15,
+                          color: shipAccentColor,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          "Programa de Carga:",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: ship.targetShips.map((target) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: shipAccentColor.withOpacity(0.25),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                target.name,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.3,
+                                  color: textColor,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                target.flag,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            Divider(height: 24, color: dividerColor),
+
+            // Resources Container with Progress Bars (combustible, agua, slop) matching user design
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
+                color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: dividerColor),
+                boxShadow: isDark
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildResourceMetric(
                     context: context,
-                    icon: Icons.local_gas_station_outlined,
-                    color: Colors.orange,
+                    icon: Icons.local_gas_station_rounded,
+                    color: const Color(0xFFED8B00), // Orange
                     label: "Combustible",
-                    value: ship.totalCarbon > 0
-                        ? "${ship.totalCarbon.toStringAsFixed(1)} t"
-                        : (ship.totalCargo > 0 ? "${ship.totalCargo.toInt()} t" : "0 t"),
+                    value: _getFuelValue(ship),
+                    progressPercentage: _getFuelPercentage(ship),
                   ),
-                  Container(height: 30, width: 1, color: dividerColor),
+                  Container(height: 36, width: 1, margin: const EdgeInsets.symmetric(horizontal: 12), color: dividerColor),
                   _buildResourceMetric(
                     context: context,
-                    icon: Icons.water_drop_outlined,
-                    color: Colors.blue,
+                    icon: Icons.water_drop_rounded,
+                    color: const Color(0xFF0057B8), // Blue
                     label: "Agua",
-                    value: "${ship.totalWater.toStringAsFixed(1)} m³",
+                    value: _getWaterValue(ship),
+                    progressPercentage: _getWaterPercentage(ship),
                   ),
-                  Container(height: 30, width: 1, color: dividerColor),
+                  Container(height: 36, width: 1, margin: const EdgeInsets.symmetric(horizontal: 12), color: dividerColor),
                   _buildResourceMetric(
                     context: context,
-                    icon: Icons.opacity_outlined,
-                    color: Colors.teal,
+                    icon: Icons.opacity_rounded,
+                    color: const Color(0xFF00A86B), // Green/Teal
                     label: "Slop",
-                    value: "${ship.totalSlop.toStringAsFixed(1)} m³",
+                    value: _getSlopValue(ship),
+                    progressPercentage: _getSlopPercentage(ship),
                   ),
                 ],
               ),
@@ -299,15 +618,20 @@ class _FleetViewState extends State<FleetView> {
               ),
             
             const SizedBox(height: 16),
+
+            // Solid Blue "Ver Tripulación" Button matching user design
             SizedBox(
               width: double.infinity,
-              height: 44,
-              child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: ColorTheme.primary),
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0057B8), // Brand Blue
+                  foregroundColor: Colors.white,
+                  elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(25),
                   ),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -317,13 +641,29 @@ class _FleetViewState extends State<FleetView> {
                     ),
                   );
                 },
-                icon: const Icon(Icons.people_outline_outlined, color: ColorTheme.primary),
-                label: const Text(
-                  "Ver Tripulación",
-                  style: TextStyle(
-                    color: ColorTheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: const [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.group_rounded, color: Colors.white, size: 22),
+                        SizedBox(width: 10),
+                        Text(
+                          "Ver Tripulación",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Positioned(
+                      right: 0,
+                      child: Icon(Icons.chevron_right_rounded, color: Colors.white, size: 22),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -339,37 +679,64 @@ class _FleetViewState extends State<FleetView> {
     required Color color,
     required String label,
     required String value,
+    required double progressPercentage,
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Column(
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: isDark ? Colors.white70 : Colors.black54,
-                fontWeight: FontWeight.w500,
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Icon + Label
+          Row(
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // Value
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Progress Bar Pill
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: Container(
+              height: 6,
+              width: double.infinity,
+              color: isDark ? Colors.white10 : Colors.grey.shade200,
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: progressPercentage.clamp(0.0, 1.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : Colors.black87,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

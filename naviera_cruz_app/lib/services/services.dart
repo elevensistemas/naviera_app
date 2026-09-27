@@ -118,21 +118,61 @@ abstract class ChatService {
 class MockChatService implements ChatService {
   @override
   Future<List<ChatChannel>> fetchChannels() async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 300));
     return [
       ChatChannel(
         id: "ch1",
-        name: "Operaciones Central",
-        isGroup: true,
-        lastMessage: "¿Cómo viene la carga del Naviera I?",
-        lastMessageTimestamp: DateTime.now(),
+        name: "Carrá Leonel",
+        isGroup: false,
+        lastMessage: "Perfecto, gracias.",
+        timeDisplay: "10:34",
+        unreadCount: 3,
+        type: "direct",
       ),
       ChatChannel(
         id: "ch2",
-        name: "Capitán Pérez",
+        name: "Caballero Diego",
         isGroup: false,
-        lastMessage: "Recibido.",
-        lastMessageTimestamp: DateTime.now().subtract(const Duration(hours: 1)),
+        lastMessage: "Te envío el reporte de hoy.",
+        timeDisplay: "09:15",
+        unreadCount: 0,
+        type: "direct",
+      ),
+      ChatChannel(
+        id: "ch3",
+        name: "Sosa Armando",
+        isGroup: false,
+        lastMessage: "Nos vemos mañana en el taller.",
+        timeDisplay: "Ayer",
+        unreadCount: 1,
+        type: "direct",
+      ),
+      ChatChannel(
+        id: "ch4",
+        name: "NANY - Tripulación",
+        isGroup: true,
+        lastMessage: "Escalante: Todo en orden.",
+        timeDisplay: "Ayer",
+        unreadCount: 4,
+        type: "group",
+      ),
+      ChatChannel(
+        id: "ch5",
+        name: "GUSTAVO U - Tripulación",
+        isGroup: true,
+        lastMessage: "Caratolli: Cambio de turno confirmado.",
+        timeDisplay: "24 sep",
+        unreadCount: 0,
+        type: "group",
+      ),
+      ChatChannel(
+        id: "ch6",
+        name: "Comunicaciones Generales",
+        isGroup: false,
+        lastMessage: "Administración: Recordatorio de capacitaci...",
+        timeDisplay: "23 sep",
+        unreadCount: 0,
+        type: "announcement",
       ),
     ];
   }
@@ -140,7 +180,16 @@ class MockChatService implements ChatService {
   @override
   Future<List<ChatChannel>> fetchContacts() async {
     await Future.delayed(const Duration(milliseconds: 300));
-    return fetchChannels();
+    return [
+      ChatChannel(id: "c1", name: "Carrá Leonel", isGroup: false, type: "direct"),
+      ChatChannel(id: "c2", name: "Caballero Diego", isGroup: false, type: "direct"),
+      ChatChannel(id: "c3", name: "Caratolli Pablo", isGroup: false, type: "direct"),
+      ChatChannel(id: "c4", name: "Escalante Jorge", isGroup: false, type: "direct"),
+      ChatChannel(id: "c5", name: "Sosa Armando", isGroup: false, type: "direct"),
+      ChatChannel(id: "c6", name: "Medina Cesar", isGroup: false, type: "direct"),
+      ChatChannel(id: "c7", name: "Ledesma Gabriel", isGroup: false, type: "direct"),
+      ChatChannel(id: "c8", name: "Pereyra Matías", isGroup: false, type: "direct"),
+    ];
   }
 
   @override
@@ -190,7 +239,16 @@ class ProductionChatService implements ChatService {
   Future<List<ChatChannel>> fetchChannels() async {
     final Map<String, dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/chat/conversations/');
     final List<dynamic> results = response['results'] ?? [];
-    return results.map((json) {
+    return results.where((json) {
+      final participant = json['participant'] ?? {};
+      final name = (participant['name'] ?? participant['username'] ?? '').toString().toLowerCase();
+      final username = (participant['username'] ?? '').toString().toLowerCase();
+      if (username == 'admin' || username == 'test admin' || username == 'test_admin' || username.contains('admin') ||
+          name == 'admin' || name == 'test admin' || name == 'test_admin' || name.contains('admin')) {
+        return false;
+      }
+      return true;
+    }).map((json) {
       final participant = json['participant'] ?? {};
       final lastMsg = json['last_message'] ?? {};
       return ChatChannel(
@@ -209,7 +267,15 @@ class ProductionChatService implements ChatService {
   Future<List<ChatChannel>> fetchContacts() async {
     final Map<String, dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/chat/users/');
     final List<dynamic> results = response['results'] ?? [];
-    return results.map((json) {
+    return results.where((json) {
+      final name = (json['name'] ?? json['username'] ?? '').toString().toLowerCase();
+      final username = (json['username'] ?? '').toString().toLowerCase();
+      if (username == 'admin' || username == 'test admin' || username == 'test_admin' || username.contains('admin') ||
+          name == 'admin' || name == 'test admin' || name == 'test_admin' || name.contains('admin')) {
+        return false;
+      }
+      return true;
+    }).map((json) {
       return ChatChannel(
         id: json['id']?.toString() ?? '',
         name: json['name'] ?? json['username'] ?? '',
@@ -335,10 +401,16 @@ class MockFleetService implements FleetService {
 
   @override
   Future<List<CrewMember>> fetchCrew(String shipId) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 300));
     return [
-      CrewMember(id: "c1", shipId: shipId, name: "Juan Pérez", role: "Capitán"),
-      CrewMember(id: "c2", shipId: shipId, name: "Carlos Goméz", role: "Jefe de Máquinas"),
+      CrewMember(id: "c1", shipId: shipId, name: "Carrá Leonel", role: "Capitán", dni: "28.123.456", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 1),
+      CrewMember(id: "c2", shipId: shipId, name: "Caballero Diego", role: "1er Oficial Cubierta", dni: "31.987.654", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 2),
+      CrewMember(id: "c3", shipId: shipId, name: "Caratolli Pablo", role: "2do Oficial Cubierta", dni: "28.654.321", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 19, orderIndex: 3),
+      CrewMember(id: "c4", shipId: shipId, name: "Escalante Jorge", role: "3er Oficial Cubierta", dni: "27.321.098", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 4),
+      CrewMember(id: "c5", shipId: shipId, name: "Sosa Armando", role: "Jefe de Maquinas", dni: "24.567.890", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 5),
+      CrewMember(id: "c6", shipId: shipId, name: "Medina Cesar", role: "1er Conductor", dni: "33.444.555", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 6),
+      CrewMember(id: "c7", shipId: shipId, name: "Ledesma Gabriel", role: "2do Oficial Maquinas", dni: "29.111.222", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 7),
+      CrewMember(id: "c8", shipId: shipId, name: "Pereyra Matías", role: "3er Oficial Maquinas", dni: "32.777.333", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 18, orderIndex: 8),
     ];
   }
 }
@@ -506,23 +578,25 @@ abstract class HomeService {
 class MockHomeService implements HomeService {
   @override
   Future<List<Post>> fetchPosts() async {
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 400));
     return [
       Post(
         id: "1",
-        authorId: "hr1",
-        authorName: "Recursos Humanos",
-        content: "¡Bienvenidos al nuevo portal móvil de Naviera Cruz del Sur! A partir de hoy centralizaremos comunicados aquí.",
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
-        type: PostType.news,
+        authorId: "a.lopresti",
+        authorName: "Alejandro Lo Presti",
+        title: "Save the Date",
+        content: "Un encuentro para disfrutar juntos",
+        timestamp: DateTime(2026, 9, 24),
+        type: PostType.alert,
       ),
       Post(
         id: "2",
-        authorId: "op1",
-        authorName: "Centro Operativo",
-        content: "Aviso: Zonas de ráfagas fuertes en el sur argentino. Mantener precauciones en flota pesquera.",
-        timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-        type: PostType.alert,
+        authorId: "hr1",
+        authorName: "Recursos Humanos",
+        title: "Nuevo Portal Móvil",
+        content: "¡Bienvenidos al portal móvil de Naviera Cruz del Sur! Centralización de comunicados e información operativa.",
+        timestamp: DateTime.now().subtract(const Duration(days: 1)),
+        type: PostType.news,
       ),
     ];
   }
@@ -903,9 +977,18 @@ class MockNotificationService implements NotificationService {
 class ProductionNotificationService implements NotificationService {
   @override
   Future<List<AppNotification>> fetchNotifications() async {
-    final Map<String, dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/notifications/');
-    final List<dynamic> results = response['results'] ?? [];
-    return results.map((json) => AppNotification.fromJson(json)).toList();
+    try {
+      final response = await APIClient.shared.request(endpoint: '/api/v1/notifications/');
+      List rawList = [];
+      if (response is List) {
+        rawList = response;
+      } else if (response is Map<String, dynamic>) {
+        rawList = response['results'] as List? ?? response['data'] as List? ?? [];
+      }
+      return rawList.map((json) => AppNotification.fromJson(json)).toList();
+    } catch (_) {
+      return [];
+    }
   }
 
   @override

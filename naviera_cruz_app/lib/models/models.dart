@@ -193,6 +193,29 @@ class ShipCamera {
   }
 }
 
+class TargetShip {
+  final String name;
+  final String flag;
+  final String? cargoDetails;
+  final String? client;
+
+  TargetShip({
+    required this.name,
+    required this.flag,
+    this.cargoDetails,
+    this.client,
+  });
+
+  factory TargetShip.fromJson(Map<String, dynamic> json) {
+    return TargetShip(
+      name: json['name']?.toString() ?? json['buque']?.toString() ?? '',
+      flag: json['flag']?.toString() ?? json['bandera']?.toString() ?? '🇦🇷',
+      cargoDetails: json['cargo_details']?.toString() ?? json['detalles']?.toString(),
+      client: json['client']?.toString() ?? json['cliente']?.toString(),
+    );
+  }
+}
+
 class Ship {
   final String id;
   final String name;
@@ -205,6 +228,9 @@ class Ship {
   final double longitude;
   final String? cameraUrl;
   final List<ShipCamera> cameras;
+  final String imoNumber;
+  final String flag;
+  final List<TargetShip> targetShips;
 
   Ship({
     required this.id,
@@ -218,6 +244,9 @@ class Ship {
     required this.longitude,
     this.cameraUrl,
     this.cameras = const [],
+    this.imoNumber = '',
+    this.flag = 'Argentina 🇦🇷',
+    this.targetShips = const [],
   });
 
   Ship copyWith({
@@ -232,6 +261,9 @@ class Ship {
     double? longitude,
     String? cameraUrl,
     List<ShipCamera>? cameras,
+    String? imoNumber,
+    String? flag,
+    List<TargetShip>? targetShips,
   }) {
     return Ship(
       id: id ?? this.id,
@@ -245,7 +277,41 @@ class Ship {
       longitude: longitude ?? this.longitude,
       cameraUrl: cameraUrl ?? this.cameraUrl,
       cameras: cameras ?? this.cameras,
+      imoNumber: imoNumber ?? this.imoNumber,
+      flag: flag ?? this.flag,
+      targetShips: targetShips ?? this.targetShips,
     );
+  }
+
+  static List<TargetShip> _getDefaultTargetShipsFor(String shipName) {
+    final upper = shipName.toUpperCase();
+    if (upper.contains('ALFA')) {
+      return [
+        TargetShip(name: "KOCIEWIE", flag: "🇧🇸", cargoDetails: "Bahamas", client: "Raizen"),
+        TargetShip(name: "PCT ARTEMIS", flag: "🇰🇾", cargoDetails: "Islas Caimán", client: "Raizen"),
+        TargetShip(name: "DSM HARBOUR", flag: "🇧🇧", cargoDetails: "Barbados", client: "Raizen"),
+        TargetShip(name: "PAN CERES", flag: "🇸🇬", cargoDetails: "Singapur", client: "Raizen"),
+        TargetShip(name: "MERCOSUL ITAJAI", flag: "🇧🇷", cargoDetails: "Brasil", client: "Raizen"),
+      ];
+    } else if (upper.contains('NANY')) {
+      return [
+        TargetShip(name: "LOWLANDS PATRASCHE", flag: "🇰🇾", cargoDetails: "Islas Caimán", client: "WFS"),
+        TargetShip(name: "ROMY", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
+        TargetShip(name: "GENCO LADDEY", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
+        TargetShip(name: "PACIFIC STAR", flag: "🇵🇦", cargoDetails: "Panamá", client: "WFS"),
+        TargetShip(name: "ERMOUPOLIS", flag: "🇬🇷", cargoDetails: "Grecia", client: "WFS"),
+      ];
+    } else if (upper.contains('GUSTAVO')) {
+      return [
+        TargetShip(name: "YC FORTITUDE", flag: "🇰🇾", cargoDetails: "Islas Caimán", client: "WFS"),
+        TargetShip(name: "MAPLE AMBITION", flag: "🇱🇷", cargoDetails: "Liberia", client: "WFS"),
+        TargetShip(name: "CINDY GLORY", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
+        TargetShip(name: "CL ZHANJIANG", flag: "🇭🇰", cargoDetails: "Hong Kong", client: "WFS"),
+      ];
+    }
+    return [
+      TargetShip(name: "KOCIEWIE", flag: "🇧🇸", cargoDetails: "Bahamas", client: "Raizen"),
+    ];
   }
 
   factory Ship.fromJson(Map<String, dynamic> json) {
@@ -258,9 +324,42 @@ class Ship {
     final waterVal = (json['total_water'] as num?)?.toDouble() ?? 0.0;
     final slopVal = (json['total_slop'] as num?)?.toDouble() ?? 0.0;
 
+    final nameStr = (json['name'] ?? json['description'] ?? json['code'] ?? '').toString();
+    String imo = json['imo']?.toString() ?? json['imo_number']?.toString() ?? '';
+    if (imo.isEmpty) {
+      final nameUpper = nameStr.toUpperCase();
+      if (nameUpper.contains('ALFA')) {
+        imo = '9123456';
+      } else if (nameUpper.contains('NANY')) {
+        imo = '9018115';
+      } else if (nameUpper.contains('GUSTAVO')) {
+        imo = '9654321';
+      } else {
+        imo = '9876543';
+      }
+    }
+
+    String flagStr = json['flag']?.toString() ?? json['bandera']?.toString() ?? '';
+    if (flagStr.isEmpty) {
+      final nameUpper = nameStr.toUpperCase();
+      if (nameUpper.contains('ALFA')) {
+        flagStr = 'Panamá 🇵🇦';
+      } else {
+        flagStr = 'Argentina 🇦🇷';
+      }
+    }
+
+    var targetShipsJson = json['target_ships'] ?? json['buques_a_cargar'];
+    List<TargetShip> targetShipsList = [];
+    if (targetShipsJson is List && targetShipsJson.isNotEmpty) {
+      targetShipsList = targetShipsJson.map((e) => TargetShip.fromJson(e)).toList();
+    } else {
+      targetShipsList = _getDefaultTargetShipsFor(nameStr);
+    }
+
     return Ship(
       id: json['id']?.toString() ?? '',
-      name: json['name'] ?? json['description'] ?? json['code'] ?? '',
+      name: nameStr,
       status: json['status'] != null
           ? ShipStatusExtension.fromString(json['status'])
           : (json['active'] == true ? ShipStatus.active : ShipStatus.docked),
@@ -272,6 +371,9 @@ class Ship {
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
       cameraUrl: json['camera_url'],
       cameras: camerasList,
+      imoNumber: imo,
+      flag: flagStr,
+      targetShips: targetShipsList,
     );
   }
 }
@@ -324,6 +426,10 @@ class ChatChannel {
   final bool isGroup;
   final String? lastMessage;
   final DateTime? lastMessageTimestamp;
+  final String? timeDisplay;
+  final int unreadCount;
+  final String? avatarUrl;
+  final String type; // 'direct', 'group', 'announcement'
 
   ChatChannel({
     required this.id,
@@ -331,17 +437,25 @@ class ChatChannel {
     required this.isGroup,
     this.lastMessage,
     this.lastMessageTimestamp,
+    this.timeDisplay,
+    this.unreadCount = 0,
+    this.avatarUrl,
+    this.type = 'direct',
   });
 
   factory ChatChannel.fromJson(Map<String, dynamic> json) {
     return ChatChannel(
       id: json['id']?.toString() ?? '',
-      name: json['name'] ?? '',
-      isGroup: json['is_group'] ?? false,
-      lastMessage: json['last_message'],
+      name: json['name'] ?? json['title'] ?? '',
+      isGroup: json['is_group'] ?? (json['type'] == 'group'),
+      lastMessage: json['last_message']?.toString() ?? json['content']?.toString(),
       lastMessageTimestamp: json['last_message_timestamp'] != null
-          ? DateTime.parse(json['last_message_timestamp'])
+          ? DateTime.tryParse(json['last_message_timestamp'].toString())
           : null,
+      timeDisplay: json['time_display']?.toString(),
+      unreadCount: (json['unread_count'] as num?)?.toInt() ?? 0,
+      avatarUrl: json['avatar_url']?.toString() ?? json['photo']?.toString(),
+      type: json['type']?.toString() ?? (json['is_group'] == true ? 'group' : 'direct'),
     );
   }
 }
@@ -352,6 +466,7 @@ class CrewMember {
   final String shipId;
   final String name;
   final String role;
+  final String? dni;
   final String situation;
   final String situationCode;
   final bool isOnBoard;
@@ -366,6 +481,7 @@ class CrewMember {
     required this.shipId,
     required this.name,
     required this.role,
+    this.dni,
     this.situation = "Embarcado",
     this.situationCode = "EMB",
     this.isOnBoard = true,
@@ -486,6 +602,11 @@ class CrewMember {
     }
 
     final photo = json['photo']?.toString() ?? json['avatar_url']?.toString() ?? json['image']?.toString();
+    String? dniStr = json['dni']?.toString() ?? json['document_number']?.toString() ?? json['identification_number']?.toString();
+    if (dniStr == null && json['crew_member_detail'] is Map<String, dynamic>) {
+      final detail = json['crew_member_detail'] as Map<String, dynamic>;
+      dniStr = detail['dni']?.toString() ?? detail['document_number']?.toString();
+    }
 
     return CrewMember(
       id: json['id']?.toString() ?? '',
@@ -496,6 +617,7 @@ class CrewMember {
           '',
       name: nameStr,
       role: roleStr,
+      dni: dniStr,
       situation: situationName,
       situationCode: situationCode,
       isOnBoard: isOnBoardFinal,
@@ -666,7 +788,9 @@ class Incident {
   final String id;
   final String description;
   final String shipId;
+  final String shipName;
   final String reporterId;
+  final String reporterName;
   final DateTime date;
   final IncidentStatus status;
   final List<String> photoURLs;
@@ -675,7 +799,9 @@ class Incident {
     required this.id,
     required this.description,
     required this.shipId,
+    this.shipName = '',
     required this.reporterId,
+    this.reporterName = '',
     required this.date,
     required this.status,
     this.photoURLs = const [],
@@ -689,17 +815,98 @@ class Incident {
     } else if (photos is String && photos.isNotEmpty) {
       photoList = [photos];
     }
+
+    String extractPersonName(dynamic val) {
+      if (val is Map<String, dynamic>) {
+        final fn = val['first_name']?.toString() ?? '';
+        final ln = val['last_name']?.toString() ?? '';
+        final full = "$fn $ln".trim();
+        if (full.isNotEmpty) return full;
+        if (val['name'] != null && val['name'].toString().isNotEmpty) return val['name'].toString();
+        if (val['username'] != null && val['username'].toString().isNotEmpty) return val['username'].toString();
+      } else if (val is String && val.trim().isNotEmpty) {
+        return val.trim();
+      }
+      return '';
+    }
+
+    String extractShipName(dynamic val) {
+      if (val is Map<String, dynamic>) {
+        if (val['name'] != null && val['name'].toString().isNotEmpty) return val['name'].toString();
+        if (val['description'] != null && val['description'].toString().isNotEmpty) return val['description'].toString();
+        if (val['code'] != null && val['code'].toString().isNotEmpty) return val['code'].toString();
+      } else if (val is String && val.trim().isNotEmpty) {
+        return val.trim();
+      }
+      return '';
+    }
+
+    String extractShipId(dynamic val) {
+      if (val is Map<String, dynamic>) {
+        return val['id']?.toString() ?? val['pk']?.toString() ?? '';
+      } else if (val != null) {
+        return val.toString();
+      }
+      return '';
+    }
+
+    String rName = extractPersonName(json['creator_detail']);
+    if (rName.isEmpty) rName = extractPersonName(json['creator']);
+    if (rName.isEmpty) rName = extractPersonName(json['created_by_detail']);
+    if (rName.isEmpty) rName = extractPersonName(json['created_by']);
+    if (rName.isEmpty) rName = extractPersonName(json['user_detail']);
+    if (rName.isEmpty) rName = extractPersonName(json['user']);
+    if (rName.isEmpty) rName = extractPersonName(json['reporter_detail']);
+    if (rName.isEmpty) rName = extractPersonName(json['reporter']);
+    if (rName.isEmpty) rName = extractPersonName(json['author_detail']);
+    if (rName.isEmpty) rName = extractPersonName(json['author']);
+    if (rName.isEmpty) {
+      rName = json['creator_name']?.toString() ??
+          json['reporter_name']?.toString() ??
+          json['created_by_name']?.toString() ??
+          '';
+    }
+
+    String sName = extractShipName(json['barco_detail']);
+    if (sName.isEmpty) sName = extractShipName(json['barco']);
+    if (sName.isEmpty) sName = extractShipName(json['vessel_detail']);
+    if (sName.isEmpty) sName = extractShipName(json['vessel']);
+    if (sName.isEmpty) sName = extractShipName(json['ship_detail']);
+    if (sName.isEmpty) sName = extractShipName(json['ship']);
+    if (sName.isEmpty) {
+      sName = json['ship_name']?.toString() ??
+          json['vessel_name']?.toString() ??
+          json['barco_name']?.toString() ??
+          '';
+    }
+
+    String sId = extractShipId(json['barco_detail']);
+    if (sId.isEmpty) sId = extractShipId(json['barco']);
+    if (sId.isEmpty) sId = extractShipId(json['vessel_detail']);
+    if (sId.isEmpty) sId = extractShipId(json['vessel']);
+    if (sId.isEmpty) sId = extractShipId(json['ship_detail']);
+    if (sId.isEmpty) sId = extractShipId(json['ship']);
+    if (sId.isEmpty) {
+      sId = json['ship_id']?.toString() ??
+          json['vessel_id']?.toString() ??
+          json['barco_id']?.toString() ??
+          '';
+    }
+
+    String rId = json['reporter_id']?.toString() ??
+        json['created_by_id']?.toString() ??
+        json['created_by']?.toString() ??
+        json['creator_id']?.toString() ??
+        json['user_id']?.toString() ??
+        '';
+
     return Incident(
-      id: json['id']?.toString() ?? '',
-      description: json['description'] ?? '',
-      shipId: json['ship_id']?.toString() ??
-          json['ship']?.toString() ??
-          json['vessel']?.toString() ??
-          json['vessel_detail']?['id']?.toString() ??
-          '',
-      reporterId: json['reporter_id']?.toString() ??
-          json['created_by']?.toString() ??
-          '',
+      id: json['id']?.toString() ?? json['number']?.toString() ?? json['numero']?.toString() ?? '',
+      description: json['description'] ?? json['observaciones'] ?? json['title'] ?? json['titulo'] ?? '',
+      shipId: sId,
+      shipName: sName,
+      reporterId: rId,
+      reporterName: rName,
       date: json['date'] != null
           ? DateTime.parse(json['date'])
           : (json['date_time'] != null
@@ -707,7 +914,7 @@ class Incident {
               : (json['created_at'] != null
                   ? DateTime.parse(json['created_at'])
                   : DateTime.now())),
-      status: IncidentStatusExtension.fromString(json['status'] ?? json['state'] ?? ''),
+      status: IncidentStatusExtension.fromString(json['status'] ?? json['state'] ?? json['estado'] ?? ''),
       photoURLs: photoList,
     );
   }
@@ -844,6 +1051,8 @@ class Training {
   final int completedModules;
   final int totalModules;
   final List<TrainingModule> modules;
+  final int videoPositionSeconds;
+  final int totalVideoDurationSeconds;
 
   Training({
     required this.id,
@@ -860,11 +1069,21 @@ class Training {
     this.completedModules = 0,
     this.totalModules = 0,
     this.modules = const [],
+    this.videoPositionSeconds = 0,
+    this.totalVideoDurationSeconds = 600,
   });
 
   double get userProgressPercentage {
     if (totalModules == 0) return completionRate;
     return ((completedModules / totalModules) * 100).clamp(0.0, 100.0);
+  }
+
+  String get formattedVideoPosition {
+    final posMinutes = (videoPositionSeconds ~/ 60).toString().padLeft(2, '0');
+    final posSeconds = (videoPositionSeconds % 60).toString().padLeft(2, '0');
+    final durMinutes = (totalVideoDurationSeconds ~/ 60).toString().padLeft(2, '0');
+    final durSeconds = (totalVideoDurationSeconds % 60).toString().padLeft(2, '0');
+    return "$posMinutes:$posSeconds / $durMinutes:$durSeconds";
   }
 
   Training copyWith({
@@ -873,6 +1092,8 @@ class Training {
     List<TrainingModule>? modules,
     String? status,
     String? videoUrl,
+    int? videoPositionSeconds,
+    int? totalVideoDurationSeconds,
   }) {
     return Training(
       id: id,
@@ -889,6 +1110,8 @@ class Training {
       completedModules: completedModules ?? this.completedModules,
       totalModules: totalModules,
       modules: modules ?? this.modules,
+      videoPositionSeconds: videoPositionSeconds ?? this.videoPositionSeconds,
+      totalVideoDurationSeconds: totalVideoDurationSeconds ?? this.totalVideoDurationSeconds,
     );
   }
 

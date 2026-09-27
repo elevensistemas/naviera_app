@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
 import '../../app/theme.dart';
-import '../../app/bar_widget.dart';
+import '../../app/ncs_hero_header.dart';
 import 'report_incident_view.dart';
 
 class IncidentListView extends StatefulWidget {
@@ -16,6 +16,7 @@ class _IncidentListViewState extends State<IncidentListView> {
   final List<Incident> _incidents = [];
   bool _isLoading = false;
   String? _errorMessage;
+  String _selectedShipFilter = 'Todos';
 
   @override
   void initState() {
@@ -45,6 +46,59 @@ class _IncidentListViewState extends State<IncidentListView> {
         _isLoading = false;
       });
     }
+  }
+
+  String _getResolvedShipName(Incident incident) {
+    final nameUpper = incident.shipName.trim().toUpperCase();
+    if (nameUpper.contains('ALFA')) return 'ALFA C';
+    if (nameUpper.contains('NANY')) return 'NANY';
+    if (nameUpper.contains('GUSTAVO')) return 'GUSTAVO U';
+
+    final idUpper = incident.shipId.trim().toUpperCase();
+    if (idUpper.contains('ALFA')) return 'ALFA C';
+    if (idUpper.contains('NANY')) return 'NANY';
+    if (idUpper.contains('GUSTAVO')) return 'GUSTAVO U';
+
+    // Django DB vessel IDs
+    if (idUpper == '4' || idUpper == '1' || idUpper == '2071') return 'ALFA C';
+    if (idUpper == '5' || idUpper == '2' || idUpper == '2072') return 'NANY';
+    if (idUpper == '6' || idUpper == '3' || idUpper == '2073') return 'GUSTAVO U';
+
+    if (nameUpper.isNotEmpty && !RegExp(r'^\d+$').hasMatch(nameUpper)) {
+      return nameUpper;
+    }
+    if (idUpper.isNotEmpty && !RegExp(r'^\d+$').hasMatch(idUpper)) {
+      return idUpper;
+    }
+
+    return 'ALFA C';
+  }
+
+  String _getResolvedReporterName(Incident incident) {
+    final rName = incident.reporterName.trim();
+    if (rName.isNotEmpty && !RegExp(r'^\d+$').hasMatch(rName)) {
+      return rName;
+    }
+    final rId = incident.reporterId.trim();
+    if (rId.isNotEmpty && !RegExp(r'^\d+$').hasMatch(rId)) {
+      return rId;
+    }
+    if (rId.isNotEmpty) {
+      if (rId == '2071' || rId == '1') return 'Nahuel';
+      if (rId == '2') return 'Juan';
+      if (rId == '3') return 'Jonathan';
+      return 'Tripulante (#$rId)';
+    }
+    return 'Personal Naviera';
+  }
+
+  List<Incident> get _filteredIncidents {
+    if (_selectedShipFilter == 'Todos') return _incidents;
+    final filterTarget = _selectedShipFilter.toUpperCase().trim();
+    return _incidents.where((i) {
+      final shipNameResolved = _getResolvedShipName(i).toUpperCase().trim();
+      return shipNameResolved.contains(filterTarget) || filterTarget.contains(shipNameResolved);
+    }).toList();
   }
 
   Color _statusColor(IncidentStatus status) {
@@ -108,257 +162,343 @@ class _IncidentListViewState extends State<IncidentListView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final bodyBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
     final textColor = isDark ? Colors.white : Colors.black87;
     final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
     final captionColor = isDark ? Colors.white38 : Colors.black38;
     final text45Color = isDark ? Colors.white54 : Colors.black45;
     final dividerColor = isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFF1F5F9);
 
+    final displayedIncidents = _filteredIncidents;
+
+    final String bannerTitle = _selectedShipFilter == 'Todos'
+        ? "Seguridad y salvamento"
+        : "Incidentes • $_selectedShipFilter";
+    final String bannerSubtitle = _selectedShipFilter == 'Todos'
+        ? "Control de incidentes y reporte de novedades en tiempo real."
+        : "Registro de novedades de seguridad del buque $_selectedShipFilter.";
+
+    final filtersList = ['Todos', 'ALFA C', 'NANY', 'GUSTAVO U'];
+
     return Scaffold(
-      appBar: const NavieraAppBar(showBackButton: true),
+      backgroundColor: bodyBg,
       body: _isLoading && _incidents.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _loadIncidents,
-              child: ListView(
+              child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-                children: [
-                  // Title Header
-                  Text(
-                    "Seguridad y salvamento",
-                    style: TextStyle(
-                      color: ColorTheme.primary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.5,
+                child: Column(
+                  children: [
+                    // Reusable NcsHeroHeader
+                    NcsHeroHeader(
+                      title: bannerTitle,
+                      subtitle: bannerSubtitle,
+                      onTap: () {
+                        final currIdx = filtersList.indexOf(_selectedShipFilter);
+                        final nextIdx = (currIdx + 1) % filtersList.length;
+                        setState(() {
+                          _selectedShipFilter = filtersList[nextIdx];
+                        });
+                      },
                     ),
-                  ),
-                  const SizedBox(height: 16),
 
-                  // Control de Incidentes Card
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: ColorTheme.primary,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Icon(
-                                  Icons.shield,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Control de Incidentes",
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: textColor,
+                          // Control de Incidentes Card
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 44,
+                                        height: 44,
+                                        decoration: BoxDecoration(
+                                          color: ColorTheme.primary,
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: const Icon(
+                                          Icons.shield,
+                                          color: Colors.white,
+                                          size: 24,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 14),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Control de Incidentes",
+                                              style: theme.textTheme.titleMedium?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: textColor,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              "Registrá novedades para revisión de capitanía",
+                                              style: TextStyle(
+                                                color: text45Color,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 20),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 48,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: ColorTheme.accent, // Orange Button
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(24),
+                                        ),
+                                      ),
+                                      onPressed: _showReportSheet,
+                                      child: const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.add, size: 20),
+                                          SizedBox(width: 6),
+                                          Text(
+                                            "Reportar incidente",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      "Registrá novedades para revisión de capitanía",
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Section Title & Vessel Filter Chips
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Historial de incidentes",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: secondaryTextColor,
+                                ),
+                              ),
+                              Text(
+                                "Filtrar por barco",
+                                style: TextStyle(fontSize: 11, color: captionColor, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+
+                          // Vessel Filter Chips
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: filtersList.map((shipFilter) {
+                                final isSelected = _selectedShipFilter == shipFilter;
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: ChoiceChip(
+                                    avatar: isSelected
+                                        ? const Icon(Icons.check, size: 14, color: Colors.white)
+                                        : const Icon(Icons.directions_boat, size: 14, color: Colors.grey),
+                                    label: Text(
+                                      shipFilter,
                                       style: TextStyle(
-                                        color: text45Color,
                                         fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: isSelected ? Colors.white : secondaryTextColor,
                                       ),
+                                    ),
+                                    selected: isSelected,
+                                    selectedColor: ColorTheme.primary,
+                                    backgroundColor: isDark ? Colors.white10 : Colors.grey.shade200,
+                                    onSelected: (selected) {
+                                      if (selected) {
+                                        setState(() {
+                                          _selectedShipFilter = shipFilter;
+                                        });
+                                      }
+                                    },
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          if (displayedIncidents.isEmpty)
+                            Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 40.0),
+                                child: Column(
+                                  children: [
+                                    const Icon(
+                                      Icons.verified_user_outlined,
+                                      size: 60,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      _errorMessage ?? "No hay incidentes para este barco.",
+                                      style: TextStyle(color: captionColor),
+                                      textAlign: TextAlign.center,
                                     ),
                                   ],
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 48,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: ColorTheme.accent, // Orange Button
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                              ),
-                              onPressed: _showReportSheet,
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.add, size: 20),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    "Reportar incidente",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
+                            )
+                          else
+                            ...displayedIncidents.map((incident) {
+                              final statusCol = _statusColor(incident.status);
+                              final statusBg = _statusBgColor(incident.status, isDark);
+                              final shipDisplay = _getResolvedShipName(incident);
+                              final reporterDisplay = _getResolvedReporterName(incident);
+
+                              return Card(
+                                margin: const EdgeInsets.only(bottom: 16.0),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(20.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Top Row: Code/ID and Status badge
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            "#${incident.id.toUpperCase().padLeft(6, '0')}",
+                                            style: const TextStyle(
+                                              color: ColorTheme.accent,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: statusBg,
+                                              borderRadius: BorderRadius.circular(16),
+                                            ),
+                                            child: Text(
+                                              incident.status.rawValue,
+                                              style: TextStyle(
+                                                color: statusCol,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 11,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+
+                                      // Date row
+                                      Row(
+                                        children: [
+                                          Icon(Icons.calendar_today_outlined, size: 14, color: captionColor),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            _formatDate(incident.date),
+                                            style: TextStyle(
+                                              color: text45Color,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 14),
+
+                                      // Description/Text
+                                      Text(
+                                        incident.description,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                          color: textColor,
+                                          height: 1.35,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 20),
+
+                                      // Divider
+                                      Divider(height: 1, color: dividerColor),
+                                      const SizedBox(height: 14),
+
+                                      // Footer Row: Ship Badge & Reporter Info
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: ColorTheme.primary.withOpacity(0.12),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(Icons.directions_boat_filled, size: 14, color: ColorTheme.primary),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  "Barco: $shipDisplay",
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: ColorTheme.primary,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.person_outline, size: 15, color: captionColor),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                "Reportó: $reporterDisplay",
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: secondaryTextColor,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ),
-                          ),
+                                ),
+                              );
+                            }),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Section Title
-                  Text(
-                    "Historial de incidentes",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: secondaryTextColor,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  if (_incidents.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 40.0),
-                        child: Column(
-                          children: [
-                            const Icon(
-                              Icons.verified_user_outlined,
-                              size: 60,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              _errorMessage ?? "No hay incidentes reportados.",
-                              style: TextStyle(color: captionColor),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  else
-                    ..._incidents.map((incident) {
-                      final statusCol = _statusColor(incident.status);
-                      final statusBg = _statusBgColor(incident.status, isDark);
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 16.0),
-                        child: Padding(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Top Row: Code/ID and Status badge
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "#${incident.id.toUpperCase().padLeft(6, '0')}",
-                                    style: const TextStyle(
-                                      color: ColorTheme.accent,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: statusBg,
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Text(
-                                      incident.status.rawValue,
-                                      style: TextStyle(
-                                        color: statusCol,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-
-                              // Date row
-                              Row(
-                                children: [
-                                  Icon(Icons.calendar_today_outlined, size: 14, color: captionColor),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    _formatDate(incident.date),
-                                    style: TextStyle(
-                                      color: text45Color,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 14),
-
-                              // Description/Text
-                              Text(
-                                incident.description,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: textColor,
-                                  height: 1.35,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-
-                              // Divider
-                              Divider(height: 1, color: dividerColor),
-                              const SizedBox(height: 16),
-
-                              // Footer Row
-                              Row(
-                                children: [
-                                  const Icon(Icons.anchor_outlined, size: 16, color: ColorTheme.primary),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    incident.shipId,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: secondaryTextColor,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  Icon(Icons.person_outline_outlined, size: 16, color: captionColor),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    incident.reporterId.isNotEmpty 
-                                        ? incident.reporterId 
-                                        : "Tripulante",
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: secondaryTextColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
-                ],
+                  ],
+                ),
               ),
             ),
     );
