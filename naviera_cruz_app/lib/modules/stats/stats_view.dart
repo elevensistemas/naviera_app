@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
 import '../../app/theme.dart';
@@ -111,7 +112,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "Obligatorio",
         description: "Guía de seguridad OCIMF Megomp para operaciones de amarre en muelles y monoboyas.",
         instructor: "Cap. Esteban Valdez (Instructor STCW)",
-        videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-cargo-container-ship-sailing-in-the-sea-41235-large.mp4",
+        videoUrl: "https://navieracruzdelsur.dyndns.org:6570/capacitaciones/amarre-efectivo-ocimf/",
         completedModules: 2,
         totalModules: 4,
         videoPositionSeconds: 3600,
@@ -1044,9 +1045,26 @@ class _TrainingVideoModalSheetState extends State<_TrainingVideoModalSheet> {
                       ],
                     ),
                   ),
-                const SizedBox(height: 16),
-
-
+                // Button to open course URL on NCS Web Portal
+                if (_current.videoUrl != null && _current.videoUrl!.isNotEmpty) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _openPortalUrl(_current.videoUrl!),
+                      icon: const Icon(Icons.language_rounded, color: Color(0xFF0066FF)),
+                      label: const Text(
+                        "Abrir clase en Portal Web NCS",
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0066FF)),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF0066FF), width: 1.2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
 
                 // Save button
                 SizedBox(
@@ -1071,6 +1089,13 @@ class _TrainingVideoModalSheetState extends State<_TrainingVideoModalSheet> {
         ],
       ),
     );
+  }
+
+  void _openPortalUrl(String urlString) async {
+    final uri = Uri.parse(urlString);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 }
 
@@ -1098,8 +1123,9 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
   @override
   void initState() {
     super.initState();
+    final bool isDirectMedia = widget.videoUrl.toLowerCase().endsWith('.mp4') || widget.videoUrl.toLowerCase().endsWith('.m3u8');
     _fallbackUrls = [
-      if (widget.videoUrl.isNotEmpty) widget.videoUrl,
+      if (isDirectMedia) widget.videoUrl,
       "https://assets.mixkit.co/videos/preview/mixkit-cargo-container-ship-sailing-in-the-sea-41235-large.mp4",
       "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-cargo-ship-in-the-sea-41234-large.mp4",
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
