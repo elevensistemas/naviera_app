@@ -358,7 +358,7 @@ class _FleetViewState extends State<FleetView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header: Ship Name and Status
+            // Header: Ship Name
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -382,47 +382,16 @@ class _FleetViewState extends State<FleetView> {
                     ),
                   ],
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: statusCol.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: statusCol.withOpacity(0.3), width: 0.8),
-                  ),
-                  child: Text(
-                    ship.status.rawValue,
-                    style: TextStyle(
-                      color: statusCol,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 8),
 
-            // Vessel Information: IMO, Flag & Cargo Program
+            // Vessel Information: Flag & Cargo Program
             Wrap(
               spacing: 14,
               runSpacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.badge_outlined, size: 14, color: secondaryTextColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      "IMO: ${ship.imoNumber}",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: secondaryTextColor,
-                      ),
-                    ),
-                  ],
-                ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -819,8 +788,8 @@ class _FleetViewState extends State<FleetView> {
           // Top Row: Icon + Label
           Row(
             children: [
-              Icon(icon, size: 14, color: color),
-              const SizedBox(width: 4),
+              Icon(icon, size: 12, color: color),
+              const SizedBox(width: 3),
               Expanded(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
@@ -828,10 +797,11 @@ class _FleetViewState extends State<FleetView> {
                   child: Text(
                     label,
                     maxLines: 1,
+                    softWrap: false,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 10,
                       color: isDark ? Colors.white70 : Colors.black87,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),

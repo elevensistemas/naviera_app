@@ -111,7 +111,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "Obligatorio",
         description: "Guía de seguridad OCIMF Megomp para operaciones de amarre en muelles y monoboyas.",
         instructor: "Cap. Esteban Valdez (Instructor STCW)",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
         completedModules: 2,
         totalModules: 4,
         videoPositionSeconds: 3600,
@@ -133,7 +133,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "Completado",
         description: "Inspección de plumas, grúas, estrobos y grilletes según normativa internacional marítima.",
         instructor: "Ing. Gabriel Rossi",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-cargo-container-ship-sailing-in-the-sea-41235-large.mp4",
         completedModules: 3,
         totalModules: 3,
         videoPositionSeconds: 3600,
@@ -154,7 +154,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "En progreso",
         description: "Cultura de seguridad, reporte de cuasi-accidentes (Near Miss) y condiciones inseguras a bordo.",
         instructor: "Lic. Roberto Soria",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
         completedModules: 1,
         totalModules: 3,
         videoPositionSeconds: 720,
@@ -175,7 +175,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "Nuevo",
         description: "Procedimientos Lockout/Tagout (LOTO), aislamiento de tableros eléctricos y protección en salas de máquinas.",
         instructor: "Ing. Carlos Benítez",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-cargo-container-ship-sailing-in-the-sea-41235-large.mp4",
         completedModules: 0,
         totalModules: 4,
         videoPositionSeconds: 0,
@@ -1099,9 +1099,10 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
   void initState() {
     super.initState();
     _fallbackUrls = [
+      "https://vjs.zencdn.net/v/oceans.mp4",
       widget.videoUrl,
+      "https://assets.mixkit.co/videos/preview/mixkit-cargo-container-ship-sailing-in-the-sea-41235-large.mp4",
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
     ];
     _initController();
   }
@@ -1112,7 +1113,7 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
       _isInitialized = false;
     });
 
-    final targetUrl = _attemptIndex < _fallbackUrls.length ? _fallbackUrls[_attemptIndex] : _fallbackUrls.last;
+    final targetUrl = _attemptIndex < _fallbackUrls.length ? _fallbackUrls[_attemptIndex] : _fallbackUrls.first;
 
     try {
       final Uri uri = Uri.parse(targetUrl);
@@ -1183,7 +1184,7 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
               const SizedBox(height: 12),
               ElevatedButton.icon(
                 onPressed: () {
-                  _attemptIndex = 0;
+                  _attemptIndex = (_attemptIndex + 1) % _fallbackUrls.length;
                   _initController();
                 },
                 style: ElevatedButton.styleFrom(
