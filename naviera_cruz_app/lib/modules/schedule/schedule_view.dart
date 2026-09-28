@@ -1600,7 +1600,7 @@ class _ScheduleViewState extends State<ScheduleView> {
                     height: 170,
                     child: CustomPaint(
                       size: const Size(double.infinity, 170),
-                      painter: _RaizenDailyChartPainter(datesList),
+                      painter: _RaizenDailyChartPainter(datesList, isDark),
                     ),
                   ),
                 ],
@@ -1766,7 +1766,7 @@ class _ScheduleViewState extends State<ScheduleView> {
                     height: 170,
                     child: CustomPaint(
                       size: const Size(double.infinity, 170),
-                      painter: _WfsDailyChartPainter(wfsDates),
+                      painter: _WfsDailyChartPainter(wfsDates, isDark),
                     ),
                   ),
                 ],
@@ -2049,9 +2049,11 @@ class _WfsStackedBarChartPainter extends CustomPainter {
 }
 
 // 3. Painter Cargas Diarias Raizen
+// 3. Painter Cargas Diarias Raizen
 class _RaizenDailyChartPainter extends CustomPainter {
   final List<Map<String, dynamic>> data;
-  _RaizenDailyChartPainter(this.data);
+  final bool isDark;
+  _RaizenDailyChartPainter(this.data, [this.isDark = false]);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -2061,7 +2063,7 @@ class _RaizenDailyChartPainter extends CustomPainter {
     final double chartHeight = size.height - bottomMargin;
 
     final paintGrid = Paint()
-      ..color = Colors.grey.shade300
+      ..color = isDark ? Colors.transparent : Colors.grey.shade300
       ..strokeWidth = 0.5;
 
     final paintBar = Paint()
@@ -2119,7 +2121,8 @@ class _RaizenDailyChartPainter extends CustomPainter {
 // 4. Painter Cargas Diarias WFS
 class _WfsDailyChartPainter extends CustomPainter {
   final List<Map<String, dynamic>> data;
-  _WfsDailyChartPainter(this.data);
+  final bool isDark;
+  _WfsDailyChartPainter(this.data, [this.isDark = false]);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -2129,7 +2132,7 @@ class _WfsDailyChartPainter extends CustomPainter {
     final double chartHeight = size.height - bottomMargin;
 
     final paintGrid = Paint()
-      ..color = Colors.grey.shade300
+      ..color = isDark ? Colors.transparent : Colors.grey.shade300
       ..strokeWidth = 0.5;
 
     final paintNany = Paint()..color = const Color(0xFFED8B00);
@@ -2206,7 +2209,7 @@ class _AnnualLineChartPainter extends CustomPainter {
     final double chartHeight = size.height - bottomMargin;
 
     final paintGrid = Paint()
-      ..color = isDark ? Colors.white24 : Colors.grey.shade300
+      ..color = isDark ? Colors.transparent : Colors.grey.shade300
       ..strokeWidth = 0.5;
 
     final lineColor = isDark ? const Color(0xFF38BDF8) : const Color(0xFF1E293B);
