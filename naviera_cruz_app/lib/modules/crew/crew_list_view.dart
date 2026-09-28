@@ -634,8 +634,15 @@ class _CrewRoleAvatarWidget extends StatelessWidget {
       );
     }
 
-    // 2. Deck Officer / Cubierta / Contramaestre / Marinero
-    if (r.contains('cubierta') || r.contains('marinero') || r.contains('contramaestre')) {
+    // 2. Deck Officer / Cubierta / Contramaestre / Marinero / Cocinero / Mozo / Marmitón
+    if (r.contains('cubierta') ||
+        r.contains('marinero') ||
+        r.contains('contramaestre') ||
+        r.contains('cocin') ||
+        r.contains('mozo') ||
+        r.contains('marmit') ||
+        r.contains('servicio') ||
+        r.contains('camarer')) {
       return Container(
         width: size,
         height: size,
@@ -651,7 +658,12 @@ class _CrewRoleAvatarWidget extends StatelessWidget {
     }
 
     // 3. Engine / Máquinas / Conductor / Electricista / Engrasador
-    if (r.contains('maquina') || r.contains('máquina') || r.contains('conductor') || r.contains('electricista') || r.contains('engrasador')) {
+    if (r.contains('maquina') ||
+        r.contains('máquina') ||
+        r.contains('conductor') ||
+        r.contains('electricista') ||
+        r.contains('engrasador') ||
+        r.contains('motor')) {
       return Container(
         width: size,
         height: size,
@@ -660,26 +672,9 @@ class _CrewRoleAvatarWidget extends StatelessWidget {
           shape: BoxShape.circle,
         ),
         child: const Icon(
-          Icons.settings_rounded, // White Cog / Gear Icon matching screenshot
+          Icons.engineering_rounded, // Engineer icon for engine crew
           color: Colors.white,
           size: 26,
-        ),
-      );
-    }
-
-    // 4. Kitchen / Catering / Servicio / Cocinero / Mozo / Marmitón
-    if (r.contains('cocin') || r.contains('mozo') || r.contains('marmit') || r.contains('servicio') || r.contains('camarer')) {
-      return Container(
-        width: size,
-        height: size,
-        decoration: const BoxDecoration(
-          color: Color(0xFF1E293B),
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.restaurant_rounded,
-          color: Colors.white,
-          size: 24,
         ),
       );
     }

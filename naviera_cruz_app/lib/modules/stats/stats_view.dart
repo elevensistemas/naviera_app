@@ -1123,9 +1123,8 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
   @override
   void initState() {
     super.initState();
-    final bool isDirectMedia = widget.videoUrl.toLowerCase().endsWith('.mp4') || widget.videoUrl.toLowerCase().endsWith('.m3u8');
     _fallbackUrls = [
-      if (isDirectMedia) widget.videoUrl,
+      if (widget.videoUrl.trim().isNotEmpty) widget.videoUrl.trim(),
       "https://assets.mixkit.co/videos/preview/mixkit-cargo-container-ship-sailing-in-the-sea-41235-large.mp4",
       "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-cargo-ship-in-the-sea-41234-large.mp4",
       "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
