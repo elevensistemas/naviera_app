@@ -2015,15 +2015,15 @@ class _WfsStackedBarChartPainter extends CustomPainter {
 
     final double xTarget = leftMargin + (targetKtons / maxScale) * chartWidth;
     
-    // Bold, glowing crimson target line
+    // Prominent red target line with top & bottom dots
     final paintDashed = Paint()
       ..color = const Color(0xFFEF4444)
-      ..strokeWidth = 2.5;
+      ..strokeWidth = 3.0;
 
-    double dashY = yBar - 4;
+    double dashY = yBar - 6;
     const double dashWidth = 5;
     const double dashSpace = 3;
-    while (dashY < yBar + barHeight + 8) {
+    while (dashY < yBar + barHeight + 6) {
       canvas.drawLine(Offset(xTarget, dashY), Offset(xTarget, dashY + dashWidth), paintDashed);
       dashY += dashWidth + dashSpace;
     }
@@ -2035,49 +2035,13 @@ class _WfsStackedBarChartPainter extends CustomPainter {
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 
-    canvas.drawCircle(Offset(xTarget, yBar + barHeight + 4), 3.5, paintDotFill);
-    canvas.drawCircle(Offset(xTarget, yBar + barHeight + 4), 3.5, paintDotBorder);
+    // Top dot
+    canvas.drawCircle(Offset(xTarget, yBar - 6), 4.0, paintDotFill);
+    canvas.drawCircle(Offset(xTarget, yBar - 6), 4.0, paintDotBorder);
 
-    // Highly visible badge: "🎯 OBJETIVO 15k"
-    const badgeW = 92.0;
-    const badgeH = 22.0;
-    final rectBadge = Rect.fromCenter(center: Offset(xTarget, yBar - 15), width: badgeW, height: badgeH);
-    
-    final paintBadgeBg = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFFDC2626), Color(0xFF991B1B)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ).createShader(rectBadge);
-      
-    final paintBadgeBorder = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 1.2
-      ..style = PaintingStyle.stroke;
-
-    // Badge shadow & background
-    canvas.drawRRect(RRect.fromRectAndRadius(rectBadge.shift(const Offset(0, 1.5)), const Radius.circular(11)), Paint()..color = Colors.black26);
-    canvas.drawRRect(RRect.fromRectAndRadius(rectBadge, const Radius.circular(11)), paintBadgeBg);
-    canvas.drawRRect(RRect.fromRectAndRadius(rectBadge, const Radius.circular(11)), paintBadgeBorder);
-
-    // Pin indicator triangle pointing down
-    final pathTriangle = Path()
-      ..moveTo(xTarget - 4, yBar - 4)
-      ..lineTo(xTarget + 4, yBar - 4)
-      ..lineTo(xTarget, yBar)
-      ..close();
-    canvas.drawPath(pathTriangle, paintDotFill);
-
-    final textBadgePainter = TextPainter(
-      text: const TextSpan(
-        text: "🎯 OBJETIVO 15k",
-        style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 0.2),
-      ),
-      textAlign: TextAlign.center,
-      textDirection: TextDirection.ltr,
-    );
-    textBadgePainter.layout();
-    textBadgePainter.paint(canvas, Offset(xTarget - textBadgePainter.width / 2, yBar - 15 - textBadgePainter.height / 2));
+    // Bottom dot
+    canvas.drawCircle(Offset(xTarget, yBar + barHeight + 6), 4.0, paintDotFill);
+    canvas.drawCircle(Offset(xTarget, yBar + barHeight + 6), 4.0, paintDotBorder);
   }
 
   @override
