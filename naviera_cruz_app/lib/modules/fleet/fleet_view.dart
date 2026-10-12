@@ -42,9 +42,26 @@ class _FleetViewState extends State<FleetView> {
         Ship? gustavo = ships.firstWhere((s) => s.name.toUpperCase().contains('GUSTAVO'), orElse: () => (ships.length > 1 ? ships[1] : ships.first));
         Ship? nany = ships.firstWhere((s) => s.name.toUpperCase().contains('NANY'), orElse: () => ships.last);
 
-        alfa = alfa.copyWith(name: "ALFA C", flag: "Panamá 🇵🇦");
-        gustavo = gustavo.copyWith(name: "GUSTAVO U");
-        nany = nany.copyWith(name: "NANY");
+        alfa = alfa.copyWith(
+          name: "ALFA C",
+          flag: "Panamá 🇵🇦",
+          imoNumber: "9711652",
+          targetShips: alfa.targetShips.isNotEmpty && !alfa.targetShips.any((t) => t.name.toUpperCase().contains('KOCIE') || t.name.toUpperCase().contains('ARTEM'))
+              ? alfa.targetShips
+              : Ship.getDefaultTargetShipsFor("ALFA C"),
+        );
+        gustavo = gustavo.copyWith(
+          name: "GUSTAVO U",
+          targetShips: gustavo.targetShips.isNotEmpty
+              ? gustavo.targetShips
+              : Ship.getDefaultTargetShipsFor("GUSTAVO U"),
+        );
+        nany = nany.copyWith(
+          name: "NANY",
+          targetShips: nany.targetShips.isNotEmpty
+              ? nany.targetShips
+              : Ship.getDefaultTargetShipsFor("NANY"),
+        );
 
         sorted.add(alfa);
         if (gustavo.id != alfa.id) sorted.add(gustavo);
@@ -83,10 +100,18 @@ class _FleetViewState extends State<FleetView> {
         totalCarbon: 71.34,
         totalWater: 83.0,
         totalSlop: 5.20,
-        imoNumber: "9123456",
+        imoNumber: "9711652",
         flag: "Panamá 🇵🇦",
         latitude: -42.76,
         longitude: -65.03,
+        targetShips: Ship.getDefaultTargetShipsFor("ALFA C"),
+        captainName: "Marecos Rubén Darío",
+        chiefEngineerName: "Sosa Armando",
+        lastPort: "BUENOS AIRES",
+        weather: "Temp: 15°C • Viento: ESE 13 kn",
+        eta: "21/09/2026 a las 08:30",
+        provistosCount: 12,
+        provistosTotal: 6915.00,
       ),
       Ship(
         id: "6",
@@ -100,6 +125,14 @@ class _FleetViewState extends State<FleetView> {
         flag: "Argentina 🇦🇷",
         latitude: -38.00,
         longitude: -57.55,
+        targetShips: Ship.getDefaultTargetShipsFor("GUSTAVO U"),
+        captainName: "Carrá Leonel",
+        chiefEngineerName: "Gómez Roberto",
+        lastPort: "CAMPANA",
+        weather: "Temp: 18°C • Viento: SE 10 kn",
+        eta: "22/09/2026 a las 14:00",
+        provistosCount: 4,
+        provistosTotal: 1200.00,
       ),
       Ship(
         id: "5",
@@ -113,6 +146,14 @@ class _FleetViewState extends State<FleetView> {
         flag: "Argentina 🇦🇷",
         latitude: -54.80,
         longitude: -68.30,
+        targetShips: Ship.getDefaultTargetShipsFor("NANY"),
+        captainName: "Fernández Hugo",
+        chiefEngineerName: "Álvarez Ricardo",
+        lastPort: "DOCK SUD",
+        weather: "Temp: 14°C • Viento: S 16 kn",
+        eta: "23/09/2026 a las 11:15",
+        provistosCount: 3,
+        provistosTotal: 800.00,
       ),
     ];
   }
@@ -120,7 +161,7 @@ class _FleetViewState extends State<FleetView> {
   String _getCargoProgramInfo(Ship ship) {
     final upper = ship.name.toUpperCase();
     if (upper.contains('ALFA')) {
-      return "Raizen (3050.00 m³ • 12 buques)";
+      return "Raizen (6915.00 m³ • 12 buques)";
     } else if (upper.contains('NANY')) {
       return "WFS (4.32 k t • 6 buques)";
     } else if (upper.contains('GUSTAVO')) {
@@ -487,6 +528,72 @@ class _FleetViewState extends State<FleetView> {
                   ],
                 ),
               ],
+            ),
+            
+            // Officers & Weather Subrow matching Intranet
+            Container(
+              margin: const EdgeInsets.only(top: 10, bottom: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.5) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: dividerColor),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.person_outline, size: 15, color: Color(0xFF0057B8)),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          "Capitán: ${ship.resolvedCaptain}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.engineering_outlined, size: 15, color: Color(0xFFED8B00)),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          "Jefe Máq.: ${ship.resolvedChiefEngineer}",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.wb_sunny_outlined, size: 14, color: secondaryTextColor),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          ship.resolvedWeather,
+                          style: TextStyle(fontSize: 11.5, color: secondaryTextColor),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Icon(Icons.anchor_outlined, size: 14, color: secondaryTextColor),
+                      const SizedBox(width: 5),
+                      Text(
+                        "Puerto: ${ship.resolvedLastPort}",
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: secondaryTextColor),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             
             // Video Player or Fallback for SBS camera (Invertido: ahora posicionado donde estaba el Programa de Carga)
@@ -884,6 +991,73 @@ class _FleetViewState extends State<FleetView> {
                           ),
                         );
                       }).toList(),
+                    ),
+                    
+                    // Intranet Cargo Progress Bar
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "VLSFO: ${ship.resolvedProvistosTotal.toStringAsFixed(0)} m³ (100%)",
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0057B8),
+                                ),
+                              ),
+                              Text(
+                                "Buques Provistos: ${ship.resolvedProvistosCount}",
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: secondaryTextColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: 1.0,
+                              minHeight: 7,
+                              backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0057B8)),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Total: ${ship.resolvedProvistosTotal.toStringAsFixed(2)} m³ • LSFO: ${ship.resolvedProvistosTotal.toStringAsFixed(2)} m³",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: secondaryTextColor,
+                                ),
+                              ),
+                              Text(
+                                "ETA: ${ship.resolvedEta}",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: secondaryTextColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

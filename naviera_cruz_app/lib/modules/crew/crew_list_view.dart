@@ -45,11 +45,11 @@ class _CrewListViewState extends State<CrewListView> {
         if (ships.isNotEmpty) {
           _ships.addAll(ships);
         } else {
-          // Fallback mock ships matching design if empty
+          // Fallback ships matching database IDs and design
           _ships.addAll([
-            Ship(id: "s1", name: "ALFA C", status: ShipStatus.active, totalCargo: 1500, latitude: -42.76, longitude: -65.03),
-            Ship(id: "s2", name: "GUSTAVO U", status: ShipStatus.active, totalCargo: 1200, latitude: -38.00, longitude: -57.55),
-            Ship(id: "s3", name: "NANY", status: ShipStatus.docked, totalCargo: 800, latitude: -54.80, longitude: -68.30),
+            Ship(id: "4", name: "ALFA C", status: ShipStatus.active, totalCargo: 1500, latitude: -42.76, longitude: -65.03),
+            Ship(id: "6", name: "GUSTAVO U", status: ShipStatus.active, totalCargo: 1200, latitude: -38.00, longitude: -57.55),
+            Ship(id: "5", name: "NANY", status: ShipStatus.docked, totalCargo: 800, latitude: -54.80, longitude: -68.30),
           ]);
         }
         
@@ -61,19 +61,18 @@ class _CrewListViewState extends State<CrewListView> {
       await _loadCrew();
     } catch (_) {
       _loadFallbackCrew();
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-    setState(() => _isLoading = false);
   }
 
   Future<void> _loadCrew() async {
-    if (_selectedShipId == null && _ships.isNotEmpty) {
-      _selectedShipId = _ships.first.id;
-    }
+    final targetId = _selectedShipId ?? (_ships.isNotEmpty ? _ships.first.id : '4');
     
     setState(() => _isLoading = true);
     try {
       final fleetService = FleetService();
-      final crew = await fleetService.fetchCrew(_selectedShipId ?? 's1');
+      final crew = await fleetService.fetchCrew(targetId);
       
       final seenIds = <String>{};
       final uniqueCrew = <CrewMember>[];
@@ -94,25 +93,20 @@ class _CrewListViewState extends State<CrewListView> {
       }
     } catch (_) {
       _loadFallbackCrew();
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-    setState(() => _isLoading = false);
   }
 
-  void _loadFallbackCrew() {
-    final shipId = _selectedShipId ?? 's1';
-    setState(() {
-      _crewMembers.clear();
-      _crewMembers.addAll([
-        CrewMember(id: "c1", shipId: shipId, name: "Carrá Leonel", role: "Capitán", dni: "28.123.456", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 1),
-        CrewMember(id: "c2", shipId: shipId, name: "Caballero Diego", role: "1er Oficial Cubierta", dni: "31.987.654", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 2),
-        CrewMember(id: "c3", shipId: shipId, name: "Caratolli Pablo", role: "2do Oficial Cubierta", dni: "28.654.321", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 19, orderIndex: 3),
-        CrewMember(id: "c4", shipId: shipId, name: "Escalante Jorge", role: "3er Oficial Cubierta", dni: "27.321.098", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 4),
-        CrewMember(id: "c5", shipId: shipId, name: "Sosa Armando", role: "Jefe de Maquinas", dni: "24.567.890", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 5),
-        CrewMember(id: "c6", shipId: shipId, name: "Medina Cesar", role: "1er Conductor", dni: "33.444.555", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 6),
-        CrewMember(id: "c7", shipId: shipId, name: "Ledesma Gabriel", role: "2do Oficial Maquinas", dni: "29.111.222", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 7),
-        CrewMember(id: "c8", shipId: shipId, name: "Pereyra Matías", role: "3er Oficial Maquinas", dni: "32.777.333", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 18, orderIndex: 8),
-      ]);
-    });
+  void _loadFallbackCrew() async {
+    final shipId = _selectedShipId ?? '4';
+    final fallbackList = await MockFleetService().fetchCrew(shipId);
+    if (mounted) {
+      setState(() {
+        _crewMembers.clear();
+        _crewMembers.addAll(fallbackList);
+      });
+    }
   }
 
   @override
@@ -342,16 +336,24 @@ class _CrewListViewState extends State<CrewListView> {
     final shipsList = _ships.isNotEmpty
         ? _ships
         : [
-            Ship(id: "s1", name: "ALFA C", status: ShipStatus.active, totalCargo: 0, latitude: 0, longitude: 0),
-            Ship(id: "s2", name: "GUSTAVO U", status: ShipStatus.active, totalCargo: 0, latitude: 0, longitude: 0),
-            Ship(id: "s3", name: "NANY", status: ShipStatus.active, totalCargo: 0, latitude: 0, longitude: 0),
+            Ship(id: "4", name: "ALFA C", status: ShipStatus.active, totalCargo: 0, latitude: 0, longitude: 0),
+            Ship(id: "6", name: "GUSTAVO U", status: ShipStatus.active, totalCargo: 0, latitude: 0, longitude: 0),
+            Ship(id: "5", name: "NANY", status: ShipStatus.active, totalCargo: 0, latitude: 0, longitude: 0),
           ];
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: shipsList.map((ship) {
-          final isSelected = _selectedShipId == ship.id ||
+          final isSelected = (_selectedShipId != null &&
+                  (_selectedShipId == ship.id ||
+                      _selectedShipId!.toUpperCase() == ship.name.toUpperCase() ||
+                      (_selectedShipId == '4' && ship.name.contains('ALFA')) ||
+                      (_selectedShipId == 's1' && ship.name.contains('ALFA')) ||
+                      (_selectedShipId == '6' && ship.name.contains('GUSTAVO')) ||
+                      (_selectedShipId == 's2' && ship.name.contains('GUSTAVO')) ||
+                      (_selectedShipId == '5' && ship.name.contains('NANY')) ||
+                      (_selectedShipId == 's3' && ship.name.contains('NANY')))) ||
               (_selectedShipId == null && ship == shipsList.first);
 
           final nameUpper = ship.name.toUpperCase();

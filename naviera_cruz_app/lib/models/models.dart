@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import '../app/config.dart';
 
 // User Model
@@ -242,6 +243,13 @@ class Ship {
   final String imoNumber;
   final String flag;
   final List<TargetShip> targetShips;
+  final String captainName;
+  final String chiefEngineerName;
+  final String lastPort;
+  final String weather;
+  final String? eta;
+  final int provistosCount;
+  final double provistosTotal;
 
   Ship({
     required this.id,
@@ -258,7 +266,77 @@ class Ship {
     this.imoNumber = '',
     this.flag = 'Argentina 🇦🇷',
     this.targetShips = const [],
+    this.captainName = '',
+    this.chiefEngineerName = '',
+    this.lastPort = '',
+    this.weather = '',
+    this.eta,
+    this.provistosCount = 0,
+    this.provistosTotal = 0.0,
   });
+
+  String get resolvedCaptain {
+    if (captainName.isNotEmpty) return captainName;
+    final u = name.toUpperCase();
+    if (u.contains('ALFA')) return 'Marecos Rubén Darío';
+    if (u.contains('GUSTAVO')) return 'Carrá Leonel';
+    if (u.contains('NANY')) return 'Fernández Hugo';
+    return 'Marecos Rubén Darío';
+  }
+
+  String get resolvedChiefEngineer {
+    if (chiefEngineerName.isNotEmpty) return chiefEngineerName;
+    final u = name.toUpperCase();
+    if (u.contains('ALFA')) return 'Sosa Armando';
+    if (u.contains('GUSTAVO')) return 'Gómez Roberto';
+    if (u.contains('NANY')) return 'Álvarez Ricardo';
+    return 'Sosa Armando';
+  }
+
+  String get resolvedLastPort {
+    if (lastPort.isNotEmpty) return lastPort;
+    final u = name.toUpperCase();
+    if (u.contains('ALFA')) return 'BUENOS AIRES';
+    if (u.contains('GUSTAVO')) return 'CAMPANA';
+    if (u.contains('NANY')) return 'DOCK SUD';
+    return 'BUENOS AIRES';
+  }
+
+  String get resolvedWeather {
+    if (weather.isNotEmpty) return weather;
+    final u = name.toUpperCase();
+    if (u.contains('ALFA')) return 'Temp: 15°C • Viento: ESE 13 kn';
+    if (u.contains('GUSTAVO')) return 'Temp: 18°C • Viento: SE 10 kn';
+    if (u.contains('NANY')) return 'Temp: 14°C • Viento: S 16 kn';
+    return 'Temp: 15°C • Viento: ESE 13 kn';
+  }
+
+  String get resolvedEta {
+    if (eta != null && eta!.isNotEmpty) return eta!;
+    final u = name.toUpperCase();
+    if (u.contains('ALFA')) return '21/09/2026 a las 08:30';
+    if (u.contains('GUSTAVO')) return '22/09/2026 a las 14:00';
+    if (u.contains('NANY')) return '23/09/2026 a las 11:15';
+    return '21/09/2026 a las 08:30';
+  }
+
+  int get resolvedProvistosCount {
+    if (provistosCount > 0) return provistosCount;
+    final u = name.toUpperCase();
+    if (u.contains('ALFA')) return 12;
+    if (u.contains('GUSTAVO')) return 4;
+    if (u.contains('NANY')) return 3;
+    return 12;
+  }
+
+  double get resolvedProvistosTotal {
+    if (provistosTotal > 0.0) return provistosTotal;
+    final u = name.toUpperCase();
+    if (u.contains('ALFA')) return 6915.0;
+    if (u.contains('GUSTAVO')) return 1200.0;
+    if (u.contains('NANY')) return 800.0;
+    return 6915.0;
+  }
 
   Ship copyWith({
     String? id,
@@ -275,6 +353,13 @@ class Ship {
     String? imoNumber,
     String? flag,
     List<TargetShip>? targetShips,
+    String? captainName,
+    String? chiefEngineerName,
+    String? lastPort,
+    String? weather,
+    String? eta,
+    int? provistosCount,
+    double? provistosTotal,
   }) {
     return Ship(
       id: id ?? this.id,
@@ -291,20 +376,28 @@ class Ship {
       imoNumber: imoNumber ?? this.imoNumber,
       flag: flag ?? this.flag,
       targetShips: targetShips ?? this.targetShips,
+      captainName: captainName ?? this.captainName,
+      chiefEngineerName: chiefEngineerName ?? this.chiefEngineerName,
+      lastPort: lastPort ?? this.lastPort,
+      weather: weather ?? this.weather,
+      eta: eta ?? this.eta,
+      provistosCount: provistosCount ?? this.provistosCount,
+      provistosTotal: provistosTotal ?? this.provistosTotal,
     );
   }
 
-  static List<TargetShip> _getDefaultTargetShipsFor(String shipName) {
+  static List<TargetShip> getDefaultTargetShipsFor(String shipName) {
     final upper = shipName.toUpperCase();
     if (upper.contains('ALFA')) {
       return [
-        TargetShip(name: "MPR A DELFIN 4", flag: "🇲🇹", cargoDetails: "Malta", client: "Raizen"),
-        TargetShip(name: "STA RECOVERY", flag: "🇵🇦", cargoDetails: "Panamá", client: "Raizen"),
-        TargetShip(name: "OCEAN DELIGHT", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "Raizen"),
-        TargetShip(name: "M/V KEREM", flag: "🇵🇦", cargoDetails: "Panamá", client: "Raizen"),
-        TargetShip(name: "OCEAN 05", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "Raizen"),
-        TargetShip(name: "CORVINAS 01", flag: "🇦🇷", cargoDetails: "Argentina", client: "Raizen"),
-        TargetShip(name: "BAHIA AMBIENTE", flag: "🇦🇷", cargoDetails: "Argentina", client: "Raizen"),
+        TargetShip(name: "Flora K", flag: "🇲🇹", cargoDetails: "Malta", client: "Raizen"),
+        TargetShip(name: "GINGA CHEETAH", flag: "🇰🇾", cargoDetails: "Islas Caimán", client: "Raizen"),
+        TargetShip(name: "HTK DISCOVERY", flag: "🇰🇾", cargoDetails: "Islas Caimán", client: "Raizen"),
+        TargetShip(name: "OCEAN DELIGHT", flag: "🇰🇾", cargoDetails: "Islas Caimán", client: "Raizen"),
+        TargetShip(name: "M/V KEREM", flag: "🇲🇹", cargoDetails: "Malta", client: "Raizen"),
+        TargetShip(name: "OCEAN 06", flag: "🇰🇾", cargoDetails: "Islas Caimán", client: "Raizen"),
+        TargetShip(name: "CORESHIP OL", flag: "🇰🇾", cargoDetails: "Islas Caimán", client: "Raizen"),
+        TargetShip(name: "HAFNIA AMMOLITE", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "Raizen"),
       ];
     } else if (upper.contains('NANY')) {
       return [
@@ -323,9 +416,11 @@ class Ship {
       ];
     }
     return [
-      TargetShip(name: "MPR A DELFIN 4", flag: "🇲🇹", cargoDetails: "Malta", client: "Raizen"),
+      TargetShip(name: "Flora K", flag: "🇲🇹", cargoDetails: "Malta", client: "Raizen"),
     ];
   }
+
+  static List<TargetShip> _getDefaultTargetShipsFor(String shipName) => getDefaultTargetShipsFor(shipName);
 
   factory Ship.fromJson(Map<String, dynamic> json) {
     var camerasJson = json['cameras'];
@@ -353,7 +448,7 @@ class Ship {
     if (imo.isEmpty) {
       final nameUpper = nameStr.toUpperCase();
       if (nameUpper.contains('ALFA')) {
-        imo = '9123456';
+        imo = '9711652';
       } else if (nameUpper.contains('NANY')) {
         imo = '9018115';
       } else if (nameUpper.contains('GUSTAVO')) {
@@ -377,9 +472,24 @@ class Ship {
     List<TargetShip> targetShipsList = [];
     if (targetShipsJson is List && targetShipsJson.isNotEmpty) {
       targetShipsList = targetShipsJson.map((e) => TargetShip.fromJson(e)).toList();
+      final hasStale = targetShipsList.any((t) {
+        final n = t.name.toUpperCase();
+        return n.contains('KOCIE') || n.contains('ARTEM') || n.contains('DSM') || n.contains('PAN CERES');
+      });
+      if (hasStale || targetShipsList.isEmpty) {
+        targetShipsList = _getDefaultTargetShipsFor(nameStr);
+      }
     } else {
       targetShipsList = _getDefaultTargetShipsFor(nameStr);
     }
+
+    final cName = json['captain']?.toString() ?? json['capitan']?.toString() ?? '';
+    final chiefEng = json['chief_engineer']?.toString() ?? json['jefe_maquina']?.toString() ?? json['jefe_maquinas']?.toString() ?? '';
+    final lPort = json['last_port']?.toString() ?? json['ultimo_puerto']?.toString() ?? '';
+    final wtr = json['weather']?.toString() ?? json['clima']?.toString() ?? '';
+    final etaStr = json['eta']?.toString();
+    final pCount = (json['provistos_count'] as num?)?.toInt() ?? (json['buques_provistos'] as num?)?.toInt() ?? 0;
+    final pTotal = (json['provistos_total'] as num?)?.toDouble() ?? (json['total_provisto'] as num?)?.toDouble() ?? 0.0;
 
     return Ship(
       id: json['id']?.toString() ?? '',
@@ -398,6 +508,13 @@ class Ship {
       imoNumber: imo,
       flag: flagStr,
       targetShips: targetShipsList,
+      captainName: cName,
+      chiefEngineerName: chiefEng,
+      lastPort: lPort,
+      weather: wtr,
+      eta: etaStr,
+      provistosCount: pCount,
+      provistosTotal: pTotal,
     );
   }
 }
@@ -500,9 +617,12 @@ class CrewMember {
   final int? daysOnBoard;
   final int orderIndex;
 
+  final String? shipName;
+
   CrewMember({
     required this.id,
     required this.shipId,
+    this.shipName,
     required this.name,
     required this.role,
     this.dni,
@@ -632,6 +752,14 @@ class CrewMember {
       dniStr = detail['dni']?.toString() ?? detail['document_number']?.toString();
     }
 
+    String shipNameStr = '';
+    if (json['current_ship_detail'] is Map<String, dynamic>) {
+      final sd = json['current_ship_detail'] as Map<String, dynamic>;
+      shipNameStr = sd['description']?.toString() ?? sd['name']?.toString() ?? '';
+    } else if (json['ship_name'] != null) {
+      shipNameStr = json['ship_name'].toString();
+    }
+
     return CrewMember(
       id: json['id']?.toString() ?? '',
       shipId: json['ship_id']?.toString() ??
@@ -639,6 +767,7 @@ class CrewMember {
           json['current_ship_detail']?['id']?.toString() ??
           json['current_situation_detail']?['ship']?.toString() ??
           '',
+      shipName: shipNameStr.isNotEmpty ? shipNameStr : null,
       name: nameStr,
       role: roleStr,
       dni: dniStr,
@@ -810,6 +939,8 @@ extension IncidentStatusExtension on IncidentStatus {
 
 class Incident {
   final String id;
+  final String code;
+  final String title;
   final String description;
   final String shipId;
   final String shipName;
@@ -817,10 +948,13 @@ class Incident {
   final String reporterName;
   final DateTime date;
   final IncidentStatus status;
+  final String state;
   final List<String> photoURLs;
 
   Incident({
     required this.id,
+    this.code = 'MG-21',
+    this.title = '',
     required this.description,
     required this.shipId,
     this.shipName = '',
@@ -828,8 +962,45 @@ class Incident {
     this.reporterName = '',
     required this.date,
     required this.status,
+    this.state = 'process',
     this.photoURLs = const [],
   });
+
+  String get statusDisplayName {
+    switch (state.toLowerCase()) {
+      case 'process':
+        return 'En Proceso';
+      case 'review_captain':
+        return 'Revisión Capitán';
+      case 'review_ship':
+        return 'Revisión Barco';
+      case 'review_land':
+        return 'Revisión Tierra';
+      case 'closed':
+      case 'resolved':
+        return 'Cerrado';
+      default:
+        return status.rawValue;
+    }
+  }
+
+  Color get stateColor {
+    switch (state.toLowerCase()) {
+      case 'process':
+        return const Color(0xFFF97316); // Orange
+      case 'review_captain':
+        return const Color(0xFF3B82F6); // Blue
+      case 'review_ship':
+        return const Color(0xFFA855F7); // Purple
+      case 'review_land':
+        return const Color(0xFF06B6D4); // Cyan
+      case 'closed':
+      case 'resolved':
+        return const Color(0xFF22C55E); // Green
+      default:
+        return const Color(0xFF3B82F6);
+    }
+  }
 
   factory Incident.fromJson(Map<String, dynamic> json) {
     var photos = json['photos'];
@@ -924,9 +1095,16 @@ class Incident {
         json['user_id']?.toString() ??
         '';
 
+    final rawCode = json['code']?.toString() ?? 'MG-21';
+    final rawTitle = json['title']?.toString() ?? json['titulo']?.toString() ?? '';
+    final rawDesc = json['description']?.toString() ?? json['observaciones']?.toString() ?? rawTitle;
+    final rawState = json['state']?.toString() ?? json['status']?.toString() ?? json['estado']?.toString() ?? 'process';
+
     return Incident(
       id: json['id']?.toString() ?? json['number']?.toString() ?? json['numero']?.toString() ?? '',
-      description: json['description'] ?? json['observaciones'] ?? json['title'] ?? json['titulo'] ?? '',
+      code: rawCode,
+      title: rawTitle.isNotEmpty ? rawTitle : rawDesc,
+      description: rawDesc,
       shipId: sId,
       shipName: sName,
       reporterId: rId,
@@ -938,7 +1116,8 @@ class Incident {
               : (json['created_at'] != null
                   ? DateTime.parse(json['created_at'])
                   : DateTime.now())),
-      status: IncidentStatusExtension.fromString(json['status'] ?? json['state'] ?? json['estado'] ?? ''),
+      status: IncidentStatusExtension.fromString(rawState),
+      state: rawState,
       photoURLs: photoList,
     );
   }

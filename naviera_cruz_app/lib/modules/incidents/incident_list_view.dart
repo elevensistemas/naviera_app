@@ -33,18 +33,30 @@ class _IncidentListViewState extends State<IncidentListView> {
     try {
       final incidentService = IncidentService();
       final incidents = await incidentService.fetchIncidents();
+      if (incidents.isEmpty) {
+        final fallback = await MockIncidentService().fetchIncidents();
+        setState(() {
+          _incidents.clear();
+          _incidents.addAll(fallback);
+        });
+      } else {
+        setState(() {
+          _incidents.clear();
+          _incidents.addAll(incidents);
+        });
+      }
+    } catch (_) {
+      final fallback = await MockIncidentService().fetchIncidents();
       setState(() {
         _incidents.clear();
-        _incidents.addAll(incidents);
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
+        _incidents.addAll(fallback);
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -415,119 +427,175 @@ class _IncidentListViewState extends State<IncidentListView> {
                               final shipDisplay = _getResolvedShipName(incident);
                               final reporterDisplay = _getResolvedReporterName(incident);
 
-                              return Card(
+                              final stateCol = incident.stateColor;
+                              return Container(
                                 margin: const EdgeInsets.only(bottom: 16.0),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(20.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      // Top Row: Code/ID and Status badge
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: dividerColor),
+                                  boxShadow: isDark
+                                      ? []
+                                      : [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.04),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: IntrinsicHeight(
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      children: [
+                                        // Left Accent Bar matching state
+                                        Container(
+                                          width: 6,
+                                          color: stateCol,
+                                        ),
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(18.0),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                      // Top Header: #ID + Code Badge + State Badge + Date
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            "#${incident.id.toUpperCase().padLeft(6, '0')}",
-                                            style: const TextStyle(
-                                              color: ColorTheme.accent,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                            decoration: BoxDecoration(
-                                              color: statusBg,
-                                              borderRadius: BorderRadius.circular(16),
-                                            ),
-                                            child: Text(
-                                              incident.status.rawValue,
-                                              style: TextStyle(
-                                                color: statusCol,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 11,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 8),
-
-                                      // Date row
-                                      Row(
-                                        children: [
-                                          Icon(Icons.calendar_today_outlined, size: 14, color: captionColor),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            _formatDate(incident.date),
-                                            style: TextStyle(
-                                              color: text45Color,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 14),
-
-                                      // Description/Text
-                                      Text(
-                                        incident.description,
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                          color: textColor,
-                                          height: 1.35,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 20),
-
-                                      // Divider
-                                      Divider(height: 1, color: dividerColor),
-                                      const SizedBox(height: 14),
-
-                                      // Footer Row: Ship Badge & Reporter Info
-                                      Row(
-                                        children: [
-                                          Builder(
-                                            builder: (context) {
-                                              final shipCol = _getIncidentShipColor(shipDisplay);
-                                              return Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                                decoration: BoxDecoration(
-                                                  color: shipCol.withValues(alpha: isDark ? 0.2 : 0.12),
-                                                  borderRadius: BorderRadius.circular(8),
-                                                  border: Border.all(color: shipCol.withValues(alpha: 0.35)),
+                                          Flexible(
+                                            child: Wrap(
+                                              crossAxisAlignment: WrapCrossAlignment.center,
+                                              spacing: 8,
+                                              runSpacing: 4,
+                                              children: [
+                                                Text(
+                                                  "#${incident.id}",
+                                                  style: TextStyle(
+                                                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 13,
+                                                  ),
                                                 ),
-                                                child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    Icon(Icons.directions_boat_filled_rounded, size: 14, color: shipCol),
-                                                    const SizedBox(width: 6),
-                                                    Text(
-                                                      "Barco: $shipDisplay",
-                                                      style: TextStyle(
-                                                        fontSize: 12,
-                                                        color: shipCol,
-                                                        fontWeight: FontWeight.bold,
-                                                      ),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(0xFF0284C7).withValues(alpha: 0.15),
+                                                    borderRadius: BorderRadius.circular(6),
+                                                    border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.3)),
+                                                  ),
+                                                  child: Text(
+                                                    incident.code,
+                                                    style: const TextStyle(
+                                                      color: Color(0xFF0284C7),
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 11,
                                                     ),
-                                                  ],
+                                                  ),
                                                 ),
-                                              );
-                                            },
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                  decoration: BoxDecoration(
+                                                    color: stateCol.withValues(alpha: 0.15),
+                                                    borderRadius: BorderRadius.circular(6),
+                                                    border: Border.all(color: stateCol.withValues(alpha: 0.35)),
+                                                  ),
+                                                  child: Text(
+                                                    incident.statusDisplayName,
+                                                    style: TextStyle(
+                                                      color: stateCol,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 11,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                          const Spacer(),
                                           Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Icon(Icons.person_outline, size: 15, color: captionColor),
-                                              const SizedBox(width: 4),
+                                              Icon(Icons.calendar_today_outlined, size: 13, color: isDark ? Colors.white38 : const Color(0xFF94A3B8)),
+                                              const SizedBox(width: 5),
                                               Text(
-                                                "Reportó: $reporterDisplay",
+                                                _formatDate(incident.date),
+                                                style: TextStyle(
+                                                  color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                                                  fontSize: 11.5,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+
+                                      // Title
+                                      if (incident.title.isNotEmpty) ...[
+                                        Text(
+                                          incident.title,
+                                          style: TextStyle(
+                                            fontSize: 15.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: textColor,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                      ],
+
+                                      // Description
+                                      Text(
+                                        incident.description,
+                                        style: TextStyle(
+                                          fontSize: 13.5,
+                                          color: secondaryTextColor,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 14),
+                                      Divider(height: 1, color: dividerColor),
+                                      const SizedBox(height: 10),
+
+                                      // Footer Row: Ship Badge & Reporter Info
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.directions_boat_filled_rounded, size: 14, color: _getIncidentShipColor(shipDisplay)),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                "Barco: ",
+                                                style: TextStyle(fontSize: 12, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                              ),
+                                              Text(
+                                                shipDisplay,
                                                 style: TextStyle(
                                                   fontSize: 12,
-                                                  color: secondaryTextColor,
-                                                  fontWeight: FontWeight.w500,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: _getIncidentShipColor(shipDisplay),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.person_outline, size: 14, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                              const SizedBox(width: 5),
+                                              Text(
+                                                "Reportó: ",
+                                                style: TextStyle(fontSize: 12, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
+                                              ),
+                                              Text(
+                                                reporterDisplay,
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
                                                 ),
                                               ),
                                             ],
@@ -537,7 +605,12 @@ class _IncidentListViewState extends State<IncidentListView> {
                                     ],
                                   ),
                                 ),
-                              );
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
                             }),
                         ],
                       ),

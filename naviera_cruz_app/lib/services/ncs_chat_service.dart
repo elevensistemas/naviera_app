@@ -152,17 +152,17 @@ class NCSChatService {
 
 Tripulación embarcada activa en regla STCW:
 
-- **Capitán:** Carrá Leonel ➔ 🟢 20 días embarcado
+- **Capitán:** Marecos Rubén Darío ➔ 🟢 22 días embarcado
+- **Jefe de Máquinas:** Sosa Armando ➔ 🟢 2 días embarcado
 - **1er Oficial Cubierta:** Caballero Diego ➔ 🟢 20 días embarcado
 - **2do Oficial Cubierta:** Caratolli Pablo ➔ 🟢 19 días embarcado
 - **3er Oficial Cubierta:** Escalante Jorge ➔ 🟢 20 días embarcado
-- **Jefe de Máquinas:** Sosa Armando ➔ 🟢 2 días embarcado
 - **1er Conductor:** Medina Cesar ➔ 🟢 20 días embarcado
 - **2do Oficial Máquinas:** Ledesma Gabriel ➔ 🟢 20 días embarcado
 - **3er Oficial Máquinas:** Pereyra Matías ➔ 🟢 18 días embarcado
 
 > **Semáforo de Relevos:** 🟢 8 OK (<60d) | 🟡 0 Próx. Relevo (60-89d) | 🔴 0 Excedidos (>=90d)
-> **Status HSE:** 0 incidentes registrados | Dotación mínima completa.
+> **Status HSE:** 3 incidentes registrados (MG-21 en proceso) | Dotación mínima completa.
 """;
       } else if (lower.contains("gustavo")) {
         responseText = """
@@ -170,14 +170,15 @@ Tripulación embarcada activa en regla STCW:
 
 Tripulación embarcada activa:
 
-- **Capitán:** Caratolli Pablo ➔ 🟢 24 días embarcado
-- **1er Oficial Cubierta:** Sosa Armando ➔ 🟢 15 días embarcado
-- **Jefe de Máquinas:** Pereyra Matías ➔ 🟢 30 días embarcado
-- **1er Conductor:** Ledesma Gabriel ➔ 🟢 22 días embarcado
-- **Personal de Cubierta:** 4 marineros habilitados ➔ 🟢 OK
+- **Capitán:** Carrá Leonel ➔ 🟢 15 días embarcado
+- **Jefe de Máquinas:** Gómez Roberto ➔ 🟢 12 días embarcado
+- **1er Oficial Cubierta:** Benítez Carlos ➔ 🟢 15 días embarcado
+- **2do Oficial Cubierta:** Díaz Martín ➔ 🟢 14 días embarcado
+- **1er Conductor:** Vega Luis ➔ 🟢 15 días embarcado
+- **2do Oficial Máquinas:** Rossi Hernán ➔ 🟢 10 días embarcado
 
-> **Semáforo de Relevos:** 🟢 5 OK (<60d) | 🟡 0 Próx. Relevo | 🔴 0 Excedidos
-> **Status HSE:** 0 incidentes registrados | Dotación mínima completa.
+> **Semáforo de Relevos:** 🟢 6 OK (<60d) | 🟡 0 Próx. Relevo | 🔴 0 Excedidos
+> **Status HSE:** 2 incidentes registrados | Dotación mínima completa.
 """;
       } else if (lower.contains("nany")) {
         responseText = """
@@ -185,24 +186,25 @@ Tripulación embarcada activa:
 
 Tripulación embarcada activa:
 
-- **Capitán:** Escalante Jorge ➔ 🟢 28 días embarcado
-- **1er Oficial Cubierta:** Ledesma Gabriel ➔ 🟢 18 días embarcado
-- **Jefe de Máquinas:** Medina Cesar ➔ 🟢 25 días embarcado
-- **1er Conductor:** Caballero Diego ➔ 🟢 19 días embarcado
-- **Personal de Cubierta:** 4 marineros habilitados ➔ 🟢 OK
+- **Capitán:** Fernández Hugo ➔ 🟢 18 días embarcado
+- **Jefe de Máquinas:** Álvarez Ricardo ➔ 🟢 16 días embarcado
+- **1er Oficial Cubierta:** Morales Esteban ➔ 🟢 18 días embarcado
+- **2do Oficial Cubierta:** Romero Facundo ➔ 🟢 17 días embarcado
+- **1er Conductor:** Silva Gustavo ➔ 🟢 18 días embarcado
+- **2do Oficial Máquinas:** Navarro Lucas ➔ 🟢 12 días embarcado
 
-> **Semáforo de Relevos:** 🟢 5 OK (<60d) | 🟡 0 Próx. Relevo | 🔴 0 Excedidos
-> **Status HSE:** 0 incidentes registrados | Dotación mínima completa.
+> **Semáforo de Relevos:** 🟢 6 OK (<60d) | 🟡 0 Próx. Relevo | 🔴 0 Excedidos
+> **Status HSE:** 2 incidentes registrados | Dotación mínima completa.
 """;
       } else {
         responseText = """
 ### 👨‍✈️ Resumen de Tripulación y Semáforo de Relevos - NCS Control Center
 
-- 🚢 **BT ALFA C:** 8 tripulantes embarcados ➔ 🟢 8 OK (<60d) | Capitán Carrá Leonel
-- 🚢 **BT GUSTAVO U:** 5 tripulantes embarcados ➔ 🟢 5 OK (<60d) | Capitán Caratolli Pablo
-- 🚢 **BT NANY:** 5 tripulantes embarcados ➔ 🟢 5 OK (<60d) | Capitán Escalante Jorge
+- 🚢 **BT ALFA C:** 8 tripulantes embarcados ➔ 🟢 8 OK (<60d) | Capitán Marecos Rubén Darío
+- 🚢 **BT GUSTAVO U:** 6 tripulantes embarcados ➔ 🟢 6 OK (<60d) | Capitán Carrá Leonel
+- 🚢 **BT NANY:** 6 tripulantes embarcados ➔ 🟢 6 OK (<60d) | Capitán Fernández Hugo
 
-> **Semáforo Total Flota:** 🟢 18 en norma (<60d) | 🟡 0 en alerta relevo (60-89d) | 🔴 0 vencidos STCW (>=90d)
+> **Semáforo Total Flota:** 🟢 20 en norma (<60d) | 🟡 0 en alerta relevo (60-89d) | 🔴 0 vencidos STCW (>=90d)
 """;
       }
     }
