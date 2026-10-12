@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import '../../models/models.dart';
 import '../../services/services.dart';
 import '../../app/theme.dart';
@@ -78,10 +79,10 @@ class _FleetViewState extends State<FleetView> {
         id: "4",
         name: "ALFA C",
         status: ShipStatus.active,
-        totalCargo: 528.0,
-        totalCarbon: 528.0,
-        totalWater: 118.0,
-        totalSlop: 83.72,
+        totalCargo: 71.34,
+        totalCarbon: 71.34,
+        totalWater: 83.0,
+        totalSlop: 5.20,
         imoNumber: "9123456",
         flag: "Panamá 🇵🇦",
         latitude: -42.76,
@@ -91,10 +92,10 @@ class _FleetViewState extends State<FleetView> {
         id: "6",
         name: "GUSTAVO U",
         status: ShipStatus.maintenance,
-        totalCargo: 340.0,
-        totalCarbon: 340.0,
+        totalCargo: 62.50,
+        totalCarbon: 62.50,
         totalWater: 65.0,
-        totalSlop: 45.0,
+        totalSlop: 4.80,
         imoNumber: "9654321",
         flag: "Argentina 🇦🇷",
         latitude: -38.00,
@@ -104,10 +105,10 @@ class _FleetViewState extends State<FleetView> {
         id: "5",
         name: "NANY",
         status: ShipStatus.docked,
-        totalCargo: 528.0,
-        totalCarbon: 528.0,
-        totalWater: 118.0,
-        totalSlop: 83.72,
+        totalCargo: 54.80,
+        totalCarbon: 54.80,
+        totalWater: 52.0,
+        totalSlop: 3.40,
         imoNumber: "9018115",
         flag: "Argentina 🇦🇷",
         latitude: -54.80,
@@ -119,11 +120,11 @@ class _FleetViewState extends State<FleetView> {
   String _getCargoProgramInfo(Ship ship) {
     final upper = ship.name.toUpperCase();
     if (upper.contains('ALFA')) {
-      return "Raizen (15.75 k t)";
+      return "Raizen (3050.00 m³ • 12 buques)";
     } else if (upper.contains('NANY')) {
-      return "WFS (12.83 k t)";
+      return "WFS (4.32 k t • 6 buques)";
     } else if (upper.contains('GUSTAVO')) {
-      return "WFS (14.89 k t)";
+      return "WFS (7.39 k t • 16 buques)";
     }
     return "Raizen";
   }
@@ -147,30 +148,43 @@ class _FleetViewState extends State<FleetView> {
   double _getFuelPercentage(Ship ship) {
     final val = ship.totalCarbon > 0 ? ship.totalCarbon : ship.totalCargo;
     if (val <= 0) return 0.0;
-    final maxCap = ship.name.toUpperCase().contains('ALFA')
-        ? 350.0
-        : (ship.name.toUpperCase().contains('NANY') ? 250.0 : 300.0);
-    return (val / maxCap).clamp(0.0, 1.0);
+    if (ship.name.toUpperCase().contains('ALFA')) {
+      return (val / 100.48).clamp(0.0, 1.0); // 71.34 m³ -> 71%
+    } else if (ship.name.toUpperCase().contains('GUSTAVO')) {
+      return (val / 107.76).clamp(0.0, 1.0); // 62.50 m³ -> 58%
+    } else {
+      return (val / 89.84).clamp(0.0, 1.0); // 54.80 m³ -> 61%
+    }
   }
 
   double _getWaterPercentage(Ship ship) {
     final val = ship.totalWater;
     if (val <= 0) return 0.0;
-    const maxCap = 100.0;
-    return (val / maxCap).clamp(0.0, 1.0);
+    if (ship.name.toUpperCase().contains('ALFA')) {
+      return (val / 307.4).clamp(0.0, 1.0); // 83.0 m³ -> 27%
+    } else if (ship.name.toUpperCase().contains('GUSTAVO')) {
+      return (val / 203.1).clamp(0.0, 1.0); // 65.0 m³ -> 32%
+    } else {
+      return (val / 148.57).clamp(0.0, 1.0); // 52.0 m³ -> 35%
+    }
   }
 
   double _getSlopPercentage(Ship ship) {
     final val = ship.totalSlop;
     if (val <= 0) return 0.0;
-    const maxCap = 40.0;
-    return (val / maxCap).clamp(0.0, 1.0);
+    if (ship.name.toUpperCase().contains('ALFA')) {
+      return (val / 37.14).clamp(0.0, 1.0); // 5.20 m³ -> 14%
+    } else if (ship.name.toUpperCase().contains('GUSTAVO')) {
+      return (val / 30.0).clamp(0.0, 1.0); // 4.80 m³ -> 16%
+    } else {
+      return (val / 28.33).clamp(0.0, 1.0); // 3.40 m³ -> 12%
+    }
   }
 
   String _getFuelValue(Ship ship) {
     final val = ship.totalCarbon > 0 ? ship.totalCarbon : ship.totalCargo;
-    if (val <= 0) return "0.0 t";
-    return "${val.toStringAsFixed(1)} t";
+    if (val <= 0) return "0.00 m³";
+    return "${val.toStringAsFixed(2)} m³";
   }
 
   String _getWaterValue(Ship ship) {
@@ -181,8 +195,8 @@ class _FleetViewState extends State<FleetView> {
 
   String _getSlopValue(Ship ship) {
     final val = ship.totalSlop;
-    if (val <= 0) return "0.0 m³";
-    return "${val.toStringAsFixed(1)} m³";
+    if (val <= 0) return "0.00 m³";
+    return "${val.toStringAsFixed(2)} m³";
   }
 
   @override
@@ -348,7 +362,7 @@ class _FleetViewState extends State<FleetView> {
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
     final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
-    final dividerColor = isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFF1F5F9);
+    final dividerColor = isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFF1F5F9);
     final shipAccentColor = _getShipThemeColor(ship.name);
 
     return Card(
@@ -358,7 +372,7 @@ class _FleetViewState extends State<FleetView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header: Ship Name
+            // Header: Ship Name + Status
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -381,6 +395,40 @@ class _FleetViewState extends State<FleetView> {
                       ),
                     ),
                   ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: statusCol.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: statusCol.withValues(alpha: 0.35), width: 0.8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: statusCol,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        ship.status == ShipStatus.active
+                            ? "En navegación"
+                            : ship.status == ShipStatus.maintenance
+                                ? "Mantenimiento"
+                                : "En muelle",
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: statusCol,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -590,36 +638,164 @@ class _FleetViewState extends State<FleetView> {
                       ),
                     ),
 
-                    // Content Padding with 3 metrics & vertical dividers
+                    // Content Padding with Concentric Gauge, Header & 3 metrics
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                      child: Row(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildResourceMetric(
-                            context: context,
-                            icon: Icons.local_gas_station_rounded,
-                            color: const Color(0xFFED8B00), // Orange
-                            label: "Combustible",
-                            value: _getFuelValue(ship),
-                            progressPercentage: _getFuelPercentage(ship),
+                          // Header: Nivel de Recursos
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Nivel de Recursos",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                              Icon(
+                                Icons.water_drop_outlined,
+                                size: 16,
+                                color: isDark ? Colors.white38 : Colors.black38,
+                              ),
+                            ],
                           ),
-                          Container(height: 38, width: 1, margin: const EdgeInsets.symmetric(horizontal: 8), color: dividerColor),
-                          _buildResourceMetric(
-                            context: context,
-                            icon: Icons.water_drop_rounded,
-                            color: const Color(0xFF0057B8), // Blue
-                            label: "Agua",
-                            value: _getWaterValue(ship),
-                            progressPercentage: _getWaterPercentage(ship),
+                          const SizedBox(height: 10),
+
+                          // Center Concentric Tank Gauge with Intranet Tooltip
+                          Center(
+                            child: SizedBox(
+                              width: 280,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      child: SizedBox(
+                                        width: 124,
+                                        height: 124,
+                                        child: CustomPaint(
+                                          painter: _ConcentricTanksPainter(
+                                            fuelPct: _getFuelPercentage(ship),
+                                            waterPct: _getWaterPercentage(ship),
+                                            slopPct: _getSlopPercentage(ship),
+                                            isDark: isDark,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  // Floating Intranet Legend Tooltip (Matching Intranet)
+                                  Positioned(
+                                    top: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                      decoration: BoxDecoration(
+                                        color: isDark
+                                            ? const Color(0xFF1E293B).withValues(alpha: 0.95)
+                                            : const Color(0xFFE8F1FC).withValues(alpha: 0.95),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: const Color(0xFF0057B8).withValues(alpha: isDark ? 0.35 : 0.20),
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Agua: ${_getWaterValue(ship)} (${(_getWaterPercentage(ship) * 100).round()}%)",
+                                            style: TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.bold,
+                                              color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF0057B8),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            "Comb: ${_getFuelValue(ship)} (${(_getFuelPercentage(ship) * 100).round()}%)",
+                                            style: TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.bold,
+                                              color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF0057B8),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            "Slop: ${_getSlopValue(ship)} (${(_getSlopPercentage(ship) * 100).round()}%)",
+                                            style: TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.bold,
+                                              color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF0057B8),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                          Container(height: 38, width: 1, margin: const EdgeInsets.symmetric(horizontal: 8), color: dividerColor),
-                          _buildResourceMetric(
-                            context: context,
-                            icon: Icons.opacity_rounded,
-                            color: const Color(0xFF00A86B), // Green/Teal
-                            label: "Slop",
-                            value: _getSlopValue(ship),
-                            progressPercentage: _getSlopPercentage(ship),
+                          const SizedBox(height: 6),
+
+                          // 3 Centered Legend Pills (Agua, Comb, Slop) matching Intranet
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildIntranetBadge("Agua", "${(_getWaterPercentage(ship) * 100).round()}%", const Color(0xFF00BCD4), isDark),
+                              const SizedBox(width: 16),
+                              _buildIntranetBadge("Comb", "${(_getFuelPercentage(ship) * 100).round()}%", const Color(0xFFF59E0B), isDark),
+                              const SizedBox(width: 16),
+                              _buildIntranetBadge("Slop", "${(_getSlopPercentage(ship) * 100).round()}%", const Color(0xFF64748B), isDark),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+
+                          Divider(height: 1, color: dividerColor),
+                          const SizedBox(height: 12),
+
+                          // 3 Resource Metrics
+                          Row(
+                            children: [
+                              _buildResourceMetric(
+                                context: context,
+                                icon: Icons.local_gas_station_rounded,
+                                color: const Color(0xFFF59E0B), // Yellow / Combustible
+                                label: "Combustible",
+                                value: _getFuelValue(ship),
+                                progressPercentage: _getFuelPercentage(ship),
+                              ),
+                              Container(height: 38, width: 1, margin: const EdgeInsets.symmetric(horizontal: 6), color: dividerColor),
+                              _buildResourceMetric(
+                                context: context,
+                                icon: Icons.water_drop_rounded,
+                                color: const Color(0xFF00BCD4), // Cyan / Agua
+                                label: "Agua",
+                                value: _getWaterValue(ship),
+                                progressPercentage: _getWaterPercentage(ship),
+                              ),
+                              Container(height: 38, width: 1, margin: const EdgeInsets.symmetric(horizontal: 6), color: dividerColor),
+                              _buildResourceMetric(
+                                context: context,
+                                icon: Icons.opacity_rounded,
+                                color: const Color(0xFF64748B), // Slate / Slop
+                                label: "Slop",
+                                value: _getSlopValue(ship),
+                                progressPercentage: _getSlopPercentage(ship),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -770,6 +946,57 @@ class _FleetViewState extends State<FleetView> {
     );
   }
 
+  Widget _buildTankBadge(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.35), width: 0.8),
+      ),
+      child: Text(
+        "$label $value",
+        style: TextStyle(
+          fontSize: 9.5,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIntranetBadge(String tag, String pct, Color color, bool isDark) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            tag,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 9.5,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          pct,
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white70 : Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildResourceMetric({
     required BuildContext context,
     required IconData icon,
@@ -780,12 +1007,13 @@ class _FleetViewState extends State<FleetView> {
   }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final int pctInt = (progressPercentage * 100).round();
 
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top Row: Icon + Label
+          // Top Row: Icon + Label + Badge
           Row(
             children: [
               Icon(icon, size: 12, color: color),
@@ -799,10 +1027,26 @@ class _FleetViewState extends State<FleetView> {
                     maxLines: 1,
                     softWrap: false,
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 10.5,
                       color: isDark ? Colors.white70 : Colors.black87,
                       fontWeight: FontWeight.w700,
                     ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 2),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: isDark ? 0.25 : 0.12),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  "$pctInt%",
+                  style: TextStyle(
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w800,
+                    color: color,
                   ),
                 ),
               ),
@@ -810,13 +1054,16 @@ class _FleetViewState extends State<FleetView> {
           ),
           const SizedBox(height: 6),
 
-          // Value (Number)
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.black87,
+          // Value (Number in m³)
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -843,5 +1090,76 @@ class _FleetViewState extends State<FleetView> {
         ],
       ),
     );
+  }
+}
+
+// Concentric Circular Tanks Gauge (Yellow: Comb, Grey: Slop, Cyan: Agua)
+class _ConcentricTanksPainter extends CustomPainter {
+  final double fuelPct;
+  final double waterPct;
+  final double slopPct;
+  final bool isDark;
+
+  _ConcentricTanksPainter({
+    required this.fuelPct,
+    required this.waterPct,
+    required this.slopPct,
+    required this.isDark,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final double maxR = size.width / 2 - 6;
+
+    const ringWidth = 8.0;
+    final rComb = maxR;
+    final rSlop = maxR - ringWidth - 6.5;
+    final rAgua = rSlop - ringWidth - 6.5;
+
+    final bgTrackPaint = Paint()
+      ..color = isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEFF1)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = ringWidth
+      ..strokeCap = StrokeCap.round;
+
+    // Background full circular tracks
+    canvas.drawCircle(center, rComb, bgTrackPaint);
+    canvas.drawCircle(center, rSlop, bgTrackPaint);
+    canvas.drawCircle(center, rAgua, bgTrackPaint);
+
+    const start = math.pi; // 9 o'clock / 180 degrees like Intranet
+
+    void drawArcPct(double r, double pct, Color color) {
+      if (pct <= 0) return;
+      final sweep = (pct.clamp(0.0, 1.0)) * 2 * math.pi;
+      final arcPaint = Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = ringWidth
+        ..strokeCap = StrokeCap.round;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: r),
+        start,
+        sweep,
+        false,
+        arcPaint,
+      );
+    }
+
+    // Outer: Combustible (Yellow)
+    drawArcPct(rComb, fuelPct, const Color(0xFFF59E0B));
+    // Middle: Slop (Slate / Grey)
+    drawArcPct(rSlop, slopPct, const Color(0xFF64748B));
+    // Inner: Agua (Cyan)
+    drawArcPct(rAgua, waterPct, const Color(0xFF00BCD4));
+  }
+
+  @override
+  bool shouldRepaint(covariant _ConcentricTanksPainter oldDelegate) {
+    return oldDelegate.fuelPct != fuelPct ||
+        oldDelegate.waterPct != waterPct ||
+        oldDelegate.slopPct != slopPct ||
+        oldDelegate.isDark != isDark;
   }
 }

@@ -351,16 +351,7 @@ class _HomeViewState extends State<HomeView> {
                   else if (_activeTab == 0) ...[
                     // Novedades List
                     if (_posts.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.all(30.0),
-                        child: Center(
-                          child: Text(
-                            _errorMessage ?? "No hay comunicados ni novedades activas en este momento.",
-                            style: TextStyle(color: captionColor, fontSize: 14),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      )
+                      _buildWelcomeCard(context, isDark, textColor, captionColor)
                     else
                       ListView.builder(
                         shrinkWrap: true,
@@ -394,6 +385,146 @@ class _HomeViewState extends State<HomeView> {
                         },
                       ),
                   ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWelcomeCard(BuildContext context, bool isDark, Color textColor, Color captionColor) {
+    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final borderColor = isDark ? Colors.white12 : const Color(0xFFE2E8F0);
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8, bottom: 20),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0066FF).withValues(alpha: isDark ? 0.1 : 0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 100,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF0066FF).withValues(alpha: isDark ? 0.18 : 0.10),
+                      const Color(0xFF00E5FF).withValues(alpha: isDark ? 0.05 : 0.02),
+                      Colors.transparent,
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0066FF), Color(0xFF00B4D8)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0066FF).withValues(alpha: 0.35),
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.explore_rounded,
+                      color: Colors.white,
+                      size: 34,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    "Bienvenidos a la app de\nNaviera Cruz del Sur",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.3,
+                      color: textColor,
+                      height: 1.25,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(
+                      "Tu plataforma móvil integral para el monitoreo de flota, tripulaciones, programación mensual y asistencia operativa con Inteligencia Artificial.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: captionColor,
+                        height: 1.45,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF16A34A),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Sin novedades pendientes al momento",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white70 : const Color(0xFF334155),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),

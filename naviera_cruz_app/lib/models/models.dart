@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import '../app/config.dart';
 
 // User Model
@@ -43,7 +42,7 @@ class User {
     return User(
       id: (json['id'] ?? json['user_id'] ?? json['username'])?.toString() ?? '',
       name: fullName,
-      role: json['role']?.toString() ?? (rawUser.contains('lopresti') || rawName.contains('lopresti') || fullName == 'Alejandro Lo Presti' ? 'Gerencia General' : 'Personal Naviera'),
+      role: json['role']?.toString() ?? '',
       avatarURL: json['avatar_url']?.toString() ?? json['avatarURL']?.toString(),
       sector: json['sector']?.toString() ?? (fullName == 'Alejandro Lo Presti' ? 'Gerencia' : 'Operaciones'),
       birthDate: json['birth_date'] != null ? DateTime.parse(json['birth_date']) : null,
@@ -299,11 +298,13 @@ class Ship {
     final upper = shipName.toUpperCase();
     if (upper.contains('ALFA')) {
       return [
-        TargetShip(name: "KOCIEWIE", flag: "🇧🇸", cargoDetails: "Bahamas", client: "Raizen"),
-        TargetShip(name: "PCT ARTEMIS", flag: "🇰🇾", cargoDetails: "Islas Caimán", client: "Raizen"),
-        TargetShip(name: "DSM HARBOUR", flag: "🇧🇧", cargoDetails: "Barbados", client: "Raizen"),
-        TargetShip(name: "PAN CERES", flag: "🇸🇬", cargoDetails: "Singapur", client: "Raizen"),
-        TargetShip(name: "MERCOSUL ITAJAI", flag: "🇧🇷", cargoDetails: "Brasil", client: "Raizen"),
+        TargetShip(name: "MPR A DELFIN 4", flag: "🇲🇹", cargoDetails: "Malta", client: "Raizen"),
+        TargetShip(name: "STA RECOVERY", flag: "🇵🇦", cargoDetails: "Panamá", client: "Raizen"),
+        TargetShip(name: "OCEAN DELIGHT", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "Raizen"),
+        TargetShip(name: "M/V KEREM", flag: "🇵🇦", cargoDetails: "Panamá", client: "Raizen"),
+        TargetShip(name: "OCEAN 05", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "Raizen"),
+        TargetShip(name: "CORVINAS 01", flag: "🇦🇷", cargoDetails: "Argentina", client: "Raizen"),
+        TargetShip(name: "BAHIA AMBIENTE", flag: "🇦🇷", cargoDetails: "Argentina", client: "Raizen"),
       ];
     } else if (upper.contains('NANY')) {
       return [
@@ -322,7 +323,7 @@ class Ship {
       ];
     }
     return [
-      TargetShip(name: "KOCIEWIE", flag: "🇧🇸", cargoDetails: "Bahamas", client: "Raizen"),
+      TargetShip(name: "MPR A DELFIN 4", flag: "🇲🇹", cargoDetails: "Malta", client: "Raizen"),
     ];
   }
 
@@ -332,9 +333,20 @@ class Ship {
     if (camerasJson is List) {
       camerasList = camerasJson.map((e) => ShipCamera.fromJson(e)).toList();
     }
-    final carbonVal = (json['total_carbon'] as num?)?.toDouble() ?? (json['total_cargo'] as num?)?.toDouble() ?? 0.0;
-    final waterVal = (json['total_water'] as num?)?.toDouble() ?? 0.0;
-    final slopVal = (json['total_slop'] as num?)?.toDouble() ?? 0.0;
+    double parseNum(dynamic val) {
+      if (val == null) return 0.0;
+      if (val is num) return val.toDouble();
+      if (val is String) {
+        final normalized = val.trim().replaceAll(',', '.');
+        final cleaned = normalized.replaceAll(RegExp(r'[^0-9.]'), '');
+        return double.tryParse(cleaned) ?? 0.0;
+      }
+      return 0.0;
+    }
+
+    final carbonVal = parseNum(json['total_carbon'] ?? json['total_combustible'] ?? json['total_fuel'] ?? json['carbon'] ?? json['combustible'] ?? json['fuel'] ?? json['total_cargo']);
+    final waterVal = parseNum(json['total_water'] ?? json['total_agua'] ?? json['water'] ?? json['agua']);
+    final slopVal = parseNum(json['total_slop'] ?? json['slop'] ?? json['residuos']);
 
     final nameStr = (json['name'] ?? json['description'] ?? json['code'] ?? '').toString();
     String imo = json['imo']?.toString() ?? json['imo_number']?.toString() ?? '';

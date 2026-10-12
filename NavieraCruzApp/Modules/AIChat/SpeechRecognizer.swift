@@ -3,21 +3,25 @@ import Speech
 import AVFoundation
 import Combine
 
+@MainActor
 class SpeechRecognizerManager: NSObject, ObservableObject, SFSpeechRecognizerDelegate {
     @Published var isRecording = false
     @Published var transcript = ""
     @Published var isAuthorized = false
+    @Published var isPlayingAudio = false
     
     private var audioEngine = AVAudioEngine()
     private var speechRecognizer: SFSpeechRecognizer?
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
-    private var synthesizer = AVSpeechSynthesizer()
+    
+    private var player: AVPlayer?
+    private var playerItemObserver: AnyCancellable?
+    private var localSynthesizer = AVSpeechSynthesizer()
     
     override init() {
         super.init()
-        // Inicializar con español
-        self.speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "es-ES"))
+        self.speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "es-CL")) ?? SFSpeechRecognizer(locale: Locale(identifier: "es-ES"))
         self.speechRecognizer?.delegate = self
     }
     
@@ -28,13 +32,13 @@ class SpeechRecognizerManager: NSObject, ObservableObject, SFSpeechRecognizerDel
             }
         }
         
-        AVAudioSession.sharedInstance().requestRecordPermission { granted in
-            // Handle audio permission if needed
-        }
+        AVAudioSession.sharedInstance().requestRecordPermission { _ in }
     }
     
     func startRecording() throws {
-        // Cancel previous task if running
+        // Stop any ongoing audio playback
+        stopAudioPlayback()
+        
         recognitionTask?.cancel()
         self.recognitionTask = nil
         
@@ -44,11 +48,12 @@ class SpeechRecognizerManager: NSObject, ObservableObject, SFSpeechRecognizerDel
         
         let inputNode = audioEngine.inputNode
         request = SFSpeechAudioBufferRecognitionRequest()
-        guard let request = request else { fatalError("No se pudo crear SFSpeechAudioBufferRecognitionRequest") }
+        guard let request = request else { return }
         
         request.shouldReportPartialResults = true
         
-        recognitionTask = speechRecognizer?.recognitionTask(with: request) { result, error in
+        recognitionTask = speechRecognizer?.recognitionTask(with: request) { [weak self] result, error in
+            guard let self = self else { return }
             var isFinal = false
             
             if let result = result {
@@ -77,10 +82,8 @@ class SpeechRecognizerManager: NSObject, ObservableObject, SFSpeechRecognizerDel
         audioEngine.prepare()
         try audioEngine.start()
         
-        DispatchQueue.main.async {
-            self.transcript = ""
-            self.isRecording = true
-        }
+        self.transcript = ""
+        self.isRecording = true
     }
     
     func stopRecording() {
@@ -89,23 +92,69 @@ class SpeechRecognizerManager: NSObject, ObservableObject, SFSpeechRecognizerDel
         isRecording = false
     }
     
-    // Función para que la IA responda por voz
-    func speak(text: String) {
-        // Detener si hay un audio en curso
-        if synthesizer.isSpeaking {
-            synthesizer.stopSpeaking(at: .immediate)
+    // MARK: - Audio TTS Streaming & Playback
+    
+    /// Stream TTS audio from endpoint or fallback to local synthesis
+    func playTTS(text: String, audioURL: URL? = nil) {
+        stopAudioPlayback()
+        
+        guard let url = audioURL ?? NCSChatService.shared.getTTSAudioURL(for: text) else {
+            speakFallback(text: text)
+            return
         }
         
-        // Ajustar sesión a reproducción
-        let audioSession = AVAudioSession.sharedInstance()
-        try? audioSession.setCategory(.playback, mode: .spokenAudio)
-        try? audioSession.setActive(true)
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+            try audioSession.setActive(true)
+        } catch {
+            print("Audio session error: \(error)")
+        }
         
-        let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = AVSpeechSynthesisVoice(language: "es-ES")
-        utterance.rate = 0.5 // Velocidad normal a placentera
-        utterance.pitchMultiplier = 1.0
+        let playerItem = AVPlayerItem(url: url)
+        player = AVPlayer(playerItem: playerItem)
         
-        synthesizer.speak(utterance)
+        isPlayingAudio = true
+        
+        // Listen for playback completion
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(playerItemDidReachEnd),
+            name: .AVPlayerItemDidPlayToEndTime,
+            object: playerItem
+        )
+        
+        player?.play()
+    }
+    
+    @objc private func playerItemDidReachEnd(notification: Notification) {
+        DispatchQueue.main.async {
+            self.isPlayingAudio = false
+        }
+    }
+    
+    func stopAudioPlayback() {
+        if player != nil {
+            player?.pause()
+            player = nil
+        }
+        if localSynthesizer.isSpeaking {
+            localSynthesizer.stopSpeaking(at: .immediate)
+        }
+        isPlayingAudio = false
+    }
+    
+    private func speakFallback(text: String) {
+        let cleanText = text
+            .replacingOccurrences(of: "#", with: "")
+            .replacingOccurrences(of: "*", with: "")
+            .replacingOccurrences(of: "`", with: "")
+        
+        let utterance = AVSpeechUtterance(string: cleanText)
+        utterance.voice = AVSpeechSynthesisVoice(language: "es-CL") ?? AVSpeechSynthesisVoice(language: "es-ES")
+        utterance.rate = 0.5
+        
+        isPlayingAudio = true
+        localSynthesizer.speak(utterance)
     }
 }

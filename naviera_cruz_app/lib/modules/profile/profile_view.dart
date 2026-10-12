@@ -168,12 +168,7 @@ class _ProfileViewState extends State<ProfileView> {
                           user.name,
                           style: TypographyTheme.title2(context),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          user.role,
-                          style: TypographyTheme.body(context),
-                        ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         Text(
                           "Sector: ${user.sector}",
                           style: const TextStyle(

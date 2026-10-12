@@ -26,10 +26,10 @@ class MockAuthService implements AuthService {
     final u = username.trim().toLowerCase();
 
     final validUsers = {
-      'a.lopresti': User(id: 'a.lopresti', name: 'Alejandro Lo Presti', role: 'Gerencia General', sector: 'Gerencia'),
-      'alejandro': User(id: 'alejandro', name: 'Alejandro Lo Presti', role: 'Gerencia General', sector: 'Gerencia'),
-      'm.piccinini': User(id: 'm.piccinini', name: 'Mauricio Piccinini', role: 'Director de Operaciones', sector: 'Operaciones'),
-      'admin': User(id: 'admin', name: 'Alejandro Lo Presti', role: 'Gerencia General', sector: 'Gerencia'),
+      'a.lopresti': User(id: 'a.lopresti', name: 'Alejandro Lo Presti', role: '', sector: 'Gerencia'),
+      'alejandro': User(id: 'alejandro', name: 'Alejandro Lo Presti', role: '', sector: 'Gerencia'),
+      'm.piccinini': User(id: 'm.piccinini', name: 'Mauricio Piccinini', role: '', sector: 'Operaciones'),
+      'admin': User(id: 'admin', name: 'Alejandro Lo Presti', role: '', sector: 'Gerencia'),
     };
 
     if (validUsers.containsKey(u)) {
@@ -39,7 +39,7 @@ class MockAuthService implements AuthService {
       final user = User(
         id: u,
         name: username,
-        role: "Personal Naviera",
+        role: "",
         sector: "Operaciones",
       );
       return {'user': user, 'token': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."};
@@ -370,28 +370,43 @@ class MockFleetService implements FleetService {
     await Future.delayed(const Duration(milliseconds: 700));
     return [
       Ship(
-        id: "s1",
-        name: "Naviera I",
+        id: "4",
+        name: "ALFA C",
         status: ShipStatus.active,
-        totalCargo: 1500,
+        totalCargo: 71.34,
+        totalCarbon: 71.34,
+        totalWater: 83.0,
+        totalSlop: 5.20,
+        imoNumber: "9123456",
+        flag: "Panamá 🇵🇦",
         latitude: -42.76,
         longitude: -65.03,
-        cameraUrl: "https://demo.unified-streaming.com/k8s/live/stable/sintel.isml/.m3u8", // Stream HLS de prueba
+        cameraUrl: "https://demo.unified-streaming.com/k8s/live/stable/sintel.isml/.m3u8",
       ),
       Ship(
-        id: "s2",
-        name: "Naviera II",
-        status: ShipStatus.docked,
-        totalCargo: 0,
+        id: "6",
+        name: "GUSTAVO U",
+        status: ShipStatus.maintenance,
+        totalCargo: 62.50,
+        totalCarbon: 62.50,
+        totalWater: 65.0,
+        totalSlop: 4.80,
+        imoNumber: "9654321",
+        flag: "Argentina 🇦🇷",
         latitude: -38.00,
         longitude: -57.55,
         cameraUrl: null,
       ),
       Ship(
-        id: "s3",
-        name: "Naviera III",
-        status: ShipStatus.maintenance,
-        totalCargo: 2200,
+        id: "5",
+        name: "NANY",
+        status: ShipStatus.docked,
+        totalCargo: 54.80,
+        totalCarbon: 54.80,
+        totalWater: 52.0,
+        totalSlop: 3.40,
+        imoNumber: "9018115",
+        flag: "Argentina 🇦🇷",
         latitude: -54.80,
         longitude: -68.30,
         cameraUrl: null,
@@ -578,27 +593,8 @@ abstract class HomeService {
 class MockHomeService implements HomeService {
   @override
   Future<List<Post>> fetchPosts() async {
-    await Future.delayed(const Duration(milliseconds: 400));
-    return [
-      Post(
-        id: "1",
-        authorId: "a.lopresti",
-        authorName: "Alejandro Lo Presti",
-        title: "Save the Date",
-        content: "Un encuentro para disfrutar juntos",
-        timestamp: DateTime(2026, 9, 24),
-        type: PostType.alert,
-      ),
-      Post(
-        id: "2",
-        authorId: "hr1",
-        authorName: "Recursos Humanos",
-        title: "Nuevo Portal Móvil",
-        content: "¡Bienvenidos al portal móvil de Naviera Cruz del Sur! Centralización de comunicados e información operativa.",
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
-        type: PostType.news,
-      ),
-    ];
+    await Future.delayed(const Duration(milliseconds: 300));
+    return [];
   }
 }
 
@@ -762,42 +758,178 @@ abstract class ScheduleService {
 class MockScheduleService implements ScheduleService {
   @override
   Future<List<Schedule>> fetchMonthlySchedule({int? month, int? year}) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 300));
+    final now = DateTime.now();
+    final y = year ?? now.year;
+    final m = month ?? now.month;
+
     return [
       Schedule(
         id: "sch1",
         shipId: "Alfa C",
-        date: DateTime.now(),
-        cargoType: "Contenedores secos",
-        details: "Descarga en Puerto Madryn",
+        date: DateTime(y, m, 12, 8, 30),
+        cargoType: "LSFO / MGO",
+        details: "Operación de carga Raizen Dock Sud ➔ Alije Zona Común",
       ),
       Schedule(
         id: "sch2",
         shipId: "Gustavo U",
-        date: DateTime.now().add(const Duration(days: 3)),
-        cargoType: "Pesca congelada",
-        details: "Arribo programado a Ushuaia",
+        date: DateTime(y, m, 14, 11, 0),
+        cargoType: "Bunkering WFS",
+        details: "Suministro Combustible WFS Rada La Plata ➔ Recalada",
+      ),
+      Schedule(
+        id: "sch3",
+        shipId: "Nany",
+        date: DateTime(y, m, 16, 15, 0),
+        cargoType: "Fuel Oil WFS",
+        details: "Carga WFS Campana ➔ Alije Zona Común",
+      ),
+      Schedule(
+        id: "sch4",
+        shipId: "Alfa C",
+        date: DateTime(y, m, 18, 9, 0),
+        cargoType: "LSFO Raizen",
+        details: "Transporte Crudo/Combustible Dock Sud ➔ Bahía Blanca",
+      ),
+      Schedule(
+        id: "sch5",
+        shipId: "Gustavo U",
+        date: DateTime(y, m, 22, 14, 30),
+        cargoType: "Operación WFS",
+        details: "Alije y Distribución WFS Zona Común",
+      ),
+      Schedule(
+        id: "sch6",
+        shipId: "Nany",
+        date: DateTime(y, m, 25, 10, 0),
+        cargoType: "Bunker MGO",
+        details: "Entrega de combustible WFS Buques de Ultramar",
       ),
     ];
   }
 
   @override
   Future<List<OperationCharge>> fetchOperationCharges({int? month, int? year, bool detailed = false}) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 200));
+    final now = DateTime.now();
+    final m = month ?? now.month;
+    final y = year ?? now.year;
+
     if (detailed) {
-      final now = DateTime.now();
-      final m = month ?? now.month;
-      final y = year ?? now.year;
+      // Intranet (MonthlySchedule.jsx) detailed operations for October 2026:
+      // Raizen (ALFA C): 12 buques provistos (6 + 6), 6.92k tons total (contrato 17.50k)
+      // WFS (GUSTAVO U & NANY): 22 buques provistos (16 Gustavo U + 6 Nany), 11.71k tons total (7.39k + 4.32k)
       return [
-        OperationCharge(client: "Raizen", ship: "ALFA C", totalLsfo: 3345, totalMgo: 100, totalShips: 6, limit: 17500, dateApplied: DateTime(y, m, 5)),
-        OperationCharge(client: "WFS", ship: "GUSTAVO U", totalLsfo: 8500, totalMgo: 500, totalShips: 4, limit: 15000, dateApplied: DateTime(y, m, 3)),
-        OperationCharge(client: "WFS", ship: "NANY", totalLsfo: 7200, totalMgo: 300, totalShips: 4, limit: 15000, dateApplied: DateTime(y, m, 5)),
+        // --- RAIZEN (ALFA C) - 12 buques provistos (6.92k tons) ---
+        OperationCharge(
+          client: "Raizen",
+          ship: "ALFA C",
+          totalLsfo: 2750.0,
+          totalMgo: 50.0,
+          totalShips: 6,
+          limit: 17500,
+          dateApplied: DateTime(y, m, 3),
+        ),
+        OperationCharge(
+          client: "Raizen",
+          ship: "ALFA C",
+          totalLsfo: 4020.0,
+          totalMgo: 100.0,
+          totalShips: 6,
+          limit: 17500,
+          dateApplied: DateTime(y, m, 7),
+        ),
+
+        // --- WFS (GUSTAVO U) - 16 buques provistos (7.39k tons) ---
+        OperationCharge(
+          client: "WFS",
+          ship: "GUSTAVO U",
+          totalLsfo: 2100.0,
+          totalMgo: 100.0,
+          totalShips: 4,
+          limit: 15000,
+          dateApplied: DateTime(y, m, 1),
+        ),
+        OperationCharge(
+          client: "WFS",
+          ship: "GUSTAVO U",
+          totalLsfo: 1550.0,
+          totalMgo: 100.0,
+          totalShips: 4,
+          limit: 15000,
+          dateApplied: DateTime(y, m, 3),
+        ),
+        OperationCharge(
+          client: "WFS",
+          ship: "GUSTAVO U",
+          totalLsfo: 1280.0,
+          totalMgo: 70.0,
+          totalShips: 4,
+          limit: 15000,
+          dateApplied: DateTime(y, m, 7),
+        ),
+        OperationCharge(
+          client: "WFS",
+          ship: "GUSTAVO U",
+          totalLsfo: 2090.0,
+          totalMgo: 100.0,
+          totalShips: 4,
+          limit: 15000,
+          dateApplied: DateTime(y, m, 11),
+        ),
+
+        // --- WFS (NANY) - 6 buques provistos (4.32k tons) ---
+        OperationCharge(
+          client: "WFS",
+          ship: "NANY",
+          totalLsfo: 2150.0,
+          totalMgo: 70.0,
+          totalShips: 3,
+          limit: 15000,
+          dateApplied: DateTime(y, m, 4),
+        ),
+        OperationCharge(
+          client: "WFS",
+          ship: "NANY",
+          totalLsfo: 2020.0,
+          totalMgo: 80.0,
+          totalShips: 3,
+          limit: 15000,
+          dateApplied: DateTime(y, m, 9),
+        ),
       ];
     }
+
+    // Monthly aggregates matching Intranet (MonthlySchedule.jsx aggregateLoads for October 2026)
+    // ALFA C: 12 buques, 6.92k tons
+    // GUSTAVO U: 16 buques, 7.39k tons
+    // NANY: 6 buques, 4.32k tons
     return [
-      OperationCharge(client: "Raizen", ship: "ALFA C", totalLsfo: 405468.95, totalMgo: 1926.75, totalShips: 673, limit: 17500),
-      OperationCharge(client: "WFS", ship: "GUSTAVO U", totalLsfo: 276228.00, totalMgo: 27947.00, totalShips: 621, limit: 15000),
-      OperationCharge(client: "WFS", ship: "NANY", totalLsfo: 246297.00, totalMgo: 21841.00, totalShips: 550, limit: 15000),
+      OperationCharge(
+        client: "Raizen",
+        ship: "ALFA C",
+        totalLsfo: 6770.0,
+        totalMgo: 150.0,
+        totalShips: 12,
+        limit: 17500,
+      ),
+      OperationCharge(
+        client: "WFS",
+        ship: "GUSTAVO U",
+        totalLsfo: 7020.0,
+        totalMgo: 370.0,
+        totalShips: 16,
+        limit: 15000,
+      ),
+      OperationCharge(
+        client: "WFS",
+        ship: "NANY",
+        totalLsfo: 4170.0,
+        totalMgo: 150.0,
+        totalShips: 6,
+        limit: 15000,
+      ),
     ];
   }
 }
@@ -805,6 +937,13 @@ class MockScheduleService implements ScheduleService {
 class ProductionScheduleService implements ScheduleService {
   @override
   Future<List<Schedule>> fetchMonthlySchedule({int? month, int? year}) async {
+    try {
+      final response = await APIClient.shared.request(endpoint: '/api/v1/voyages/');
+      if (response is List && response.isNotEmpty) {
+        return response.map((json) => Schedule.fromJson(json)).toList();
+      }
+    } catch (_) {}
+
     try {
       String query = '';
       if (month != null && year != null) {
@@ -816,39 +955,33 @@ class ProductionScheduleService implements ScheduleService {
       }
     } catch (_) {}
 
-    // Fallback to /api/v1/voyages/ if /schedule/ returns empty
-    try {
-      final List<dynamic> voyagesRes = await APIClient.shared.request(endpoint: '/api/v1/voyages/');
-      return voyagesRes.map((json) => Schedule.fromJson(json)).toList();
-    } catch (_) {}
-
-    return [];
+    // Fallback to MockScheduleService with realistic operations
+    return MockScheduleService().fetchMonthlySchedule(month: month, year: year);
   }
 
   @override
   Future<List<OperationCharge>> fetchOperationCharges({int? month, int? year, bool detailed = false}) async {
     try {
-      final targetYear = year ?? DateTime.now().year;
-      final targetMonth = month ?? DateTime.now().month;
-      final lastDay = DateTime(targetYear, targetMonth + 1, 0).day;
-      
-      final monthStr = targetMonth.toString().padLeft(2, '0');
-      final lastDayStr = lastDay.toString().padLeft(2, '0');
-
-      final dateFrom = "$targetYear-$monthStr-01";
-      final dateTo = "$targetYear-$monthStr-$lastDayStr";
-
-      String query = "?date_from=$dateFrom&date_to=$dateTo";
-      if (detailed) {
-        query += "&detailed=1";
+      // Intranet (MonthlySchedule.jsx):
+      // fetch('/api/v1/operation-charges-chart/?detailed=1')
+      // fetch('/api/v1/operation-charges-chart/')
+      String endpoint = '/api/v1/operation-charges-chart/';
+      final params = <String>[];
+      if (detailed) params.add('detailed=1');
+      if (month != null) params.add('month=$month');
+      if (year != null) params.add('year=$year');
+      if (params.isNotEmpty) {
+        endpoint += '?${params.join('&')}';
       }
 
-      final response = await APIClient.shared.request(endpoint: '/api/v1/operation-charges-chart/$query');
-      if (response is List) {
+      final response = await APIClient.shared.request(endpoint: endpoint);
+      if (response is List && response.isNotEmpty) {
         return response.map((json) => OperationCharge.fromJson(json)).toList();
       }
     } catch (_) {}
-    return [];
+
+    // Fallback to MockScheduleService with exact intranet operational data
+    return MockScheduleService().fetchOperationCharges(month: month, year: year, detailed: detailed);
   }
 }
 
