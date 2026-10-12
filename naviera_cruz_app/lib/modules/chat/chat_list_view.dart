@@ -92,14 +92,14 @@ class _ChatListViewState extends State<ChatListView> {
     setState(() {
       _channels.clear();
       _channels.addAll([
-        ChatChannel(id: "c1", name: "Carrá Leonel", isGroup: false, type: "direct", lastMessage: "Capitán - ALFA C"),
-        ChatChannel(id: "c2", name: "Caballero Diego", isGroup: false, type: "direct", lastMessage: "1er Oficial Cubierta"),
-        ChatChannel(id: "c3", name: "Caratolli Pablo", isGroup: false, type: "direct", lastMessage: "2do Oficial Cubierta"),
-        ChatChannel(id: "c4", name: "Escalante Jorge", isGroup: false, type: "direct", lastMessage: "3er Oficial Cubierta"),
-        ChatChannel(id: "c5", name: "Sosa Armando", isGroup: false, type: "direct", lastMessage: "Jefe de Máquinas"),
-        ChatChannel(id: "c6", name: "Medina Cesar", isGroup: false, type: "direct", lastMessage: "1er Conductor"),
-        ChatChannel(id: "c7", name: "Ledesma Gabriel", isGroup: false, type: "direct", lastMessage: "2do Oficial Máquinas"),
-        ChatChannel(id: "c8", name: "Pereyra Matías", isGroup: false, type: "direct", lastMessage: "3er Oficial Máquinas"),
+        ChatChannel(id: "c1", name: "Marenco Rubén Darío", isGroup: false, type: "direct", lastMessage: "Capitán - ALFA C"),
+        ChatChannel(id: "c2", name: "Ramirez Pedro", isGroup: false, type: "direct", lastMessage: "Capitán - GUSTAVO U"),
+        ChatChannel(id: "c3", name: "Maciel Jonathan", isGroup: false, type: "direct", lastMessage: "Capitán - NANY"),
+        ChatChannel(id: "c4", name: "Sosa Armando", isGroup: false, type: "direct", lastMessage: "Jefe de Máquinas - ALFA C"),
+        ChatChannel(id: "c5", name: "Agüero Leandro", isGroup: false, type: "direct", lastMessage: "Jefe de Máquinas - GUSTAVO U"),
+        ChatChannel(id: "c6", name: "Porto Guillermo", isGroup: false, type: "direct", lastMessage: "Jefe de Máquinas - NANY"),
+        ChatChannel(id: "c7", name: "Maldonado Juan", isGroup: false, type: "direct", lastMessage: "1er Oficial Cubierta - ALFA C"),
+        ChatChannel(id: "c8", name: "Carattoli Pablo", isGroup: false, type: "direct", lastMessage: "2do Oficial Cubierta - ALFA C"),
       ]);
       _filteredChannels = List.from(_channels);
     });
@@ -120,14 +120,14 @@ class _ChatListViewState extends State<ChatListView> {
 
     if (contacts.isEmpty) {
       contacts = [
-        ChatChannel(id: "c1", name: "Carrá Leonel", isGroup: false, type: "direct", lastMessage: "Capitán - ALFA C"),
-        ChatChannel(id: "c2", name: "Caballero Diego", isGroup: false, type: "direct", lastMessage: "1er Oficial Cubierta"),
-        ChatChannel(id: "c3", name: "Caratolli Pablo", isGroup: false, type: "direct", lastMessage: "2do Oficial Cubierta"),
-        ChatChannel(id: "c4", name: "Escalante Jorge", isGroup: false, type: "direct", lastMessage: "3er Oficial Cubierta"),
-        ChatChannel(id: "c5", name: "Sosa Armando", isGroup: false, type: "direct", lastMessage: "Jefe de Máquinas"),
-        ChatChannel(id: "c6", name: "Medina Cesar", isGroup: false, type: "direct", lastMessage: "1er Conductor"),
-        ChatChannel(id: "c7", name: "Ledesma Gabriel", isGroup: false, type: "direct", lastMessage: "2do Oficial Máquinas"),
-        ChatChannel(id: "c8", name: "Pereyra Matías", isGroup: false, type: "direct", lastMessage: "3er Oficial Máquinas"),
+        ChatChannel(id: "c1", name: "Marenco Rubén Darío", isGroup: false, type: "direct", lastMessage: "Capitán - ALFA C"),
+        ChatChannel(id: "c2", name: "Ramirez Pedro", isGroup: false, type: "direct", lastMessage: "Capitán - GUSTAVO U"),
+        ChatChannel(id: "c3", name: "Maciel Jonathan", isGroup: false, type: "direct", lastMessage: "Capitán - NANY"),
+        ChatChannel(id: "c4", name: "Sosa Armando", isGroup: false, type: "direct", lastMessage: "Jefe de Máquinas - ALFA C"),
+        ChatChannel(id: "c5", name: "Agüero Leandro", isGroup: false, type: "direct", lastMessage: "Jefe de Máquinas - GUSTAVO U"),
+        ChatChannel(id: "c6", name: "Porto Guillermo", isGroup: false, type: "direct", lastMessage: "Jefe de Máquinas - NANY"),
+        ChatChannel(id: "c7", name: "Maldonado Juan", isGroup: false, type: "direct", lastMessage: "1er Oficial Cubierta - ALFA C"),
+        ChatChannel(id: "c8", name: "Carattoli Pablo", isGroup: false, type: "direct", lastMessage: "2do Oficial Cubierta - ALFA C"),
       ];
     }
 

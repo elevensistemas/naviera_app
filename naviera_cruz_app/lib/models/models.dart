@@ -278,18 +278,18 @@ class Ship {
   String get resolvedCaptain {
     if (captainName.isNotEmpty) return captainName;
     final u = name.toUpperCase();
-    if (u.contains('ALFA')) return 'Marecos Rubén Darío';
-    if (u.contains('GUSTAVO')) return 'Carrá Leonel';
-    if (u.contains('NANY')) return 'Fernández Hugo';
-    return 'Marecos Rubén Darío';
+    if (u.contains('ALFA')) return 'Marenco Rubén Darío';
+    if (u.contains('GUSTAVO')) return 'Ramirez Pedro';
+    if (u.contains('NANY')) return 'Maciel Jonathan';
+    return 'Marenco Rubén Darío';
   }
 
   String get resolvedChiefEngineer {
     if (chiefEngineerName.isNotEmpty) return chiefEngineerName;
     final u = name.toUpperCase();
     if (u.contains('ALFA')) return 'Sosa Armando';
-    if (u.contains('GUSTAVO')) return 'Gómez Roberto';
-    if (u.contains('NANY')) return 'Álvarez Ricardo';
+    if (u.contains('GUSTAVO')) return 'Agüero Leandro';
+    if (u.contains('NANY')) return 'Porto Guillermo';
     return 'Sosa Armando';
   }
 

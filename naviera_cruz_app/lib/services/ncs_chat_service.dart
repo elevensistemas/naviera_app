@@ -150,61 +150,78 @@ class NCSChatService {
         responseText = """
 ### 👨‍✈️ Dotación y Tripulación - BT ALFA C
 
-Tripulación embarcada activa en regla STCW:
+Tripulación embarcada activa en regla STCW (15 tripulantes):
 
-- **Capitán:** Marecos Rubén Darío ➔ 🟢 22 días embarcado
-- **Jefe de Máquinas:** Sosa Armando ➔ 🟢 2 días embarcado
-- **1er Oficial Cubierta:** Caballero Diego ➔ 🟢 20 días embarcado
-- **2do Oficial Cubierta:** Caratolli Pablo ➔ 🟢 19 días embarcado
-- **3er Oficial Cubierta:** Escalante Jorge ➔ 🟢 20 días embarcado
-- **1er Conductor:** Medina Cesar ➔ 🟢 20 días embarcado
-- **2do Oficial Máquinas:** Ledesma Gabriel ➔ 🟢 20 días embarcado
-- **3er Oficial Máquinas:** Pereyra Matías ➔ 🟢 18 días embarcado
+- **Capitán:** Marenco Rubén Darío ➔ 🟢 10 días embarcado
+- **1er Oficial Cubierta:** Maldonado Juan ➔ 🟢 10 días embarcado
+- **2do Oficial Cubierta:** Carattoli Pablo ➔ 🟢 35 días embarcado
+- **3er Oficial Cubierta:** Lambertuchi Pablo ➔ 🟢 10 días embarcado
+- **Jefe de Máquinas:** Sosa Armando ➔ 🟢 18 días embarcado
+- **1er Oficial Máquinas:** Molero Jorge ➔ 🟢 6 días embarcado
+- **2do Oficial Máquinas:** Ledesma Gabriel ➔ 🟢 36 días embarcado
+- **Contramaestre:** Sosa Marcelo ➔ 🟢 23 días embarcado
+- **Marineros I:** Marquez Ruben (36d), Romero José (10d), Miguel Angel Ramirez (23d)
+- **1er Cabo:** Zacarias Walter ➔ 🟢 49 días embarcado
+- **Cocinero:** Kretschel Claudio ➔ 🟢 17 días embarcado
+- **Bomberos:** Aquino Marcos (26d), Mineo Julio (10d)
 
-> **Semáforo de Relevos:** 🟢 8 OK (<60d) | 🟡 0 Próx. Relevo (60-89d) | 🔴 0 Excedidos (>=90d)
-> **Status HSE:** 3 incidentes registrados (MG-21 en proceso) | Dotación mínima completa.
+> **Semáforo de Relevos:** 🟢 15 OK (<60d) | 🟡 0 Próx. Relevo | 🔴 0 Excedidos
+> **Status Dotación:** Dotación mínima completa (15/15).
 """;
       } else if (lower.contains("gustavo")) {
         responseText = """
 ### 👨‍✈️ Dotación y Tripulación - BT GUSTAVO U
 
-Tripulación embarcada activa:
+Tripulación embarcada activa (15 tripulantes):
 
-- **Capitán:** Carrá Leonel ➔ 🟢 15 días embarcado
-- **Jefe de Máquinas:** Gómez Roberto ➔ 🟢 12 días embarcado
-- **1er Oficial Cubierta:** Benítez Carlos ➔ 🟢 15 días embarcado
-- **2do Oficial Cubierta:** Díaz Martín ➔ 🟢 14 días embarcado
-- **1er Conductor:** Vega Luis ➔ 🟢 15 días embarcado
-- **2do Oficial Máquinas:** Rossi Hernán ➔ 🟢 10 días embarcado
+- **Capitán:** Ramirez Pedro ➔ 🟢 20 días embarcado
+- **1er Oficial Cubierta:** Percara Marco ➔ 🟢 9 días embarcado
+- **2do Oficial Cubierta:** Perez Douglas ➔ 🟢 20 días embarcado
+- **Piloto (PLT):** Tobias Joaquin ➔ 🔴 108 días embarcado (Alerta Relevo)
+- **Jefe de Máquinas:** Agüero Leandro ➔ 🟢 14 días embarcado
+- **1er Oficial Máquinas:** Aguirrezarobe Alexis ➔ 🟢 9 días embarcado
+- **2do Oficial Máquinas:** Tomas Ribas Pintos ➔ 🟢 9 días embarcado
+- **Contramaestre:** Cucurulo Gustavo ➔ 🟢 24 días embarcado
+- **Marineros I:** Molina Geronimo (40d), Camacho Pablo Ezequias (29d), Rene Ruben Aceval (12d)
+- **Bomberos:** Jacquet Jorge (20d), Escalante Eduardo (9d)
+- **Engrasador:** Caprioglio Fernando ➔ 🟢 32 días embarcado
+- **Cocinero:** Rodriguez Lucas ➔ 🟢 17 días embarcado
 
-> **Semáforo de Relevos:** 🟢 6 OK (<60d) | 🟡 0 Próx. Relevo | 🔴 0 Excedidos
-> **Status HSE:** 2 incidentes registrados | Dotación mínima completa.
+> **Semáforo de Relevos:** 🟢 14 OK (<60d) | 🔴 1 Excedido STCW (Tobias Joaquin: 108d)
+> **Status Dotación:** Dotación mínima completa (15/15).
 """;
       } else if (lower.contains("nany")) {
         responseText = """
 ### 👨‍✈️ Dotación y Tripulación - BT NANY
 
-Tripulación embarcada activa:
+Tripulación embarcada activa (15 tripulantes):
 
-- **Capitán:** Fernández Hugo ➔ 🟢 18 días embarcado
-- **Jefe de Máquinas:** Álvarez Ricardo ➔ 🟢 16 días embarcado
-- **1er Oficial Cubierta:** Morales Esteban ➔ 🟢 18 días embarcado
-- **2do Oficial Cubierta:** Romero Facundo ➔ 🟢 17 días embarcado
-- **1er Conductor:** Silva Gustavo ➔ 🟢 18 días embarcado
-- **2do Oficial Máquinas:** Navarro Lucas ➔ 🟢 12 días embarcado
+- **Capitán:** Maciel Jonathan ➔ 🟢 14 días embarcado
+- **1er Oficial Cubierta:** Maidana Francisco ➔ 🟢 18 días embarcado
+- **2do Oficial Cubierta:** Saucedo Nicolás ➔ 🟢 14 días embarcado
+- **3er Oficial Cubierta:** Alan Leguiza ➔ 🟢 14 días embarcado
+- **Jefe de Máquinas:** Porto Guillermo ➔ 🟢 23 días embarcado
+- **1er Oficial Máquinas:** Bequir Ramiro ➔ 🟢 4 días embarcado
+- **2do Conductor:** Rosales Carlos ➔ 🟢 18 días embarcado
+- **Contramaestre:** Torres Ulises ➔ 🟢 9 días embarcado
+- **Marineros I:** Andrada Emiliano (23d), Mora Alejandro (18d), Ganduglia Sergio (14d)
+- **Auxiliar Máquinas:** Correa Motta Nicolas ➔ 🟢 9 días embarcado
+- **Engrasador:** Martin Tarroza ➔ 🟢 50 días embarcado
+- **Cocinero:** Cantore Alejandro ➔ 🟢 4 días embarcado
+- **Bombero:** Medina Felix ➔ 🟢 23 días embarcado
 
-> **Semáforo de Relevos:** 🟢 6 OK (<60d) | 🟡 0 Próx. Relevo | 🔴 0 Excedidos
-> **Status HSE:** 2 incidentes registrados | Dotación mínima completa.
+> **Semáforo de Relevos:** 🟢 15 OK (<60d) | 🟡 0 Próx. Relevo | 🔴 0 Excedidos
+> **Status Dotación:** Dotación mínima completa (15/15).
 """;
       } else {
         responseText = """
 ### 👨‍✈️ Resumen de Tripulación y Semáforo de Relevos - NCS Control Center
 
-- 🚢 **BT ALFA C:** 8 tripulantes embarcados ➔ 🟢 8 OK (<60d) | Capitán Marecos Rubén Darío
-- 🚢 **BT GUSTAVO U:** 6 tripulantes embarcados ➔ 🟢 6 OK (<60d) | Capitán Carrá Leonel
-- 🚢 **BT NANY:** 6 tripulantes embarcados ➔ 🟢 6 OK (<60d) | Capitán Fernández Hugo
+- 🚢 **BT ALFA C:** 15 tripulantes ➔ Capitán Marenco Rubén Darío | Jefe Máq. Sosa Armando (🟢 15 OK)
+- 🚢 **BT GUSTAVO U:** 15 tripulantes ➔ Capitán Ramirez Pedro | Jefe Máq. Agüero Leandro (🔴 1 Excedido: Tobias J. 108d)
+- 🚢 **BT NANY:** 15 tripulantes ➔ Capitán Maciel Jonathan | Jefe Máq. Porto Guillermo (🟢 15 OK)
 
-> **Semáforo Total Flota:** 🟢 20 en norma (<60d) | 🟡 0 en alerta relevo (60-89d) | 🔴 0 vencidos STCW (>=90d)
+> **Semáforo Total Flota:** 🟢 44 en norma (<60d) | 🔴 1 vencido STCW (>=90d) | Dotación mínima completa en los 3 buques (45 tripulantes a bordo).
 """;
       }
     }
