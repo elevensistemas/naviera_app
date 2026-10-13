@@ -644,6 +644,9 @@ class ProductionFleetService implements FleetService {
         final upperShip = shipId.trim().toUpperCase();
         
         final filtered = allCrew.where((m) {
+          // SOLO TRIPULANTES EMBARCADOS (A BORDO)
+          if (!m.isOnBoard) return false;
+
           final mShipId = m.shipId.trim().toUpperCase();
           final mShipName = (m.shipName ?? '').trim().toUpperCase();
           if (mShipId == upperShip || (mShipName.isNotEmpty && mShipName == upperShip)) return true;
@@ -685,9 +688,15 @@ class ProductionFleetService implements FleetService {
         }
 
         if (rawList.isNotEmpty) {
-          final crewList = rawList.map((json) => CrewMember.fromJson(json)).toList();
-          crewList.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-          return crewList;
+          // SOLO TRIPULANTES EMBARCADOS (A BORDO)
+          final crewList = rawList
+              .map((json) => CrewMember.fromJson(json))
+              .where((m) => m.isOnBoard)
+              .toList();
+          if (crewList.isNotEmpty) {
+            crewList.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+            return crewList;
+          }
         }
       } catch (_) {}
     }

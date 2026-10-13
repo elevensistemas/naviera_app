@@ -738,10 +738,18 @@ class CrewMember {
       isOnBoardFinal = isOnBoardExplicit;
     } else {
       final sitLower = situationName.toLowerCase();
-      if (sitLower.contains('franco') || sitLower.contains('licenc') || sitLower.contains('baja') || sitLower.contains('tierra') || sitLower.contains('desembarc')) {
+      if (sitLower.contains('franco') ||
+          sitLower.contains('licenc') ||
+          sitLower.contains('baja') ||
+          sitLower.contains('tierra') ||
+          sitLower.contains('desembarc') ||
+          sitLower.contains('vacacion') ||
+          sitLower.contains('sin embarcar')) {
         isOnBoardFinal = false;
-      } else {
+      } else if (sitLower.contains('embarc') || sitLower.contains('a bordo') || sitLower == 'emb') {
         isOnBoardFinal = true;
+      } else {
+        isOnBoardFinal = false;
       }
     }
 

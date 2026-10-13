@@ -858,31 +858,46 @@ class _FleetViewState extends State<FleetView> {
                     // Intranet Cargo Progress Bar
                     const SizedBox(height: 12),
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Text(
-                                "VLSFO: ${ship.resolvedProvistosTotal.toStringAsFixed(0)} m³ (100%)",
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0057B8),
+                              Flexible(
+                                child: Text(
+                                  "VLSFO: ${ship.resolvedProvistosTotal.toStringAsFixed(0)} m³ (100%)",
+                                  style: const TextStyle(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0057B8),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              Text(
-                                "Buques Provistos: ${ship.resolvedProvistosCount}",
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: secondaryTextColor,
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0057B8).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  "Buques Provistos: ${ship.resolvedProvistosCount}",
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0057B8),
+                                  ),
                                 ),
                               ),
                             ],
@@ -897,19 +912,20 @@ class _FleetViewState extends State<FleetView> {
                               valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0057B8)),
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                "Total: ${ship.resolvedProvistosTotal.toStringAsFixed(2)} m³ • LSFO: ${ship.resolvedProvistosTotal.toStringAsFixed(2)} m³",
+                                "Total: ${ship.resolvedProvistosTotal.toStringAsFixed(2)} m³",
                                 style: TextStyle(
                                   fontSize: 11,
+                                  fontWeight: FontWeight.w600,
                                   color: secondaryTextColor,
                                 ),
                               ),
                               Text(
-                                "ETA: ${ship.resolvedEta}",
+                                "LSFO: ${ship.resolvedProvistosTotal.toStringAsFixed(2)} m³",
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
@@ -918,6 +934,26 @@ class _FleetViewState extends State<FleetView> {
                               ),
                             ],
                           ),
+                          if (ship.resolvedEta.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Icon(Icons.schedule_rounded, size: 13, color: secondaryTextColor),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    "ETA: ${ship.resolvedEta}",
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: secondaryTextColor,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -950,28 +986,27 @@ class _FleetViewState extends State<FleetView> {
                     ),
                   );
                 },
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: const [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.group_rounded, color: Colors.white, size: 22),
-                        SizedBox(width: 10),
-                        Text(
-                          "Ver Tripulación",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
+                child: const Row(
+                  children: [
+                    SizedBox(width: 22),
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.group_rounded, color: Colors.white, size: 22),
+                          SizedBox(width: 10),
+                          Text(
+                            "Ver Tripulación",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    Positioned(
-                      right: 0,
-                      child: Icon(Icons.chevron_right_rounded, color: Colors.white, size: 22),
-                    ),
+                    Icon(Icons.chevron_right_rounded, color: Colors.white, size: 22),
                   ],
                 ),
               ),

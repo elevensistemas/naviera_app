@@ -17,6 +17,7 @@ class _HomeViewState extends State<HomeView> {
   final List<Goal> _goals = [];
   bool _isLoading = false;
   String? _errorMessage;
+  int _activeTab = 0; // 0 for Novedades, 1 for Mis Objetivos
 
   @override
   void initState() {
@@ -135,6 +136,11 @@ class _HomeViewState extends State<HomeView> {
     final int completedCount = userGoals.where(_checkIsCompleted).length;
     final int inProgressCount = totalCount - completedCount;
 
+    final String bannerTitle = _activeTab == 0 ? "Novedades y noticias" : "Mis objetivos";
+    final String bannerSubtitle = _activeTab == 0
+        ? "Actualidad y comunicados de Naviera Cruz del Sur."
+        : "Seguimiento de metas operativas y estratégicas.";
+
     return Scaffold(
       backgroundColor: bodyBg,
       body: RefreshIndicator(
@@ -143,139 +149,319 @@ class _HomeViewState extends State<HomeView> {
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
-              // Standard NcsHeroHeader
-              const NcsHeroHeader(
-                title: "Mis objetivos",
-                subtitle: "Seguimiento de metas operativas y estratégicas.",
+              // Reusable Hero Header
+              NcsHeroHeader(
+                title: bannerTitle,
+                subtitle: bannerSubtitle,
+                onTap: () {
+                  setState(() {
+                    _activeTab = (_activeTab + 1) % 2;
+                  });
+                },
               ),
 
-              // KPI Stats Row
+              // Segmented Buttons (Novedades vs Mis Objetivos)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 4.0),
-                child: Row(
-                  children: [
-                    _buildKpiCard(
-                      label: "Total",
-                      value: totalCount.toString(),
-                      color: ColorTheme.primary,
-                      icon: Icons.track_changes_rounded,
-                      isDark: isDark,
-                      cardBg: cardBg,
-                      textColor: textColor,
-                      captionColor: captionColor,
-                    ),
-                    const SizedBox(width: 10),
-                    _buildKpiCard(
-                      label: "Completados",
-                      value: completedCount.toString(),
-                      color: const Color(0xFF16A34A),
-                      icon: Icons.check_circle_rounded,
-                      isDark: isDark,
-                      cardBg: cardBg,
-                      textColor: textColor,
-                      captionColor: captionColor,
-                    ),
-                    const SizedBox(width: 10),
-                    _buildKpiCard(
-                      label: "En Curso",
-                      value: inProgressCount.toString(),
-                      color: const Color(0xFFF59E0B),
-                      icon: Icons.hourglass_top_rounded,
-                      isDark: isDark,
-                      cardBg: cardBg,
-                      textColor: textColor,
-                      captionColor: captionColor,
-                    ),
-                  ],
-                ),
-              ),
-
-              // Main Container with Goals List
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                padding: const EdgeInsets.all(18.0),
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Metas y Objetivos Asignados",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            "Período $currentYear - S$currentSemester",
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: captionColor,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: isDark ? Colors.white24 : const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    children: [
+                      // Button 1: Novedades
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() => _activeTab = 0);
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
+                            decoration: BoxDecoration(
+                              color: _activeTab == 0 ? ColorTheme.primary : Colors.transparent,
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.article_outlined,
+                                  size: 18,
+                                  color: _activeTab == 0
+                                      ? Colors.white
+                                      : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    "Novedades",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: _activeTab == 0
+                                          ? Colors.white
+                                          : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
+                      ),
 
-                    if (_isLoading && _goals.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(40.0),
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    else if (userGoals.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.all(30.0),
-                        child: Center(
-                          child: Column(
-                            children: [
-                              Icon(Icons.assignment_turned_in_outlined, size: 48, color: captionColor.withOpacity(0.5)),
-                              const SizedBox(height: 12),
-                              Text(
-                                _errorMessage ?? "No tienes objetivos asignados en este período.",
-                                style: TextStyle(color: captionColor, fontSize: 14),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
+                      // Button 2: Mis Objetivos
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() => _activeTab = 1);
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
+                            decoration: BoxDecoration(
+                              color: _activeTab == 1 ? ColorTheme.primary : Colors.transparent,
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.track_changes_outlined,
+                                  size: 17,
+                                  color: _activeTab == 1
+                                      ? Colors.white
+                                      : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    "Mis Objetivos",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: _activeTab == 1
+                                          ? Colors.white
+                                          : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      )
-                    else
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: userGoals.length,
-                        itemBuilder: (context, index) {
-                          return _buildGoalCard(context, userGoals[index], isDark, textColor, captionColor);
-                        },
                       ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
+
+              // TAB 0: NOVEDADES (VACIÓ CON ESTADO ELEGANTE)
+              if (_activeTab == 0) ...[
+                _buildEmptyNovedades(context, isDark, cardBg, textColor, captionColor),
+              ]
+
+              // TAB 1: MIS OBJETIVOS (COMO ANTES)
+              else ...[
+                // KPI Stats Row
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 4.0),
+                  child: Row(
+                    children: [
+                      _buildKpiCard(
+                        label: "Total",
+                        value: totalCount.toString(),
+                        color: ColorTheme.primary,
+                        icon: Icons.track_changes_rounded,
+                        isDark: isDark,
+                        cardBg: cardBg,
+                        textColor: textColor,
+                        captionColor: captionColor,
+                      ),
+                      const SizedBox(width: 10),
+                      _buildKpiCard(
+                        label: "Completados",
+                        value: completedCount.toString(),
+                        color: const Color(0xFF16A34A),
+                        icon: Icons.check_circle_rounded,
+                        isDark: isDark,
+                        cardBg: cardBg,
+                        textColor: textColor,
+                        captionColor: captionColor,
+                      ),
+                      const SizedBox(width: 10),
+                      _buildKpiCard(
+                        label: "En Curso",
+                        value: inProgressCount.toString(),
+                        color: const Color(0xFFF59E0B),
+                        icon: Icons.hourglass_top_rounded,
+                        isDark: isDark,
+                        cardBg: cardBg,
+                        textColor: textColor,
+                        captionColor: captionColor,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Main Goals Container
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.all(18.0),
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Metas y Objetivos Asignados",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              "Período $currentYear - S$currentSemester",
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: captionColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      if (_isLoading && _goals.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.all(40.0),
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      else if (userGoals.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.all(30.0),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Icon(Icons.assignment_turned_in_outlined,
+                                    size: 48, color: captionColor.withOpacity(0.5)),
+                                const SizedBox(height: 12),
+                                Text(
+                                  _errorMessage ?? "No tienes objetivos asignados en este período.",
+                                  style: TextStyle(color: captionColor, fontSize: 14),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: userGoals.length,
+                          itemBuilder: (context, index) {
+                            return _buildGoalCard(context, userGoals[index], isDark, textColor, captionColor);
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // Tarjeta vacía para Novedades (tal como solicitó el usuario: "dejalo vacío")
+  Widget _buildEmptyNovedades(
+    BuildContext context,
+    bool isDark,
+    Color cardBg,
+    Color textColor,
+    Color captionColor,
+  ) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isDark ? Colors.white10 : const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: ColorTheme.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.newspaper_outlined,
+              size: 28,
+              color: ColorTheme.primary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "Sin novedades por el momento",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "No hay avisos o comunicaciones publicadas al momento.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: captionColor,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -77,7 +77,16 @@ class _CrewListViewState extends State<CrewListView> {
       final seenIds = <String>{};
       final uniqueCrew = <CrewMember>[];
       for (var member in crew) {
-        if (member.id.isNotEmpty && !seenIds.contains(member.id)) {
+        final isEmbarcado = member.isOnBoard &&
+            !member.situation.toLowerCase().contains('franco') &&
+            !member.situation.toLowerCase().contains('licenc') &&
+            !member.situation.toLowerCase().contains('desembarc') &&
+            !member.situation.toLowerCase().contains('tierra') &&
+            !member.situation.toLowerCase().contains('baja') &&
+            !member.situation.toLowerCase().contains('vacacion') &&
+            !member.situation.toLowerCase().contains('sin embarcar');
+
+        if (isEmbarcado && member.id.isNotEmpty && !seenIds.contains(member.id)) {
           seenIds.add(member.id);
           uniqueCrew.add(member);
         }
@@ -102,9 +111,18 @@ class _CrewListViewState extends State<CrewListView> {
     final shipId = _selectedShipId ?? '4';
     final fallbackList = await MockFleetService().fetchCrew(shipId);
     if (mounted) {
+      final embarkedOnly = fallbackList.where((m) =>
+          m.isOnBoard &&
+          !m.situation.toLowerCase().contains('franco') &&
+          !m.situation.toLowerCase().contains('licenc') &&
+          !m.situation.toLowerCase().contains('desembarc') &&
+          !m.situation.toLowerCase().contains('tierra') &&
+          !m.situation.toLowerCase().contains('baja') &&
+          !m.situation.toLowerCase().contains('vacacion') &&
+          !m.situation.toLowerCase().contains('sin embarcar')).toList();
       setState(() {
         _crewMembers.clear();
-        _crewMembers.addAll(fallbackList);
+        _crewMembers.addAll(embarkedOnly);
       });
     }
   }
@@ -120,8 +138,18 @@ class _CrewListViewState extends State<CrewListView> {
     final inputBg = isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC);
     final inputBorder = isDark ? Colors.white24 : const Color(0xFFE2E8F0);
 
-    // Filter crew list by search query
+    // Filter crew list: ONLY EMBARKED + search query
     final filteredCrew = _crewMembers.where((member) {
+      final isEmbarcado = member.isOnBoard &&
+          !member.situation.toLowerCase().contains('franco') &&
+          !member.situation.toLowerCase().contains('licenc') &&
+          !member.situation.toLowerCase().contains('desembarc') &&
+          !member.situation.toLowerCase().contains('tierra') &&
+          !member.situation.toLowerCase().contains('baja') &&
+          !member.situation.toLowerCase().contains('vacacion') &&
+          !member.situation.toLowerCase().contains('sin embarcar');
+      if (!isEmbarcado) return false;
+
       if (_searchQuery.isEmpty) return true;
       final query = _searchQuery.toLowerCase();
       final nameMatch = member.name.toLowerCase().contains(query);
@@ -130,7 +158,7 @@ class _CrewListViewState extends State<CrewListView> {
       return nameMatch || roleMatch || dniMatch;
     }).toList();
 
-    final onBoardCount = filteredCrew.where((m) => m.isOnBoard).length;
+    final onBoardCount = filteredCrew.length;
 
     return Scaffold(
       backgroundColor: bodyBg,
