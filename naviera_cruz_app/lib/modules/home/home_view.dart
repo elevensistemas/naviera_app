@@ -1,11 +1,9 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
 import '../../app/theme.dart';
 import '../../app/ncs_hero_header.dart';
-import '../../app/save_the_date_data.dart';
 import '../../core/storage.dart';
 
 class HomeView extends StatefulWidget {
@@ -16,11 +14,9 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  final List<Post> _posts = [];
   final List<Goal> _goals = [];
   bool _isLoading = false;
   String? _errorMessage;
-  int _activeTab = 0; // 0 for Novedades, 1 for Mis Objetivos
 
   @override
   void initState() {
@@ -36,20 +32,13 @@ class _HomeViewState extends State<HomeView> {
     });
 
     try {
-      final homeService = HomeService();
       final goalService = GoalService();
-
-      final results = await Future.wait([
-        homeService.fetchPosts().catchError((_) => <Post>[]),
-        goalService.fetchGoals().catchError((_) => <Goal>[]),
-      ]);
+      final goals = await goalService.fetchGoals().catchError((_) => <Goal>[]);
 
       if (mounted) {
         setState(() {
-          _posts.clear();
-          _posts.addAll((results[0] as List).cast<Post>());
           _goals.clear();
-          _goals.addAll((results[1] as List).cast<Goal>());
+          _goals.addAll(goals);
         });
       }
     } catch (e) {
@@ -67,87 +56,16 @@ class _HomeViewState extends State<HomeView> {
     }
   }
 
-  String _formatDate(DateTime date) {
-    return "${date.day}/${date.month}/${date.year}";
-  }
-
-  void _showImageDialog(BuildContext context, String imageUrl) {
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.black.withOpacity(0.9),
-        insetPadding: const EdgeInsets.all(12),
-        child: Stack(
-          alignment: Alignment.topRight,
-          children: [
-            Center(
-              child: InteractiveViewer(
-                panEnabled: true,
-                minScale: 0.8,
-                maxScale: 4.0,
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => const Center(
-                    child: Text("Error al cargar la imagen", style: TextStyle(color: Colors.white)),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 10,
-              right: 10,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white, size: 28),
-                onPressed: () => Navigator.of(ctx).pop(),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.black54,
-                  shape: const CircleBorder(),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showMemoryImageDialog(BuildContext context, Uint8List bytes) {
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.black.withOpacity(0.92),
-        insetPadding: const EdgeInsets.all(12),
-        child: Stack(
-          alignment: Alignment.topRight,
-          children: [
-            Center(
-              child: InteractiveViewer(
-                panEnabled: true,
-                minScale: 0.8,
-                maxScale: 4.0,
-                child: Image.memory(
-                  bytes,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            Positioned(
-              top: 10,
-              right: 10,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white, size: 28),
-                onPressed: () => Navigator.of(ctx).pop(),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.black54,
-                  shape: const CircleBorder(),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  bool _checkIsCompleted(Goal goal) {
+    if (goal.goalType == 'boolean') {
+      return goal.achievedValue == '1.00' || goal.achievedValue == '1' || goal.achievedValue == 'true';
+    }
+    final expected = double.tryParse(goal.expectedValue);
+    final achieved = double.tryParse(goal.achievedValue ?? '');
+    if (expected != null && achieved != null) {
+      return achieved >= expected;
+    }
+    return false;
   }
 
   @override
@@ -167,8 +85,8 @@ class _HomeViewState extends State<HomeView> {
     final currentSemester = now.month >= 7 ? 2 : 1;
 
     // Filter goals for current user
-    final userSpecificGoals = currentUser == null 
-        ? _goals 
+    final userSpecificGoals = currentUser == null
+        ? _goals
         : _goals.where((g) {
             if (g.userId.isNotEmpty && g.userId == currentUser.id) return true;
             if (g.leaderId.isNotEmpty && g.leaderId == currentUser.id) return true;
@@ -195,7 +113,7 @@ class _HomeViewState extends State<HomeView> {
         final dt = DateTime.tryParse(g.targetDate);
         return dt != null && dt.year == currentYear;
       }).toList();
-      
+
       if (currentYearGoals.isNotEmpty) {
         userGoals = currentYearGoals;
       } else {
@@ -213,165 +131,132 @@ class _HomeViewState extends State<HomeView> {
 
     userGoals.sort((a, b) => b.targetDate.compareTo(a.targetDate));
 
-    final String bannerTitle = _activeTab == 0
-        ? "Novedades y noticias"
-        : "Mis objetivos";
-    final String bannerSubtitle = _activeTab == 0
-        ? "Actualidad y comunicados de Naviera Cruz del Sur."
-        : "Seguimiento de metas operativas y estratégicas.";
+    final int totalCount = userGoals.length;
+    final int completedCount = userGoals.where(_checkIsCompleted).length;
+    final int inProgressCount = totalCount - completedCount;
 
     return Scaffold(
       backgroundColor: bodyBg,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Standard NcsHeroHeader with ship ALFA C
-            NcsHeroHeader(
-              title: bannerTitle,
-              subtitle: bannerSubtitle,
-            ),
-
-            // Main Full-Width Card Container with top rounded corners
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              padding: const EdgeInsets.all(18.0),
-              decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              // Standard NcsHeroHeader
+              const NcsHeroHeader(
+                title: "Mis objetivos",
+                subtitle: "Seguimiento de metas operativas y estratégicas.",
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Row 1: Segmented Buttons (Novedades vs Mis Objetivos)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: isDark ? Colors.white24 : const Color(0xFFE2E8F0)),
+
+              // KPI Stats Row
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 4.0),
+                child: Row(
+                  children: [
+                    _buildKpiCard(
+                      label: "Total",
+                      value: totalCount.toString(),
+                      color: ColorTheme.primary,
+                      icon: Icons.track_changes_rounded,
+                      isDark: isDark,
+                      cardBg: cardBg,
+                      textColor: textColor,
+                      captionColor: captionColor,
                     ),
-                    child: Row(
+                    const SizedBox(width: 10),
+                    _buildKpiCard(
+                      label: "Completados",
+                      value: completedCount.toString(),
+                      color: const Color(0xFF16A34A),
+                      icon: Icons.check_circle_rounded,
+                      isDark: isDark,
+                      cardBg: cardBg,
+                      textColor: textColor,
+                      captionColor: captionColor,
+                    ),
+                    const SizedBox(width: 10),
+                    _buildKpiCard(
+                      label: "En Curso",
+                      value: inProgressCount.toString(),
+                      color: const Color(0xFFF59E0B),
+                      icon: Icons.hourglass_top_rounded,
+                      isDark: isDark,
+                      cardBg: cardBg,
+                      textColor: textColor,
+                      captionColor: captionColor,
+                    ),
+                  ],
+                ),
+              ),
+
+              // Main Container with Goals List
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding: const EdgeInsets.all(18.0),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Button 1: Novedades
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() => _activeTab = 0);
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: _activeTab == 0 ? ColorTheme.primary : Colors.transparent,
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.article_outlined,
-                                    size: 18,
-                                    color: _activeTab == 0 ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Flexible(
-                                    child: Text(
-                                      "Novedades",
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: _activeTab == 0 ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                        Text(
+                          "Metas y Objetivos Asignados",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
                           ),
                         ),
-
-                        // Button 2: Mis Objetivos
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() => _activeTab = 1);
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              decoration: BoxDecoration(
-                                color: _activeTab == 1 ? ColorTheme.primary : Colors.transparent,
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.track_changes_outlined,
-                                    size: 17,
-                                    color: _activeTab == 1 ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Flexible(
-                                    child: Text(
-                                      "Mis Objetivos",
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: _activeTab == 1 ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white10 : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            "Período $currentYear - S$currentSemester",
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: captionColor,
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 16),
 
-                  // Tab Content
-                  if (_isLoading && (_posts.isEmpty && _goals.isEmpty))
-                    const Padding(
-                      padding: EdgeInsets.all(40.0),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else if (_activeTab == 0) ...[
-                    // Novedades List
-                    if (_posts.isEmpty)
-                      _buildWelcomeCard(context, isDark, textColor, captionColor)
-                    else
-                      ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _posts.length,
-                        itemBuilder: (context, index) {
-                          final post = _posts[index];
-                          return _buildPostCard(post, isDark, textColor, captionColor);
-                        },
-                      ),
-                  ] else ...[
-                    // Mis Objetivos List
-                    if (userGoals.isEmpty)
+                    if (_isLoading && _goals.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(40.0),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    else if (userGoals.isEmpty)
                       Padding(
                         padding: const EdgeInsets.all(30.0),
                         child: Center(
-                          child: Text(
-                            _errorMessage ?? "No tienes objetivos asignados en este período.",
-                            style: TextStyle(color: captionColor, fontSize: 14),
-                            textAlign: TextAlign.center,
+                          child: Column(
+                            children: [
+                              Icon(Icons.assignment_turned_in_outlined, size: 48, color: captionColor.withOpacity(0.5)),
+                              const SizedBox(height: 12),
+                              Text(
+                                _errorMessage ?? "No tienes objetivos asignados en este período.",
+                                style: TextStyle(color: captionColor, fontSize: 14),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
                         ),
                       )
@@ -385,342 +270,102 @@ class _HomeViewState extends State<HomeView> {
                         },
                       ),
                   ],
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWelcomeCard(BuildContext context, bool isDark, Color textColor, Color captionColor) {
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final borderColor = isDark ? Colors.white12 : const Color(0xFFE2E8F0);
-
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 8, bottom: 20),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0066FF).withValues(alpha: isDark ? 0.1 : 0.06),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Stack(
-          children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 100,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF0066FF).withValues(alpha: isDark ? 0.18 : 0.10),
-                      const Color(0xFF00E5FF).withValues(alpha: isDark ? 0.05 : 0.02),
-                      Colors.transparent,
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 8),
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF0066FF), Color(0xFF00B4D8)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF0066FF).withValues(alpha: 0.35),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.explore_rounded,
-                      color: Colors.white,
-                      size: 34,
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    "Bienvenidos a la app de\nNaviera Cruz del Sur",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.3,
-                      color: textColor,
-                      height: 1.25,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Text(
-                      "Tu plataforma móvil integral para el monitoreo de flota, tripulaciones, programación mensual y asistencia operativa con Inteligencia Artificial.",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: captionColor,
-                        height: 1.45,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF16A34A),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          "Sin novedades pendientes al momento",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white70 : const Color(0xFF334155),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPostCard(Post post, bool isDark, Color textColor, Color captionColor) {
-    final itemBg = isDark ? const Color(0xFF0F172A) : Colors.white;
-    final itemBorder = isDark ? Colors.white10 : const Color(0xFFE2E8F0);
-
-    final titleText = post.title.isNotEmpty ? post.title : "Save the Date";
-    final rawSubtitle = post.content.trim();
-    final bool isDuplicateSaveTheDate = rawSubtitle.toLowerCase() == titleText.toLowerCase() ||
-        rawSubtitle.toLowerCase() == 'save the date' ||
-        rawSubtitle.isEmpty;
-
-    final subtitleText = isDuplicateSaveTheDate ? "" : rawSubtitle;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: itemBg,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: itemBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Header Date + Menu dots (Sin la cápsula de "Aviso Importante")
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                _formatDate(post.timestamp),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: captionColor,
-                ),
-              ),
-              Icon(
-                Icons.more_vert,
-                size: 18,
-                color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-              ),
+              const SizedBox(height: 24),
             ],
           ),
-          const SizedBox(height: 10),
+        ),
+      ),
+    );
+  }
 
-          // Title & Subtitle Centered
-          Center(
-            child: Column(
-              children: [
-                Text(
-                  titleText,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                if (subtitleText.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+  Widget _buildKpiCard({
+    required String label,
+    required String value,
+    required Color color,
+    required IconData icon,
+    required bool isDark,
+    required Color cardBg,
+    required Color textColor,
+    required Color captionColor,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18, color: color),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   Text(
-                    subtitleText,
-                    textAlign: TextAlign.center,
+                    value,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
                       color: captionColor,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // Mini 16:9 AspectRatio Banner Card (Clean, Prolijo, BoxFit.contain to prevent text cropping)
-          GestureDetector(
-            onTap: () {
-              if (post.imageUrl != null && post.imageUrl!.isNotEmpty) {
-                _showImageDialog(context, post.imageUrl!);
-              } else {
-                _showMemoryImageDialog(context, saveTheDateImageBytes);
-              }
-            },
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF020617) : const Color(0xFF0F172A),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(15),
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: (post.imageUrl != null && post.imageUrl!.isNotEmpty)
-                            ? Image.network(
-                                post.imageUrl!,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) => Image.memory(
-                                  saveTheDateImageBytes,
-                                  fit: BoxFit.contain,
-                                ),
-                              )
-                            : Image.memory(
-                                saveTheDateImageBytes,
-                                fit: BoxFit.contain,
-                              ),
-                      ),
-                      // Zoom hint pill on bottom right
-                      Positioned(
-                        bottom: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.65),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.zoom_in_rounded, color: Colors.white, size: 14),
-                              SizedBox(width: 4),
-                              Text(
-                                "Toca para ampliar",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildGoalCard(BuildContext context, Goal goal, bool isDark, Color textColor, Color captionColor) {
-    final itemBg = isDark ? const Color(0xFF0F172A) : Colors.white;
+    final itemBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
     final itemBorder = isDark ? Colors.white10 : const Color(0xFFE2E8F0);
 
     double progress = 0.0;
     bool isProgressBased = goal.goalType == 'percentage' || goal.goalType == 'free';
-    
+
     double? achieved = double.tryParse(goal.achievedValue ?? '');
     double? expected = double.tryParse(goal.expectedValue);
-    
+
     if (achieved != null && expected != null && expected > 0) {
       progress = (achieved / expected).clamp(0.0, 1.0);
     }
-    
-    bool isCompleted = false;
-    if (goal.goalType == 'boolean') {
-      isCompleted = goal.achievedValue == '1.00' || goal.achievedValue == '1' || goal.achievedValue == 'true';
-    } else if (expected != null && achieved != null) {
-      isCompleted = achieved >= expected;
-    }
+
+    final bool isCompleted = _checkIsCompleted(goal);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14.0),
+      margin: const EdgeInsets.only(bottom: 12.0),
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: itemBg,
@@ -751,12 +396,12 @@ class _HomeViewState extends State<HomeView> {
                   ),
                 ),
                 child: Text(
-                  goal.goalType == 'percentage' 
-                      ? 'Porcentual' 
+                  goal.goalType == 'percentage'
+                      ? 'Porcentual'
                       : (goal.goalType == 'boolean' ? 'Cumplimiento' : 'General'),
                   style: TextStyle(
-                    color: isCompleted 
-                        ? (isDark ? Colors.greenAccent : Colors.green.shade700) 
+                    color: isCompleted
+                        ? (isDark ? Colors.greenAccent : Colors.green.shade700)
                         : (isDark ? Colors.blueAccent : ColorTheme.primary),
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -770,18 +415,18 @@ class _HomeViewState extends State<HomeView> {
             ],
           ),
           const SizedBox(height: 12),
-          
+
           Text(
             goal.description,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 14,
               height: 1.4,
               fontWeight: FontWeight.bold,
               color: textColor,
             ),
           ),
           const SizedBox(height: 14),
-          
+
           if (isProgressBased) ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -801,7 +446,7 @@ class _HomeViewState extends State<HomeView> {
               borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(
                 value: progress,
-                backgroundColor: isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFF1F5F9),
+                backgroundColor: isDark ? Colors.white.withOpacity(0.1) : const Color(0xFFE2E8F0),
                 valueColor: AlwaysStoppedAnimation<Color>(
                   isCompleted ? Colors.green : ColorTheme.primary,
                 ),
@@ -821,8 +466,8 @@ class _HomeViewState extends State<HomeView> {
                   isCompleted ? "Completado" : "Pendiente de cumplimiento",
                   style: TextStyle(
                     fontSize: 13,
-                    color: isCompleted 
-                        ? (isDark ? Colors.greenAccent : Colors.green.shade700) 
+                    color: isCompleted
+                        ? (isDark ? Colors.greenAccent : Colors.green.shade700)
                         : captionColor,
                     fontWeight: FontWeight.w600,
                   ),

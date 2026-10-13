@@ -140,82 +140,6 @@ class _ScheduleViewState extends State<ScheduleView> {
             },
           ),
           
-          // Intranet Operational Status Alert Banner (GUSTAVO U • FONDEADO)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFFEA580C), Color(0xFFD97706)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-            ),
-            child: Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      "GUSTAVO U",
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(width: 5, height: 5, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
-                    const SizedBox(width: 6),
-                    const Text(
-                      "FONDEADO",
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        "Navegando: RIO DE LA PLATA | ETA: RADA LA PLATA - Sept. 19, 2026, 1 a.m.",
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.95), fontSize: 11),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "Actualizado 21/09, fondeado a espera de buques",
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.95), fontSize: 11),
-                    ),
-                    const SizedBox(width: 10),
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        const Icon(Icons.notifications_rounded, color: Colors.white, size: 18),
-                        Positioned(
-                          top: -3,
-                          right: -5,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFDC2626),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              "50",
-                              style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          
           // Date Filter Inputs
           Padding(
             padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 8.0),
@@ -1369,23 +1293,27 @@ class _ScheduleViewState extends State<ScheduleView> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: Text(
-                      "Buques Cargados del Periodo",
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : Colors.grey),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Total de buques operados (histórico acumulado)",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white60 : const Color(0xFF64748B),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   SizedBox(
-                    height: 170,
-                    child: CustomPaint(
-                      size: const Size(double.infinity, 170),
-                      painter: _ShipsLoadedChartPainter(
-                        alfaCShips: alfaCShips,
-                        gustavoUShips: gustavoUShips,
-                        nanyShips: nanyShips,
-                        isDark: isDark,
+                    height: 180,
+                    child: ClipRect(
+                      child: CustomPaint(
+                        size: const Size(double.infinity, 180),
+                        painter: _ShipsLoadedChartPainter(
+                          alfaCShips: alfaCShips,
+                          gustavoUShips: gustavoUShips,
+                          nanyShips: nanyShips,
+                          isDark: isDark,
+                        ),
                       ),
                     ),
                   ),
@@ -2440,31 +2368,13 @@ class _ShipsLoadedChartPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const double leftMargin = 32;
-    const double bottomMargin = 24;
-    final double chartWidth = size.width - leftMargin;
-    final double chartHeight = size.height - bottomMargin;
+    const double leftMargin = 38.0;
+    const double rightMargin = 16.0;
+    const double bottomMargin = 28.0;
+    const double topMargin = 20.0;
 
-    final paintGrid = Paint()
-      ..color = isDark ? Colors.white10 : Colors.grey.shade200
-      ..strokeWidth = 0.5;
-
-    final textStyleAxis = TextStyle(fontSize: 10, color: isDark ? Colors.white70 : Colors.grey.shade700);
-
-    const int maxShips = 16;
-    final yTicks = [0, 2, 4, 6, 8, 10, 12, 14, 16];
-
-    for (var tick in yTicks) {
-      final yPos = chartHeight - (tick / maxShips) * chartHeight;
-      canvas.drawLine(Offset(leftMargin, yPos), Offset(size.width, yPos), paintGrid);
-
-      final textPainter = TextPainter(
-        text: TextSpan(text: tick.toString(), style: textStyleAxis),
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(leftMargin - textPainter.width - 6, yPos - 6));
-    }
+    final double chartWidth = size.width - leftMargin - rightMargin;
+    final double chartHeight = size.height - bottomMargin - topMargin;
 
     final ships = [
       {'name': 'ALFA C', 'val': alfaCShips > 0 ? alfaCShips : 12, 'color': const Color(0xFF0057B8)},
@@ -2472,7 +2382,56 @@ class _ShipsLoadedChartPainter extends CustomPainter {
       {'name': 'NANY', 'val': nanyShips > 0 ? nanyShips : 6, 'color': const Color(0xFFED8B00)},
     ];
 
-    final double stepX = chartWidth / 3;
+    // Compute dynamic maximum to guarantee bars never exceed chart bounds
+    int rawMax = 0;
+    for (var s in ships) {
+      final v = s['val'] as int;
+      if (v > rawMax) rawMax = v;
+    }
+    if (rawMax < 10) rawMax = 10;
+
+    int limit;
+    if (rawMax <= 20) {
+      limit = ((rawMax + 3) ~/ 4) * 4;
+      if (limit < 20) limit = 20;
+    } else if (rawMax <= 100) {
+      limit = ((rawMax + 9) ~/ 10) * 10;
+    } else if (rawMax <= 500) {
+      limit = ((rawMax + 49) ~/ 50) * 50;
+    } else {
+      limit = ((rawMax + 99) ~/ 100) * 100;
+    }
+
+    final int tickCount = 4;
+    final double tickStep = limit / tickCount;
+
+    final paintGrid = Paint()
+      ..color = isDark ? Colors.white10 : const Color(0xFFE2E8F0)
+      ..strokeWidth = 0.8;
+
+    final textStyleAxis = TextStyle(
+      fontSize: 10,
+      fontWeight: FontWeight.w500,
+      color: isDark ? Colors.white60 : const Color(0xFF64748B),
+    );
+
+    // Draw horizontal grid lines & labels
+    for (int i = 0; i <= tickCount; i++) {
+      final double tickVal = i * tickStep;
+      final double yPos = topMargin + chartHeight - (tickVal / limit) * chartHeight;
+
+      canvas.drawLine(Offset(leftMargin, yPos), Offset(size.width - rightMargin, yPos), paintGrid);
+
+      final label = tickVal >= 1000 ? "${(tickVal / 1000).toStringAsFixed(1)}k" : tickVal.round().toString();
+      final textPainter = TextPainter(
+        text: TextSpan(text: label, style: textStyleAxis),
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+      textPainter.paint(canvas, Offset(leftMargin - textPainter.width - 6, yPos - textPainter.height / 2));
+    }
+
+    final double stepX = chartWidth / ships.length;
 
     for (int i = 0; i < ships.length; i++) {
       final int val = ships[i]['val'] as int;
@@ -2480,35 +2439,66 @@ class _ShipsLoadedChartPainter extends CustomPainter {
       final String name = ships[i]['name'] as String;
 
       final double xCenter = leftMargin + (i + 0.5) * stepX;
-      final double barWidth = (stepX * 0.55).clamp(32.0, 60.0);
-      final double barHeight = val > 0 ? (val / maxShips) * chartHeight : 4.0;
+      final double barWidth = (stepX * 0.52).clamp(24.0, 56.0);
+      final double barHeight = limit > 0 ? ((val / limit) * chartHeight).clamp(4.0, chartHeight) : 4.0;
+      final double yTop = topMargin + chartHeight - barHeight;
 
-      final paintBar = Paint()..color = color;
-      final rect = Rect.fromLTWH(xCenter - barWidth / 2, chartHeight - barHeight, barWidth, barHeight);
-      canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(4)), paintBar);
+      final rect = Rect.fromLTWH(xCenter - barWidth / 2, yTop, barWidth, barHeight);
+      final rrect = RRect.fromRectAndCorners(
+        rect,
+        topLeft: const Radius.circular(6),
+        topRight: const Radius.circular(6),
+        bottomLeft: const Radius.circular(2),
+        bottomRight: const Radius.circular(2),
+      );
 
-      if (val > 0) {
-        final textValPainter = TextPainter(
-          text: TextSpan(
-            text: val.toString(),
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: i == 0 ? const Color(0xFF38BDF8) : Colors.white,
-            ),
+      final barPaint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            color,
+            color.withValues(alpha: 0.8),
+          ],
+        ).createShader(rect);
+
+      canvas.drawRRect(rrect, barPaint);
+
+      // Value label on top of bar or inside
+      final String valText = val >= 1000 ? "${(val / 1000).toStringAsFixed(1)}k" : val.toString();
+      final valPainter = TextPainter(
+        text: TextSpan(
+          text: valText,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 11,
           ),
-          textDirection: TextDirection.ltr,
-        );
-        textValPainter.layout();
-        textValPainter.paint(canvas, Offset(xCenter - textValPainter.width / 2, chartHeight - barHeight / 2 - textValPainter.height / 2));
-      }
-
-      final textNamePainter = TextPainter(
-        text: TextSpan(text: name, style: textStyleAxis),
+        ),
         textDirection: TextDirection.ltr,
       );
-      textNamePainter.layout();
-      textNamePainter.paint(canvas, Offset(xCenter - textNamePainter.width / 2, chartHeight + 6));
+      valPainter.layout();
+
+      if (barHeight > 24) {
+        valPainter.paint(canvas, Offset(xCenter - valPainter.width / 2, yTop + 6));
+      } else {
+        valPainter.paint(canvas, Offset(xCenter - valPainter.width / 2, yTop - valPainter.height - 3));
+      }
+
+      // Ship name label below axis
+      final namePainter = TextPainter(
+        text: TextSpan(
+          text: name,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white : const Color(0xFF1E293B),
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      namePainter.layout();
+      namePainter.paint(canvas, Offset(xCenter - namePainter.width / 2, topMargin + chartHeight + 6));
     }
   }
 
