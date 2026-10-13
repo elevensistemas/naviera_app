@@ -27,12 +27,6 @@ class _AIChatViewState extends State<AIChatView> {
   String _speechText = '';
   StreamSubscription<NCSStreamEvent>? _currentStreamSubscription;
 
-  final List<String> _quickPrompts = [
-    "Estado Naviera I",
-    "ETA Puerto Montt",
-    "Reporte de Combustible",
-    "Tripulación Activa"
-  ];
 
   @override
   void initState() {
@@ -46,21 +40,7 @@ class _AIChatViewState extends State<AIChatView> {
   }
 
   void _setupWelcomeMessage() {
-    final welcomeText = """
-¡Hola! Soy el **Asistente IA de NCS Control Center**.
-
-Puedo ayudarte a verificar la telemetría satelital, velocidad de buques, consumo de combustible, horas de arribo (ETA) y dotación de personal en tiempo real.
-""";
-
-    final initialStructured = NCSStructuredVesselData(
-      vesselName: "Naviera I",
-      status: "En Operación",
-      speed: "12.4 nudos",
-      coordinates: "41°48'S 73°45'W",
-      eta: "Hoy 18:30",
-      fuelLevel: "85%",
-      cargoWeight: "1,850 Ton",
-    );
+    const welcomeText = "¡Hola! Soy el **Asistente de NCS**.";
 
     _messages.add(NCSAIMessage(
       id: "w1",
@@ -74,7 +54,6 @@ Puedo ayudarte a verificar la telemetría satelital, velocidad de buques, consum
           timestamp: DateTime.now(),
         )
       ],
-      structuredData: initialStructured,
     ));
   }
 
@@ -259,8 +238,6 @@ Puedo ayudarte a verificar la telemetría satelital, velocidad de buques, consum
             ),
           ),
 
-          // Quick Prompt Chips
-          if (_messages.length <= 2) _buildQuickPrompts(),
 
           // Speech Listening Banner
           if (_isListening)
@@ -354,31 +331,6 @@ Puedo ayudarte a verificar la telemetría satelital, velocidad de buques, consum
     );
   }
 
-  Widget _buildQuickPrompts() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: _quickPrompts.map((prompt) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: ActionChip(
-              avatar: const Icon(Icons.auto_awesome, size: 14, color: ColorTheme.accent),
-              label: Text(prompt, style: const TextStyle(fontSize: 12)),
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: ColorTheme.accent.withOpacity(0.3)),
-              ),
-              onPressed: () {
-                _sendMessage(prompt);
-              },
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
 
   Widget _buildMessageBubble(NCSAIMessage message) {
     final isUser = message.sender == NCSMessageSender.user;
@@ -516,7 +468,7 @@ Puedo ayudarte a verificar la telemetría satelital, velocidad de buques, consum
             child: TextField(
               controller: _textController,
               decoration: InputDecoration(
-                hintText: _isListening ? "Escuchando por voz..." : "Consulte por flota, ETA, cargas o combustible...",
+                hintText: _isListening ? "Escuchando por voz..." : "",
                 filled: true,
                 fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.4),
                 border: OutlineInputBorder(

@@ -46,7 +46,7 @@ class NCSChatService {
             'history': [
               {
                 'role': 'system',
-                'content': 'Estás hablando directamente a través de la app móvil de voz con un miembro de la tripulación o gerencia de la Naviera Cruz del Sur. Tu rol es conversar de forma empática, directa y profesional. Contexto: ALFA C (26.02k t para Raizen, fondeado en Rada La Plata por mal clima), GUSTAVO U (16.52k t para WFS), NANY (12.84k t para WFS). Tripulación y cámaras disponibles.'
+                'content': 'Estás hablando directamente a través de la app móvil de voz con un miembro de la tripulación o gerencia de la Naviera Cruz del Sur. Tu rol es ser el Asistente de NCS, conversar de forma empática, directa y profesional. No digas que eres Centinela, sólo di que eres el Asistente de NCS. Contexto: ALFA C (26.02k t para Raizen, fondeado en Rada La Plata por mal clima), GUSTAVO U (16.52k t para WFS), NANY (12.84k t para WFS). Tripulación y cámaras disponibles.'
               }
             ]
           }),
@@ -56,7 +56,7 @@ class NCSChatService {
           final data = jsonDecode(res.body);
           final reply = data['reply'] as String?;
           if (reply != null && reply.isNotEmpty) {
-            yield NCSStreamEvent(type: "log", logClass: "info", content: "Conectado con Centinela AI Bot...");
+            yield NCSStreamEvent(type: "log", logClass: "info", content: "Conectado con Asistente de NCS...");
             yield NCSStreamEvent(type: "log", logClass: "info", content: "Procesando respuesta del Control Center...");
             await Future.delayed(const Duration(milliseconds: 300));
             yield NCSStreamEvent(
@@ -121,7 +121,7 @@ class NCSChatService {
     yield NCSStreamEvent(
       type: "log",
       logClass: "info",
-      content: "Consultando a Centinela AI (WhatsApp & Control Center)...",
+      content: "Consultando al Asistente de NCS...",
     );
     await Future.delayed(const Duration(milliseconds: 300));
 
@@ -262,7 +262,7 @@ El sistema cuenta con transmisiones HLS HD en tiempo real:
         lower.contains("recursos") ||
         lower.contains("residuo")) {
       responseText = """
-### Reporte de Recursos y Tanques - Centinela IA
+### Reporte de Recursos y Tanques - Asistente de NCS
 
 Niveles actualizados de recursos en la flota:
 
@@ -321,7 +321,7 @@ Niveles actualizados de recursos en la flota:
         lower.contains("donde esta") ||
         lower.contains("dónde está")) {
       responseText = """
-### Estado Operativo de la Flota - Centinela IA
+### Estado Operativo de la Flota - Asistente de NCS
 
 - 🚢 **BT ALFA C:** Fondeado en Rada La Plata por condiciones meteorológicas (Ingreso a DDI programado el 08/04). Carga acumulada: 26.02k t para Raizen.
 - 🚢 **BT GUSTAVO U:** En navegación activa completando operaciones de carga para cliente WFS (16.52k t).
@@ -340,7 +340,15 @@ Niveles actualizados de recursos en la flota:
 *Previsión favorable para maniobras de alijo en las próximas 12 horas.*
 """;
     }
-    // PRIORITY 6: Saludos y conversación natural estilo Centinela WhatsApp
+    // PRIORITY 6: Saludos y conversación natural
+    else if (lower.contains("quien eres") ||
+        lower.contains("quién eres") ||
+        lower.contains("quien sos") ||
+        lower.contains("quién sos") ||
+        lower.contains("como te llamas") ||
+        lower.contains("cómo te llamas")) {
+      responseText = "Soy el **Asistente de NCS**.";
+    }
     else if (lower == "hola" ||
         lower.startsWith("hola ") ||
         lower.contains("como estas") ||
@@ -350,7 +358,7 @@ Niveles actualizados de recursos en la flota:
         lower.contains("buenas noches") ||
         lower.contains("buenas")) {
       responseText = """
-¡Hola! Todo en orden por aquí. Soy **Centinela**, el Asistente IA de Naviera Cruz del Sur.
+¡Hola! Todo en orden por aquí. Soy el **Asistente de NCS**.
 
 ¿En qué te puedo colaborar hoy? Puedes pedirme:
 - 👨‍✈️ *"Dime la tripulación a bordo del Alfa C"*
@@ -359,12 +367,12 @@ Niveles actualizados de recursos en la flota:
 - ⛽ *"Nivel de recursos"* (Combustible, Agua Dulce, Slop)
 """;
     }
-    // PRIORITY 7: Respuestas por defecto estilo Centinela
+    // PRIORITY 7: Respuestas por defecto
     else {
       responseText = """
 Entendido. He procesado tu consulta: "*$prompt*".
 
-Como asistente de Centinela y Control Center, puedo ayudarte con:
+Como Asistente de NCS, puedo ayudarte con:
 1. 👨‍✈️ **Tripulación:** *"Dime la tripulación del Alfa C"*.
 2. 🏢 **Cámaras en vivo:** *"Muéstrame la oficina"*.
 3. 🚢 **Estado de buques:** *"¿Dónde está el Alfa C?"* o *"Estado de flota"*.

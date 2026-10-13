@@ -162,7 +162,7 @@ const AIChat = () => {
 
     } catch (err) {
       console.error(err);
-      const errorMsg = "Lo siento, falló la conexión con Centinela. " + err.message;
+      const errorMsg = "Lo siento, falló la conexión con el Asistente de NCS. " + err.message;
       setMessages(prev => [...prev, { id: Date.now()+1, text: errorMsg, isUser: false }]);
       speak(errorMsg);
     } finally {
