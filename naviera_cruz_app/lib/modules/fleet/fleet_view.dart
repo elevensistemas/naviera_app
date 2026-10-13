@@ -77,16 +77,49 @@ class _FleetViewState extends State<FleetView> {
           _selectedShipIndex = 0;
         }
       });
+      _resolveCameras();
     } catch (e) {
       setState(() {
         _ships.clear();
         _ships.addAll(_getDefaultShipsList());
         _selectedShipIndex = 0;
       });
+      _resolveCameras();
     } finally {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _resolveCameras() async {
+    final Map<String, String> serialMap = {
+      'ALFA': 'BF1765385',
+      'GUSTAVO': 'BF1767228',
+      'NANY': 'BF1765344',
+    };
+
+    for (int i = 0; i < _ships.length; i++) {
+      final ship = _ships[i];
+      String? serial;
+      for (final entry in serialMap.entries) {
+        if (ship.name.toUpperCase().contains(entry.key)) {
+          serial = entry.value;
+          break;
+        }
+      }
+      if (serial != null) {
+        try {
+          final liveUrl = await EzvizService.shared.getLiveStreamUrl(serial);
+          if (liveUrl.isNotEmpty && mounted) {
+            setState(() {
+              _ships[i] = _ships[i].copyWith(cameraUrl: liveUrl);
+            });
+          }
+        } catch (e) {
+          debugPrint("Ezviz live stream resolution for ${ship.name}: $e");
+        }
+      }
     }
   }
 
@@ -104,6 +137,10 @@ class _FleetViewState extends State<FleetView> {
         flag: "Panamá 🇵🇦",
         latitude: -42.76,
         longitude: -65.03,
+        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765385_1_1.m3u8?expire=1791983362&id=1030225763993604096&t=e7d9b21b67319bcd0f1d5b0014c5aee0c642b9114e21fb715375d4e3638897bf&ev=100&c=fe12620732&u=da1e897bca5549f4996a9d149f367b71",
+        cameras: [
+          ShipCamera(id: "cam-alfa", name: "BT.ALFAC", serialNumber: "BF1765385", isActive: true),
+        ],
         targetShips: Ship.getDefaultTargetShipsFor("ALFA C"),
         captainName: "Marenco Rubén Darío",
         chiefEngineerName: "Sosa Armando",
@@ -125,6 +162,10 @@ class _FleetViewState extends State<FleetView> {
         flag: "Argentina 🇦🇷",
         latitude: -38.00,
         longitude: -57.55,
+        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1767228_1_1.m3u8?expire=1791983362&id=1030225764011499520&t=c6cc87226530d49291195df67d1b5bbc7fa6210a5b4920541546ddc4c02ee008&ev=100&c=f5f9942f03&u=af7980d447c6451b9871bf77e62365f3",
+        cameras: [
+          ShipCamera(id: "cam-gustavo", name: "BT.GUSTAVO.U", serialNumber: "BF1767228", isActive: true),
+        ],
         targetShips: Ship.getDefaultTargetShipsFor("GUSTAVO U"),
         captainName: "Ramirez Pedro",
         chiefEngineerName: "Agüero Leandro",
@@ -146,6 +187,10 @@ class _FleetViewState extends State<FleetView> {
         flag: "Argentina 🇦🇷",
         latitude: -54.80,
         longitude: -68.30,
+        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765344_1_1.m3u8?expire=1791983362&id=1030225764045402112&t=65f8bd88ff9b15db0755ab8635accb3d8e96985b749553795c13b2a15104dcc5&ev=100&c=ea289a6356&u=06e37856b8214f938f8fd6a8bf5d9a36",
+        cameras: [
+          ShipCamera(id: "cam-nany", name: "BT.NANY1", serialNumber: "BF1765344", isActive: true),
+        ],
         targetShips: Ship.getDefaultTargetShipsFor("NANY"),
         captainName: "Maciel Jonathan",
         chiefEngineerName: "Porto Guillermo",
@@ -596,8 +641,60 @@ class _FleetViewState extends State<FleetView> {
               ),
             ),
             
-            // Video Player or Fallback for SBS camera (Invertido: ahora posicionado donde estaba el Programa de Carga)
+            // Header de Cámara a Bordo
             const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.videocam_rounded, size: 17, color: Color(0xFF0057B8)),
+                    const SizedBox(width: 6),
+                    Text(
+                      "Cámara en Vivo a Bordo",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF22C55E).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF22C55E).withOpacity(0.4)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFF22C55E),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        "EN VIVO",
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF22C55E),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // Video Player or Fallback for SBS camera
             if (ship.cameraUrl != null && ship.cameraUrl!.isNotEmpty)
               SBSCameraPlayer(
                 key: ValueKey(ship.cameraUrl),
@@ -628,8 +725,9 @@ class _FleetViewState extends State<FleetView> {
             
             Divider(height: 24, color: dividerColor),
 
-            // Shared Resources Container with smooth top gradient washes (Combustible, Agua, Slop)
+            // Native Mobile Resources Container (Combustible, Agua, Slop)
             Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -644,271 +742,35 @@ class _FleetViewState extends State<FleetView> {
                         ),
                       ],
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Stack(
-                  children: [
-                    // Orange Top Wash for Combustible (Left)
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      width: 140,
-                      height: 65,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFFED8B00).withValues(alpha: isDark ? 0.30 : 0.18),
-                              const Color(0xFFED8B00).withValues(alpha: isDark ? 0.08 : 0.04),
-                              Colors.transparent,
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: -20,
-                      left: -20,
-                      child: Container(
-                        width: 90,
-                        height: 90,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              const Color(0xFFED8B00).withValues(alpha: 0.25),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Blue Top Wash for Agua (Center)
-                    Positioned(
-                      top: 0,
-                      left: 110,
-                      right: 110,
-                      height: 65,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFF0057B8).withValues(alpha: isDark ? 0.28 : 0.15),
-                              const Color(0xFF0057B8).withValues(alpha: isDark ? 0.08 : 0.04),
-                              Colors.transparent,
-                            ],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Green Top Wash for Slop (Right)
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      width: 140,
-                      height: 65,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFF00A86B).withValues(alpha: isDark ? 0.30 : 0.18),
-                              const Color(0xFF00A86B).withValues(alpha: isDark ? 0.08 : 0.04),
-                              Colors.transparent,
-                            ],
-                            begin: Alignment.topRight,
-                            end: Alignment.bottomLeft,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: -20,
-                      right: -20,
-                      child: Container(
-                        width: 90,
-                        height: 90,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              const Color(0xFF00A86B).withValues(alpha: 0.25),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Content Padding with Concentric Gauge, Header & 3 metrics
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header: Nivel de Recursos
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Nivel de Recursos",
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDark ? Colors.white : Colors.black87,
-                                ),
-                              ),
-                              Icon(
-                                Icons.water_drop_outlined,
-                                size: 16,
-                                color: isDark ? Colors.white38 : Colors.black38,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-
-                          // Center Concentric Tank Gauge with Intranet Tooltip
-                          Center(
-                            child: SizedBox(
-                              width: 280,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  Center(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 8),
-                                      child: SizedBox(
-                                        width: 124,
-                                        height: 124,
-                                        child: CustomPaint(
-                                          painter: _ConcentricTanksPainter(
-                                            fuelPct: _getFuelPercentage(ship),
-                                            waterPct: _getWaterPercentage(ship),
-                                            slopPct: _getSlopPercentage(ship),
-                                            isDark: isDark,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  // Floating Intranet Legend Tooltip (Matching Intranet)
-                                  Positioned(
-                                    top: 0,
-                                    right: 0,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                                      decoration: BoxDecoration(
-                                        color: isDark
-                                            ? const Color(0xFF1E293B).withValues(alpha: 0.95)
-                                            : const Color(0xFFE8F1FC).withValues(alpha: 0.95),
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: const Color(0xFF0057B8).withValues(alpha: isDark ? 0.35 : 0.20),
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.05),
-                                            blurRadius: 6,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            "Agua: ${_getWaterValue(ship)} (${(_getWaterPercentage(ship) * 100).round()}%)",
-                                            style: TextStyle(
-                                              fontSize: 9.5,
-                                              fontWeight: FontWeight.bold,
-                                              color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF0057B8),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            "Comb: ${_getFuelValue(ship)} (${(_getFuelPercentage(ship) * 100).round()}%)",
-                                            style: TextStyle(
-                                              fontSize: 9.5,
-                                              fontWeight: FontWeight.bold,
-                                              color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF0057B8),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            "Slop: ${_getSlopValue(ship)} (${(_getSlopPercentage(ship) * 100).round()}%)",
-                                            style: TextStyle(
-                                              fontSize: 9.5,
-                                              fontWeight: FontWeight.bold,
-                                              color: isDark ? const Color(0xFF60A5FA) : const Color(0xFF0057B8),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-
-                          // 3 Centered Legend Pills (Agua, Comb, Slop) matching Intranet
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildIntranetBadge("Agua", "${(_getWaterPercentage(ship) * 100).round()}%", const Color(0xFF00BCD4), isDark),
-                              const SizedBox(width: 16),
-                              _buildIntranetBadge("Comb", "${(_getFuelPercentage(ship) * 100).round()}%", const Color(0xFFF59E0B), isDark),
-                              const SizedBox(width: 16),
-                              _buildIntranetBadge("Slop", "${(_getSlopPercentage(ship) * 100).round()}%", const Color(0xFF64748B), isDark),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-
-                          Divider(height: 1, color: dividerColor),
-                          const SizedBox(height: 12),
-
-                          // 3 Resource Metrics
-                          Row(
-                            children: [
-                              _buildResourceMetric(
-                                context: context,
-                                icon: Icons.local_gas_station_rounded,
-                                color: const Color(0xFFF59E0B), // Yellow / Combustible
-                                label: "Combustible",
-                                value: _getFuelValue(ship),
-                                progressPercentage: _getFuelPercentage(ship),
-                              ),
-                              Container(height: 38, width: 1, margin: const EdgeInsets.symmetric(horizontal: 6), color: dividerColor),
-                              _buildResourceMetric(
-                                context: context,
-                                icon: Icons.water_drop_rounded,
-                                color: const Color(0xFF00BCD4), // Cyan / Agua
-                                label: "Agua",
-                                value: _getWaterValue(ship),
-                                progressPercentage: _getWaterPercentage(ship),
-                              ),
-                              Container(height: 38, width: 1, margin: const EdgeInsets.symmetric(horizontal: 6), color: dividerColor),
-                              _buildResourceMetric(
-                                context: context,
-                                icon: Icons.opacity_rounded,
-                                color: const Color(0xFF64748B), // Slate / Slop
-                                label: "Slop",
-                                value: _getSlopValue(ship),
-                                progressPercentage: _getSlopPercentage(ship),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              child: Row(
+                children: [
+                  _buildResourceMetric(
+                    context: context,
+                    icon: Icons.local_gas_station_rounded,
+                    color: const Color(0xFFED8B00), // Orange / Combustible
+                    label: "Combustible",
+                    value: _getFuelValue(ship),
+                    progressPercentage: _getFuelPercentage(ship),
+                  ),
+                  Container(height: 42, width: 1, margin: const EdgeInsets.symmetric(horizontal: 10), color: dividerColor),
+                  _buildResourceMetric(
+                    context: context,
+                    icon: Icons.water_drop_rounded,
+                    color: const Color(0xFF0057B8), // Blue / Agua
+                    label: "Agua",
+                    value: _getWaterValue(ship),
+                    progressPercentage: _getWaterPercentage(ship),
+                  ),
+                  Container(height: 42, width: 1, margin: const EdgeInsets.symmetric(horizontal: 10), color: dividerColor),
+                  _buildResourceMetric(
+                    context: context,
+                    icon: Icons.opacity_rounded,
+                    color: const Color(0xFF00A86B), // Green/Teal / Slop
+                    label: "Slop",
+                    value: _getSlopValue(ship),
+                    progressPercentage: _getSlopPercentage(ship),
+                  ),
+                ],
               ),
             ),
             
@@ -1120,57 +982,6 @@ class _FleetViewState extends State<FleetView> {
     );
   }
 
-  Widget _buildTankBadge(String label, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.35), width: 0.8),
-      ),
-      child: Text(
-        "$label $value",
-        style: TextStyle(
-          fontSize: 9.5,
-          fontWeight: FontWeight.bold,
-          color: color,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildIntranetBadge(String tag, String pct, Color color, bool isDark) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Text(
-            tag,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 9.5,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          pct,
-          style: TextStyle(
-            fontSize: 10.5,
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white70 : Colors.black87,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildResourceMetric({
     required BuildContext context,
     required IconData icon,
@@ -1187,7 +998,6 @@ class _FleetViewState extends State<FleetView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top Row: Icon + Label + Badge
           Row(
             children: [
               Icon(icon, size: 12, color: color),
@@ -1227,8 +1037,6 @@ class _FleetViewState extends State<FleetView> {
             ],
           ),
           const SizedBox(height: 6),
-
-          // Value (Number in m³)
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
@@ -1241,8 +1049,6 @@ class _FleetViewState extends State<FleetView> {
             ),
           ),
           const SizedBox(height: 8),
-
-          // Progress Bar Pill
           ClipRRect(
             borderRadius: BorderRadius.circular(3),
             child: Container(
@@ -1267,73 +1073,4 @@ class _FleetViewState extends State<FleetView> {
   }
 }
 
-// Concentric Circular Tanks Gauge (Yellow: Comb, Grey: Slop, Cyan: Agua)
-class _ConcentricTanksPainter extends CustomPainter {
-  final double fuelPct;
-  final double waterPct;
-  final double slopPct;
-  final bool isDark;
 
-  _ConcentricTanksPainter({
-    required this.fuelPct,
-    required this.waterPct,
-    required this.slopPct,
-    required this.isDark,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final double maxR = size.width / 2 - 6;
-
-    const ringWidth = 8.0;
-    final rComb = maxR;
-    final rSlop = maxR - ringWidth - 6.5;
-    final rAgua = rSlop - ringWidth - 6.5;
-
-    final bgTrackPaint = Paint()
-      ..color = isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFECEFF1)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = ringWidth
-      ..strokeCap = StrokeCap.round;
-
-    // Background full circular tracks
-    canvas.drawCircle(center, rComb, bgTrackPaint);
-    canvas.drawCircle(center, rSlop, bgTrackPaint);
-    canvas.drawCircle(center, rAgua, bgTrackPaint);
-
-    const start = math.pi; // 9 o'clock / 180 degrees like Intranet
-
-    void drawArcPct(double r, double pct, Color color) {
-      if (pct <= 0) return;
-      final sweep = (pct.clamp(0.0, 1.0)) * 2 * math.pi;
-      final arcPaint = Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = ringWidth
-        ..strokeCap = StrokeCap.round;
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: r),
-        start,
-        sweep,
-        false,
-        arcPaint,
-      );
-    }
-
-    // Outer: Combustible (Yellow)
-    drawArcPct(rComb, fuelPct, const Color(0xFFF59E0B));
-    // Middle: Slop (Slate / Grey)
-    drawArcPct(rSlop, slopPct, const Color(0xFF64748B));
-    // Inner: Agua (Cyan)
-    drawArcPct(rAgua, waterPct, const Color(0xFF00BCD4));
-  }
-
-  @override
-  bool shouldRepaint(covariant _ConcentricTanksPainter oldDelegate) {
-    return oldDelegate.fuelPct != fuelPct ||
-        oldDelegate.waterPct != waterPct ||
-        oldDelegate.slopPct != slopPct ||
-        oldDelegate.isDark != isDark;
-  }
-}

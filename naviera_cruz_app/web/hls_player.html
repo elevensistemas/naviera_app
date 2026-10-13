@@ -21,7 +21,7 @@
   </style>
 </head>
 <body>
-  <video id="video" controls autoplay muted></video>
+  <video id="video" controls autoplay muted playsinline></video>
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const videoSrc = urlParams.get('url');
@@ -36,6 +36,9 @@
         });
         hls.loadSource(videoSrc);
         hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function () {
+          video.play().catch(function(e) { console.log('Autoplay prevented:', e); });
+        });
         hls.on(Hls.Events.ERROR, function (event, data) {
           if (data.fatal) {
             switch (data.type) {
