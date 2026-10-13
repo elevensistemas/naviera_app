@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../app/config.dart';
 import '../core/storage.dart';
 import '../models/ncs_chat_models.dart';
+import 'ncs_chat_policy.dart';
 
 class NCSChatService {
   static final NCSChatService shared = NCSChatService._internal();
@@ -19,99 +20,102 @@ class NCSChatService {
   }
 
   Stream<NCSStreamEvent> streamChatResponse(String prompt) async* {
-    if (AppConfig.isMockActive) {
-      yield* _mockStreamChatResponse(prompt);
+    final currentUser = SessionManager.shared.currentUser;
+
+    // FASE 1: Verificación de Política Corporativa y Seguridad
+    yield NCSStreamEvent(
+      type: "log",
+      logClass: "info",
+      content: "Verificando política corporativa de seguridad y permisos...",
+    );
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    final targetShip = NCSCorporateChatPolicy.extractShipFromQuery(prompt);
+    final hasShipAccess = targetShip == null || NCSCorporateChatPolicy.hasPermissionForShip(currentUser, targetShip);
+    final hasProhibitedFinancial = NCSCorporateChatPolicy.containsProhibitedFinancialOrEconomicQuery(prompt);
+    final hasProhibitedPii = NCSCorporateChatPolicy.containsProhibitedPiiQuery(prompt);
+    final hasProhibitedSec = NCSCorporateChatPolicy.containsSecurityCredentialsQuery(prompt);
+    final hasEvasion = NCSCorporateChatPolicy.containsEvasionAttempt(prompt);
+    final isProhibited = hasProhibitedFinancial || hasProhibitedPii || hasProhibitedSec || hasEvasion;
+    final isWithinScope = NCSCorporateChatPolicy.isWithinPermittedScope(prompt);
+
+    // 1.A: Control de acceso a buques (un usuario de buque solo puede ver su buque)
+    if (!hasShipAccess) {
+      yield NCSStreamEvent(
+        type: "log",
+        logClass: "warning",
+        content: "Control de acceso: Usuario sin permiso para consultar buques ajenos.",
+      );
+      await Future.delayed(const Duration(milliseconds: 200));
+      yield NCSStreamEvent(
+        type: "result",
+        content: NCSCorporateChatPolicy.unauthorizedVesselMessage,
+      );
       return;
     }
 
-    // Try Centinela endpoints (Local Bridge & Production Server Proxy)
-    final centinelaEndpoints = [
-      "https://navieracruzdelsur.dyndns.org:6570/centinela-api/api/ai-chat/external-bot",
-      "https://navieracruzdelsur.dyndns.org:6570/api/ai-chat/external-bot",
-      "http://192.168.2.121:3001/api/ai-chat/external-bot",
-      "https://192.168.2.121:5073/api/ai-chat/external-bot",
-    ];
-
-    for (final endpoint in centinelaEndpoints) {
-      try {
-        final uri = Uri.parse(endpoint);
-        final res = await http.post(
-          uri,
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': 'centinela-bridge-2026',
-          },
-          body: jsonEncode({
-            'message': prompt,
-            'history': [
-              {
-                'role': 'system',
-                'content': 'Estás hablando directamente a través de la app móvil de voz con un miembro de la tripulación o gerencia de la Naviera Cruz del Sur. Tu rol es ser el Asistente de NCS, conversar de forma empática, directa y profesional. No digas que eres Centinela, sólo di que eres el Asistente de NCS. Contexto: ALFA C (26.02k t para Raizen, fondeado en Rada La Plata por mal clima), GUSTAVO U (16.52k t para WFS), NANY (12.84k t para WFS). Tripulación y cámaras disponibles.'
-              }
-            ]
-          }),
-        ).timeout(const Duration(seconds: 2));
-
-        if (res.statusCode == 200) {
-          final data = jsonDecode(res.body);
-          final reply = data['reply'] as String?;
-          if (reply != null && reply.isNotEmpty) {
-            yield NCSStreamEvent(type: "log", logClass: "info", content: "Conectado con Asistente de NCS...");
-            yield NCSStreamEvent(type: "log", logClass: "info", content: "Procesando respuesta del Control Center...");
-            await Future.delayed(const Duration(milliseconds: 300));
-            yield NCSStreamEvent(
-              type: "result",
-              content: reply,
-              structured: _generateStructuredForPrompt(prompt),
-            );
-            return;
-          }
-        }
-      } catch (_) {}
+    // 1.B: Información prohibida pura (financiera, sueldos, evasión, etc. sin parte permitida)
+    if (isProhibited && !isWithinScope) {
+      yield NCSStreamEvent(
+        type: "log",
+        logClass: "warning",
+        content: "Política corporativa: Consulta sobre información restringida bloqueada.",
+      );
+      await Future.delayed(const Duration(milliseconds: 200));
+      final policyResponse = NCSCorporateChatPolicy.processCorporatePolicy(
+        prompt: prompt,
+        currentUser: currentUser,
+      );
+      yield NCSStreamEvent(
+        type: "result",
+        content: policyResponse,
+      );
+      return;
     }
 
-    // Try standard POST /api/chat/
-    final uri = Uri.parse("$_baseURL/api/chat/");
-    final client = http.Client();
-
-    try {
-      final request = http.Request('POST', uri);
-      request.headers['Content-Type'] = 'application/json';
-      request.headers['Accept'] = 'application/x-ndjson';
-
-      final token = await SessionManager.shared.getToken();
-      if (token != null && token.isNotEmpty) {
-        request.headers['Authorization'] = 'Token $token';
-      }
-
-      request.body = jsonEncode({'message': prompt});
-
-      final streamedResponse = await client.send(request);
-
-      if (streamedResponse.statusCode >= 200 && streamedResponse.statusCode < 300) {
-        final lines = streamedResponse.stream
-            .transform(utf8.decoder)
-            .transform(const LineSplitter());
-
-        await for (final line in lines) {
-          final trimmed = line.trim();
-          if (trimmed.isEmpty) continue;
-
-          try {
-            final jsonMap = jsonDecode(trimmed) as Map<String, dynamic>;
-            yield NCSStreamEvent.fromJson(jsonMap);
-          } catch (e) {
-            print("⚠️ Error decodificando linea NDJSON: $trimmed, err: $e");
-          }
-        }
-      } else {
-        yield* _mockStreamChatResponse(prompt);
-      }
-    } catch (e) {
-      yield* _mockStreamChatResponse(prompt);
-    } finally {
-      client.close();
+    // 1.C: Consulta fuera de alcance
+    if (!isWithinScope && !isProhibited) {
+      yield NCSStreamEvent(
+        type: "log",
+        logClass: "info",
+        content: "Evaluando alcance de consulta con política de empresa...",
+      );
+      await Future.delayed(const Duration(milliseconds: 150));
+      yield NCSStreamEvent(
+        type: "result",
+        content: NCSCorporateChatPolicy.outOfScopeMessage,
+      );
+      return;
     }
+
+    // FASE 2: Consulta dentro de política operativa autorizada
+    yield NCSStreamEvent(
+      type: "log",
+      logClass: "info",
+      content: "Consultando fuentes autorizadas (Flota, Tripulación, Manual de Gestión, Compras)...",
+    );
+    await Future.delayed(const Duration(milliseconds: 250));
+
+    final reply = NCSCorporateChatPolicy.processCorporatePolicy(
+      prompt: prompt,
+      currentUser: currentUser,
+    );
+
+    NCSStructuredVesselData? structured;
+    if (targetShip != null &&
+        (prompt.toLowerCase().contains("donde") ||
+         prompt.toLowerCase().contains("dónde") ||
+         prompt.toLowerCase().contains("estado") ||
+         prompt.toLowerCase().contains("barco") ||
+         prompt.toLowerCase().contains("buque"))) {
+      structured = _generateStructuredForPrompt(targetShip);
+    }
+
+    yield NCSStreamEvent(
+      type: "result",
+      content: reply,
+      structured: structured,
+    );
   }
 
   // MARK: - Smart Centinela Bot Intent Processor matching WhatsApp Bot Functions
@@ -133,7 +137,7 @@ class NCSChatService {
     await Future.delayed(const Duration(milliseconds: 300));
 
     final String responseText;
-    final NCSStructuredVesselData structuredData = _generateStructuredForPrompt(prompt);
+    final NCSStructuredVesselData? structuredData = _generateStructuredForPrompt(prompt);
 
     // PRIORITY 1: Tripulación / Personal / Capitanes (Checked FIRST before vessel names capture it)
     if (lower.contains("tripul") ||
@@ -389,19 +393,9 @@ Como Asistente de NCS, puedo ayudarte con:
     );
   }
 
-  NCSStructuredVesselData _generateStructuredForPrompt(String prompt) {
+  NCSStructuredVesselData? _generateStructuredForPrompt(String prompt) {
     final lower = prompt.toLowerCase();
-    if (lower.contains("oficina")) {
-      return NCSStructuredVesselData(
-        vesselName: "Cámara Oficina Central (NCS)",
-        status: "Transmitiendo en Vivo",
-        speed: "HD 1080p",
-        coordinates: "Oficina Principal",
-        eta: "Online 24/7",
-        fuelLevel: "Alimentación OK",
-        cargoWeight: "Supervisión Activa",
-      );
-    } else if (lower.contains("gustavo")) {
+    if (lower.contains("gustavo")) {
       return NCSStructuredVesselData(
         vesselName: "BT GUSTAVO U",
         status: "En Navegación",
@@ -421,7 +415,17 @@ Como Asistente de NCS, puedo ayudarte con:
         fuelLevel: "155 t (62%)",
         cargoWeight: "528 Ton",
       );
-    } else {
+    } else if (lower.contains("monarca")) {
+      return NCSStructuredVesselData(
+        vesselName: "BT MONARCA I",
+        status: "En Muelle / Alistamiento",
+        speed: "0.0 nudos",
+        coordinates: "34°36'S 58°22'W",
+        eta: "En Puerto",
+        fuelLevel: "90 t (55%)",
+        cargoWeight: "Alistamiento Técnico",
+      );
+    } else if (lower.contains("alfa")) {
       return NCSStructuredVesselData(
         vesselName: "BT ALFA C",
         status: "Fondeado en Rada",
@@ -432,5 +436,6 @@ Como Asistente de NCS, puedo ayudarte con:
         cargoWeight: "528 Ton",
       );
     }
+    return null;
   }
 }

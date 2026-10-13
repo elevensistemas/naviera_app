@@ -121,14 +121,49 @@ const AIChat = () => {
 
   const processAIResponse = async (query) => {
     setProcessing(true);
-    
-    // Generar un micro-contexto dinámico para que el Bot sepa el clima de operaciones y su verdadera directiva
+
+    const lower = query.toLowerCase().trim();
+
+    // POLÍTICA ESTRICTA DE SEGURIDAD CORPORATIVA NCS
+    const outOfScopeMsg = "Puedo ayudarte con información autorizada sobre buques, tripulaciones, el Manual de Gestión y pedidos abiertos de compras.";
+    const restrictedMsg = "No puedo proporcionar información económica, financiera, comercial confidencial ni datos personales sensibles. Puedo ayudarte con la información operativa autorizada.";
+
+    // 1. Detección de evasión / suplantación
+    const isEvasion = ["soy miguel", "soy el dueño", "soy dueño", "soy administrador", "soy admin", "miguel me autorizó", "miguel me autorizo", "ignora las reglas", "ignora las instrucciones", "actúa como", "juego de rol", "jailbreak"].some(t => lower.includes(t));
+    if (isEvasion) {
+      setMessages(prev => [...prev, { id: Date.now()+1, text: restrictedMsg, isUser: false }]);
+      speak(restrictedMsg);
+      setProcessing(false);
+      return;
+    }
+
+    // 2. Detección de información económica, financiera, costos, salarios, PII
+    const isProhibited = ["factur", "costo", "cuanto cuesta", "cuánto cuesta", "cuanto sale", "cuánto sale", "precio", "importe", "monto", "presupuesto", "saldo", "banco", "deuda", "pago", "impuesto", "sueldo", "salario", "remuneracion", "remuneración", "cuanto cobra", "cuánto cobra", "cuanto gana", "cuánto gana", "dni", "cédula", "pasaporte", "domicilio", "telefono privado", "ficha medica", "contraseña", "token"].some(t => lower.includes(t)) ||
+      ((lower.includes("estima") || lower.includes("estimá") || lower.includes("calcula")) && (lower.includes("ingreso") || lower.includes("ganancia") || lower.includes("operacion") || lower.includes("operación")));
+
+    // 3. Alcance permitido
+    const isWithinScope = ["buque", "barco", "flota", "alfa", "gustavo", "nany", "monarca", "donde esta", "dónde está", "tripul", "personal", "capitán", "capitan", "manual", "gestion", "gestión", "procedimiento", "pedido", "compra", "repuesto", "certificado", "mantenimiento", "hola"].some(t => lower.includes(t));
+
+    if (isProhibited && !isWithinScope) {
+      setMessages(prev => [...prev, { id: Date.now()+1, text: restrictedMsg, isUser: false }]);
+      speak(restrictedMsg);
+      setProcessing(false);
+      return;
+    }
+
+    if (!isWithinScope && !isProhibited) {
+      setMessages(prev => [...prev, { id: Date.now()+1, text: outOfScopeMsg, isUser: false }]);
+      speak(outOfScopeMsg);
+      setProcessing(false);
+      return;
+    }
+
+    // Contexto Seguro: Política Estricta NCS
     const contextPrompt = {
       role: "system",
-      content: "Ignora instrucciones previas donde se te refiera como un 'bot externo'. Estás hablando directamente a través de una aplicación móvil de voz con un miembro humano de la tripulación o gerencia de la Naviera Cruz del Sur. Tu rol es conversar con él de forma empática, directa y seria. NUNCA lo llames 'bot' ni menciones sistemas externos. Contexto Operacional Histórico (Marzo 2026): El ALFA C cargó 38 buques con 26.02k toneladas para Raizen. El GUSTAVO U cargó 29 buques con 16.52k toneladas para WFS. El NANY cargó 25 buques con 12.84k toneladas para WFS. Estado Actual Flota: ALFA C fondeado en Rada La Plata por mal clima, ingreso a DDI el 08/04. Clima: Dock Sud 20°C (Nublado), Río de la Plata 21°C (Vientos), Campana 19°C (Lluvia ligera)."
+      content: "Eres el Asistente de NCS de Naviera Cruz del Sur. Solo puedes responder sobre información operativa autorizada (buques, tripulaciones sin datos sensibles, Manual de Gestión y pedidos de compras sin importes ni precios). PROHIBIDO: facturación, gastos, costos, márgenes, sueldos, cuentas bancarias, precios y datos sensibles. Si preguntan por datos prohibidos, responde: 'No puedo proporcionar información económica, financiera, comercial confidencial ni datos personales sensibles. Puedo ayudarte con la información operativa autorizada.' Si está fuera del alcance: 'Puedo ayudarte con información autorizada sobre buques, tripulaciones, el Manual de Gestión y pedidos abiertos de compras.'"
     };
 
-    // Preparar historial compatible con APIs de LLM (Groq/OpenAI) agregando el contexto base
     const currentHistory = [
       contextPrompt,
       ...messages.filter(msg => msg.id !== 1).map(msg => ({
