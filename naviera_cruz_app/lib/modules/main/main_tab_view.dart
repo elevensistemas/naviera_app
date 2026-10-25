@@ -160,12 +160,21 @@ class NavieraBottomBar extends StatelessWidget {
 
     final items = isTripulante ? tripulanteItems : officeItems;
     final double bottomPadding = MediaQuery.of(context).padding.bottom;
-    final double barHeight = 70.0 + bottomPadding;
+    final double barHeight = 72.0 + bottomPadding;
 
     return Container(
       height: barHeight,
       decoration: BoxDecoration(
-        color: const Color(0xFF001F3F), // Navy oscuro corporativo tal cual captura
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF001D40),
+            Color(0xFF003875),
+            Color(0xFF00224A),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.35),
@@ -177,7 +186,7 @@ class NavieraBottomBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
+          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(items.length, (index) {
@@ -185,46 +194,69 @@ class NavieraBottomBar extends StatelessWidget {
               final item = items[index];
 
               return Expanded(
-                child: Center(
-                  child: GestureDetector(
-                    onTap: () => onTap(index),
-                    behavior: HitTestBehavior.opaque,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeInOut,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 2.0,
-                        vertical: 4.0,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF0066CC) : Colors.transparent,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            isSelected ? item.activeIcon : item.icon,
-                            color: isSelected ? Colors.white : Colors.white.withOpacity(0.85),
-                            size: isSelected ? 21 : 20,
-                          ),
-                          const SizedBox(height: 2),
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              item.label,
-                              maxLines: 1,
-                              softWrap: false,
-                              style: TextStyle(
-                                color: isSelected ? Colors.white : Colors.white.withOpacity(0.85),
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                fontSize: 10.5,
+                child: GestureDetector(
+                  onTap: () => onTap(index),
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeInOut,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 2.0,
+                      vertical: 6.0,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      gradient: isSelected
+                          ? const LinearGradient(
+                              colors: [
+                                Color(0xFF0088FF),
+                                Color(0xFF0057B8),
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            )
+                          : null,
+                      border: isSelected
+                          ? Border.all(
+                              color: Colors.white.withOpacity(0.35),
+                              width: 1,
+                            )
+                          : null,
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: const Color(0xFF007FFF).withOpacity(0.6),
+                                blurRadius: 12,
+                                spreadRadius: 1,
+                                offset: const Offset(0, 2),
                               ),
+                            ]
+                          : null,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          isSelected ? item.activeIcon : item.icon,
+                          color: isSelected ? Colors.white : Colors.white.withOpacity(0.75),
+                          size: isSelected ? 23 : 21,
+                        ),
+                        const SizedBox(height: 3),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            item.label,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.white.withOpacity(0.75),
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w400,
+                              fontSize: 11,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
