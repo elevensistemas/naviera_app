@@ -202,6 +202,8 @@ class SessionManager with ChangeNotifier {
 
   @visibleForTesting
   void setCurrentUserForTesting(User? user) {
+    _forceLoggedOut = false;
+    _overrideTripulante = null;
     _currentUser = user;
     _isAuthenticated = user != null;
     notifyListeners();
@@ -319,6 +321,14 @@ class SessionManager with ChangeNotifier {
   bool get isTripulanteMode {
     if (_forceLoggedOut) return false;
     if (_overrideTripulante != null) return _overrideTripulante!;
+
+    // Si el usuario actual es de tripulación según el catálogo oficial,
+    // tiene prioridad directa sobre parámetros de URL
+    if (_currentUser != null) {
+      if (isUserTripulanteRole) return true;
+      if (isUserAdmin) return false;
+    }
+
     try {
       final role = Uri.base.queryParameters['role'];
       if (role == 'tripulante' || role == 'nany') return true;
@@ -450,6 +460,8 @@ class SessionManager with ChangeNotifier {
 
   Future<void> login(String token, User user) async {
     _forceLoggedOut = false;
+    _overrideTripulante = null;
+    cleanBrowserUrl();
     // Limpiar caché de datos personales previos
     ProductionCrewProfileService.clearCache();
     await _secureStorage.write(key: _tokenKey, value: token);

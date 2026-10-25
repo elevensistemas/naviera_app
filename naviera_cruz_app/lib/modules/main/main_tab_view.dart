@@ -193,12 +193,12 @@ class NavieraBottomBar extends StatelessWidget {
                       duration: const Duration(milliseconds: 200),
                       curve: Curves.easeInOut,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8.0,
-                        vertical: 5.0,
+                        horizontal: 2.0,
+                        vertical: 4.0,
                       ),
                       decoration: BoxDecoration(
                         color: isSelected ? const Color(0xFF0066CC) : Colors.transparent,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -207,15 +207,20 @@ class NavieraBottomBar extends StatelessWidget {
                           Icon(
                             isSelected ? item.activeIcon : item.icon,
                             color: isSelected ? Colors.white : Colors.white.withOpacity(0.85),
-                            size: isSelected ? 22 : 21,
+                            size: isSelected ? 21 : 20,
                           ),
                           const SizedBox(height: 2),
-                          Text(
-                            item.label,
-                            style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.white.withOpacity(0.85),
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w400,
-                              fontSize: 11,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              item.label,
+                              maxLines: 1,
+                              softWrap: false,
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : Colors.white.withOpacity(0.85),
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                fontSize: 10.5,
+                              ),
                             ),
                           ),
                         ],

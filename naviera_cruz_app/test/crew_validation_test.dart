@@ -706,5 +706,46 @@ void main() {
       expect(tula.calculatedDays, equals(5));
     });
   });
+
+  group('8. Validación de Mejoras Solicitadas: Usuario marenco, Modo Tripulante y Cámaras Ezviz', () {
+    test('Usuario "marenco" resuelve de forma estricta a Capitán Marenco Rubén Darío de ALFA C', () async {
+      // 1. Deserialización directa desde json
+      final user = User.fromJson({'username': 'marenco'});
+      expect(user.name, equals('Marenco Rubén Darío'));
+      expect(user.role, equals('Capitán'));
+      expect(user.sector, contains('ALFA C'));
+
+      // 2. Comprobación en SessionManager
+      SessionManager.shared.setCurrentUserForTesting(user);
+      expect(SessionManager.shared.isUserTripulanteRole, isTrue);
+      expect(SessionManager.shared.isTripulanteMode, isTrue);
+      expect(SessionManager.shared.isUserAlfaCrew, isTrue);
+      expect(SessionManager.shared.isUserNanyCrew, isFalse);
+
+      // 3. Login por MockAuthService
+      final authResult = await MockAuthService().login('marenco', 'pass123');
+      final loggedUser = authResult['user'] as User;
+      expect(loggedUser.name, equals('Marenco Rubén Darío'));
+      expect(loggedUser.role, equals('Capitán'));
+    });
+
+    test('Cámaras Ezviz: ALFA C y NANY cuentan con URLs activas no vencidas y caché instantáneo', () async {
+      final alfaUrl = EzvizService.shared.getCachedStreamUrl('BF1765385');
+      final nanyUrl = EzvizService.shared.getCachedStreamUrl('BF1765344');
+
+      expect(alfaUrl, isNotNull);
+      expect(alfaUrl!.contains('BF1765385_1_1.m3u8'), isTrue);
+      expect(alfaUrl.contains('expire=1793052311'), isTrue); // Timestamp activo y válido
+
+      expect(nanyUrl, isNotNull);
+      expect(nanyUrl!.contains('BF1765344_1_1.m3u8'), isTrue);
+      expect(nanyUrl.contains('expire=1793052312'), isTrue);
+
+      // Resolución inmediata con getLiveStreamUrl
+      final liveAlfa = await EzvizService.shared.getLiveStreamUrl('BF1765385');
+      expect(liveAlfa, equals(alfaUrl));
+    });
+  });
 }
+
 

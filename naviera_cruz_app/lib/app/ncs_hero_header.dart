@@ -51,17 +51,15 @@ class NcsHeroHeader extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onHorizontalDragEnd: (DragEndDetails details) {
-        // Deslizar horizontalmente para cambiar de portada en oficina entre Alfa C y Nany
+        // Deslizar horizontalmente para cambiar de portada en oficina entre Alfa C y Nany (silencioso y fluido)
         if (!session.isTripulanteMode) {
           final velocity = details.primaryVelocity ?? 0;
           if (velocity < -80) {
             // Desliza hacia la izquierda -> Siguiente portada (Alfa C <-> Nany)
             session.nextOfficeCover();
-            _showCoverNotification(context, session.currentOfficeCoverName);
           } else if (velocity > 80) {
             // Desliza hacia la derecha -> Portada anterior (Alfa C <-> Nany)
             session.previousOfficeCover();
-            _showCoverNotification(context, session.currentOfficeCoverName);
           }
         }
       },
@@ -69,7 +67,6 @@ class NcsHeroHeader extends StatelessWidget {
         // Doble clic para cambiar de portada en oficina
         if (!session.isTripulanteMode) {
           session.cycleOfficeCover();
-          _showCoverNotification(context, session.currentOfficeCoverName);
         }
       },
       onTap: onTap,
@@ -335,105 +332,13 @@ class NcsHeroHeader extends StatelessWidget {
           ),
         ),
 
-        // Control deslizador de portada interactivo para personal de oficina (Alfa C <-> Nany)
-        if (!session.isTripulanteMode)
-              Positioned(
-                bottom: 8,
-                right: isMobile ? 14 : 24,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.45),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withOpacity(0.25), width: 0.8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 4,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          session.previousOfficeCover();
-                          _showCoverNotification(context, session.currentOfficeCoverName);
-                        },
-                        borderRadius: BorderRadius.circular(12),
-                        child: const Padding(
-                          padding: EdgeInsets.all(2.0),
-                          child: Icon(Icons.chevron_left_rounded, size: 16, color: Colors.white70),
-                        ),
-                      ),
-                      const SizedBox(width: 2),
-                      GestureDetector(
-                        onTap: () {
-                          session.toggleOfficeShipCover();
-                          _showCoverNotification(context, session.currentOfficeCoverName);
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.swap_horiz_rounded, size: 13, color: Colors.white70),
-                            const SizedBox(width: 4),
-                            Text(
-                              session.currentOfficeCoverName,
-                              style: const TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 2),
-                      InkWell(
-                        onTap: () {
-                          session.nextOfficeCover();
-                          _showCoverNotification(context, session.currentOfficeCoverName);
-                        },
-                        borderRadius: BorderRadius.circular(12),
-                        child: const Padding(
-                          padding: EdgeInsets.all(2.0),
-                          child: Icon(Icons.chevron_right_rounded, size: 16, color: Colors.white70),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
           ],
         ),
       ),
     );
   }
 
-  void _showCoverNotification(BuildContext context, String coverName) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.swap_horiz_rounded, color: Colors.white, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              'Portada: $coverName',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
-            ),
-          ],
-        ),
-        duration: const Duration(milliseconds: 1200),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF003D7A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-  }
+
 
   Widget _buildDesktopUserChip(BuildContext context, User user) {
     final String letter = user.name.trim().isNotEmpty ? user.name.trim()[0].toUpperCase() : 'U';

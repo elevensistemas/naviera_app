@@ -1009,34 +1009,23 @@ class IntranetCrewCatalog {
     final n = (name ?? '').toLowerCase();
     final u = (username ?? '').toLowerCase();
 
-    // 1. Roles y sectores explícitos de OFICINA (NUNCA son tripulantes)
-    if (s.contains('gerencia') ||
-        s.contains('operaciones') ||
-        s.contains('administra') ||
-        s.contains('oficina') ||
-        s.contains('directorio') ||
-        s.contains('sistemas') ||
-        s.contains('finanzas') ||
-        s.contains('contabilidad') ||
-        s.contains('recursos humanos') ||
-        s.contains('rrhh') ||
-        s.contains('compras') ||
-        r.contains('gerente') ||
-        r.contains('director') ||
-        r.contains('administrat') ||
-        r.contains('analista') ||
-        r.contains('jefe de operaciones') ||
-        u == 'a.lopresti' ||
+    // 1. Usuarios específicos y comprobados de OFICINA / GERENCIA
+    if (u == 'a.lopresti' ||
         u == 'alejandro' ||
         u == 'admin' ||
         u == 'm.piccinini' ||
         n.contains('lopresti') ||
         n.contains('lo presti') ||
-        n.contains('piccinini')) {
+        n.contains('piccinini') ||
+        s.contains('gerencia') ||
+        s.contains('directorio') ||
+        r.contains('gerente') ||
+        r.contains('director') ||
+        r.contains('jefe de operaciones')) {
       return false;
     }
 
-    // 2. Comprobación contra el padrón oficial de 89 tripulantes
+    // 2. Comprobación contra el padrón oficial de 89 tripulantes (MÁXIMA PRIORIDAD PARA PERSONAL EMBARCADO)
     if (name != null && name.trim().isNotEmpty) {
       if (findCrewMember(name) != null) return true;
     }
@@ -1065,6 +1054,21 @@ class IntranetCrewCatalog {
         r.contains('conductor') ||
         r.contains('tripulant')) {
       return true;
+    }
+
+    // 4. Roles y sectores explícitos de OFICINA
+    if (s.contains('operaciones') ||
+        s.contains('administra') ||
+        s.contains('oficina') ||
+        s.contains('sistemas') ||
+        s.contains('finanzas') ||
+        s.contains('contabilidad') ||
+        s.contains('recursos humanos') ||
+        s.contains('rrhh') ||
+        s.contains('compras') ||
+        r.contains('administrat') ||
+        r.contains('analista')) {
+      return false;
     }
 
     // Todo el resto pertenece a OFICINA

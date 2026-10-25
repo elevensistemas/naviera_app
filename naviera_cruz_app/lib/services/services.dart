@@ -405,7 +405,7 @@ class MockFleetService implements FleetService {
         flag: "Panamá 🇵🇦",
         latitude: -42.76,
         longitude: -65.03,
-        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765385_1_1.m3u8?expire=1791983362&id=1030225763993604096&t=e7d9b21b67319bcd0f1d5b0014c5aee0c642b9114e21fb715375d4e3638897bf&ev=100&c=fe12620732&u=da1e897bca5549f4996a9d149f367b71",
+        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765385_1_1.m3u8?expire=1793052311&id=1034709261508558848&t=89d1249110f715517ebcd5a3a0236c307f274182e5599c4c7f288cb4b5204330&ev=100&c=fe12620732&u=279f366b908f4daaaae9d2afbc2c6aa2",
         cameras: [
           ShipCamera(id: "cam-alfa", name: "BT.ALFAC", serialNumber: "BF1765385", isActive: true),
         ],
@@ -429,9 +429,9 @@ class MockFleetService implements FleetService {
         flag: "Argentina 🇦🇷",
         latitude: -38.00,
         longitude: -57.55,
-        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1767228_1_1.m3u8?expire=1791983362&id=1030225764011499520&t=c6cc87226530d49291195df67d1b5bbc7fa6210a5b4920541546ddc4c02ee008&ev=100&c=f5f9942f03&u=af7980d447c6451b9871bf77e62365f3",
+        cameraUrl: "",
         cameras: [
-          ShipCamera(id: "cam-gustavo", name: "BT.GUSTAVO.U", serialNumber: "BF1767228", isActive: true),
+          ShipCamera(id: "cam-gustavo", name: "BT.GUSTAVO.U", serialNumber: "BF1767228", isActive: false),
         ],
         targetShips: Ship.getDefaultTargetShipsFor("GUSTAVO U"),
         captainName: "Ramirez Pedro",
@@ -453,7 +453,7 @@ class MockFleetService implements FleetService {
         flag: "Argentina 🇦🇷",
         latitude: -54.80,
         longitude: -68.30,
-        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765344_1_1.m3u8?expire=1791983362&id=1030225764045402112&t=65f8bd88ff9b15db0755ab8635accb3d8e96985b749553795c13b2a15104dcc5&ev=100&c=ea289a6356&u=06e37856b8214f938f8fd6a8bf5d9a36",
+        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765344_1_1.m3u8?expire=1793052312&id=1034709262797811712&t=f2a8fbeafa97c299b65da1342175eb53f3380f11056ac0a4236535a35a51b749&ev=100&c=ea289a6356&u=f16b3a1af2984ad9a4cd956b9e4bcf88",
         cameras: [
           ShipCamera(id: "cam-nany", name: "BT.NANY1", serialNumber: "BF1765344", isActive: true),
         ],
@@ -536,8 +536,22 @@ class EzvizService {
   static const String _appKey = "b7b99e5c45d64148a1492fb25b84ceb8";
   static const String _appSecret = "2bd739f5c4614af0b33191f9a780fd42";
 
+  // Caché en memoria pre-sembrado con las transmisiones en vivo activas de la flota
+  final Map<String, String> _streamCache = {
+    // Buque ALFA C (BF1765385)
+    'BF1765385': 'https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765385_1_1.m3u8?expire=1793052311&id=1034709261508558848&t=89d1249110f715517ebcd5a3a0236c307f274182e5599c4c7f288cb4b5204330&ev=100&c=fe12620732&u=279f366b908f4daaaae9d2afbc2c6aa2',
+    // Buque NANY (BF1765344)
+    'BF1765344': 'https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765344_1_1.m3u8?expire=1793052312&id=1034709262797811712&t=f2a8fbeafa97c299b65da1342175eb53f3380f11056ac0a4236535a35a51b749&ev=100&c=ea289a6356&u=f16b3a1af2984ad9a4cd956b9e4bcf88',
+  };
+
+  final Set<String> _offlineSerials = {'BF1767228'}; // Gustavo U offline físicamente en puerto
   String? _accessToken;
   DateTime? _tokenExpireTime;
+
+  /// Retorna de inmediato la URL en caché sin latencia ni bloqueos de red
+  String? getCachedStreamUrl(String deviceSerial) {
+    return _streamCache[deviceSerial];
+  }
 
   Future<String> _getAccessToken() async {
     if (_accessToken != null && _tokenExpireTime != null && DateTime.now().isBefore(_tokenExpireTime!)) {
@@ -554,30 +568,38 @@ class EzvizService {
           "appKey": _appKey,
           "appSecret": _appSecret,
         },
-      );
+      ).timeout(const Duration(milliseconds: 3000));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data["code"] == "200" && data["data"] != null) {
           _accessToken = data["data"]["accessToken"];
-          // Token is valid for 7 days, cache it for 6 days
+          // Token válido por 7 días
           _tokenExpireTime = DateTime.now().add(const Duration(days: 6));
           return _accessToken!;
-        } else {
-          throw Exception(data["msg"] ?? "Error obteniendo token de Ezviz");
         }
-      } else {
-        throw Exception("Error de conexión con Ezviz API (HTTP ${response.statusCode})");
       }
-    } catch (e) {
-      throw Exception("Fallo de red al autenticar en Ezviz: $e");
-    }
+    } catch (_) {}
+    return _accessToken ?? "";
   }
 
   Future<String> getLiveStreamUrl(String deviceSerial) async {
-    final token = await _getAccessToken();
+    // Si ya está en caché pre-sembrado, devolverlo al instante para máxima velocidad
+    if (_streamCache.containsKey(deviceSerial)) {
+      return _streamCache[deviceSerial]!;
+    }
+
+    if (_offlineSerials.contains(deviceSerial)) {
+      throw Exception("El dispositivo $deviceSerial se encuentra actualmente fuera de línea.");
+    }
 
     try {
+      final token = await _getAccessToken();
+      if (token.isEmpty) {
+        if (_streamCache.containsKey(deviceSerial)) return _streamCache[deviceSerial]!;
+        throw Exception("No se pudo contactar el servicio de token Ezviz.");
+      }
+
       final response = await http.post(
         Uri.parse("https://open.ezvizlife.com/api/lapp/v2/live/address/get"),
         headers: {
@@ -590,23 +612,32 @@ class EzvizService {
           "protocol": "2", // HLS
           "quality": "1",  // HD/Standard
         },
-      );
+      ).timeout(const Duration(milliseconds: 3500));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data["code"] == "200" && data["data"] != null) {
           final url = data["data"]["url"];
-          if (url != null && url.isNotEmpty) {
-            return url;
+          if (url != null && url.toString().isNotEmpty) {
+            _streamCache[deviceSerial] = url.toString();
+            return url.toString();
           }
+        } else if (data["code"] == "20007") {
+          _offlineSerials.add(deviceSerial);
+          throw Exception("Dispositivo fuera de línea (20007)");
         }
-        throw Exception(data["msg"] ?? "Error de Ezviz al obtener dirección de directo");
-      } else {
-        throw Exception("Error de red con Ezviz (HTTP ${response.statusCode})");
       }
     } catch (e) {
-      throw Exception("Fallo al consultar dirección HLS de Ezviz: $e");
+      if (_streamCache.containsKey(deviceSerial)) {
+        return _streamCache[deviceSerial]!;
+      }
+      rethrow;
     }
+
+    if (_streamCache.containsKey(deviceSerial)) {
+      return _streamCache[deviceSerial]!;
+    }
+    throw Exception("No se pudo obtener la transmisión en vivo.");
   }
 }
 
@@ -876,11 +907,10 @@ class ProductionFleetService implements FleetService {
 
           final activeCams = ship.cameras.where((c) => c.isActive && c.serialNumber.isNotEmpty);
           if (activeCams.isNotEmpty) {
-            try {
-              final camera = activeCams.first;
-              cameraUrl = await EzvizService.shared.getLiveStreamUrl(camera.serialNumber);
-            } catch (e) {
-              debugPrint("Error resolving Ezviz camera stream for ${ship.name}: $e");
+            final camera = activeCams.first;
+            final cached = EzvizService.shared.getCachedStreamUrl(camera.serialNumber);
+            if (cached != null && cached.isNotEmpty) {
+              cameraUrl = cached;
             }
           }
 

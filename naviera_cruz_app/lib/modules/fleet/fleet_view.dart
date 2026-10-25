@@ -129,8 +129,12 @@ class _FleetViewState extends State<FleetView> {
       'NANY': 'BF1765344',
     };
 
+    final List<Future> tasks = [];
+    bool needsSetState = false;
+
     for (int i = 0; i < _ships.length; i++) {
-      final ship = _ships[i];
+      final index = i;
+      final ship = _ships[index];
       String? serial;
       for (final entry in serialMap.entries) {
         if (ship.name.toUpperCase().contains(entry.key)) {
@@ -139,17 +143,33 @@ class _FleetViewState extends State<FleetView> {
         }
       }
       if (serial != null) {
-        try {
-          final liveUrl = await EzvizService.shared.getLiveStreamUrl(serial);
-          if (liveUrl.isNotEmpty && mounted) {
-            setState(() {
-              _ships[i] = _ships[i].copyWith(cameraUrl: liveUrl);
-            });
-          }
-        } catch (e) {
-          debugPrint("Ezviz live stream resolution for ${ship.name}: $e");
+        final cached = EzvizService.shared.getCachedStreamUrl(serial);
+        if (cached != null && cached.isNotEmpty && _ships[index].cameraUrl != cached) {
+          _ships[index] = _ships[index].copyWith(cameraUrl: cached);
+          needsSetState = true;
         }
+
+        tasks.add(() async {
+          try {
+            final liveUrl = await EzvizService.shared.getLiveStreamUrl(serial!);
+            if (liveUrl.isNotEmpty && mounted) {
+              setState(() {
+                _ships[index] = _ships[index].copyWith(cameraUrl: liveUrl);
+              });
+            }
+          } catch (e) {
+            debugPrint("Ezviz live stream resolution for ${ship.name}: $e");
+          }
+        }());
       }
+    }
+
+    if (needsSetState && mounted) {
+      setState(() {});
+    }
+
+    if (tasks.isNotEmpty) {
+      await Future.wait(tasks);
     }
   }
 
@@ -167,7 +187,7 @@ class _FleetViewState extends State<FleetView> {
         flag: "Panamá 🇵🇦",
         latitude: -42.76,
         longitude: -65.03,
-        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765385_1_1.m3u8?expire=1791983362&id=1030225763993604096&t=e7d9b21b67319bcd0f1d5b0014c5aee0c642b9114e21fb715375d4e3638897bf&ev=100&c=fe12620732&u=da1e897bca5549f4996a9d149f367b71",
+        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765385_1_1.m3u8?expire=1793052311&id=1034709261508558848&t=89d1249110f715517ebcd5a3a0236c307f274182e5599c4c7f288cb4b5204330&ev=100&c=fe12620732&u=279f366b908f4daaaae9d2afbc2c6aa2",
         cameras: [
           ShipCamera(id: "cam-alfa", name: "BT.ALFAC", serialNumber: "BF1765385", isActive: true),
         ],
@@ -191,9 +211,9 @@ class _FleetViewState extends State<FleetView> {
         flag: "Argentina 🇦🇷",
         latitude: -38.00,
         longitude: -57.55,
-        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1767228_1_1.m3u8?expire=1791983362&id=1030225764011499520&t=c6cc87226530d49291195df67d1b5bbc7fa6210a5b4920541546ddc4c02ee008&ev=100&c=f5f9942f03&u=af7980d447c6451b9871bf77e62365f3",
+        cameraUrl: "",
         cameras: [
-          ShipCamera(id: "cam-gustavo", name: "BT.GUSTAVO.U", serialNumber: "BF1767228", isActive: true),
+          ShipCamera(id: "cam-gustavo", name: "BT.GUSTAVO.U", serialNumber: "BF1767228", isActive: false),
         ],
         targetShips: Ship.getDefaultTargetShipsFor("GUSTAVO U"),
         captainName: "Ramirez Pedro",
@@ -215,7 +235,7 @@ class _FleetViewState extends State<FleetView> {
         flag: "Argentina 🇦🇷",
         latitude: -54.80,
         longitude: -68.30,
-        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765344_1_1.m3u8?expire=1791983362&id=1030225764045402112&t=65f8bd88ff9b15db0755ab8635accb3d8e96985b749553795c13b2a15104dcc5&ev=100&c=ea289a6356&u=06e37856b8214f938f8fd6a8bf5d9a36",
+        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765344_1_1.m3u8?expire=1793052312&id=1034709262797811712&t=f2a8fbeafa97c299b65da1342175eb53f3380f11056ac0a4236535a35a51b749&ev=100&c=ea289a6356&u=f16b3a1af2984ad9a4cd956b9e4bcf88",
         cameras: [
           ShipCamera(id: "cam-nany", name: "BT.NANY1", serialNumber: "BF1765344", isActive: true),
         ],

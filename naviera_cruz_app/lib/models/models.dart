@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../app/config.dart';
+import 'intranet_crew_catalog.dart';
 
 // User Model
 class User {
@@ -24,7 +25,26 @@ class User {
     if (fullName.isEmpty && (json['first_name'] != null || json['last_name'] != null)) {
       fullName = "${json['first_name'] ?? ''} ${json['last_name'] ?? ''}".trim();
     }
-    final rawUser = (json['username'] ?? '').toString().toLowerCase();
+    final rawUser = (json['username'] ?? json['id'] ?? '').toString().toLowerCase().trim();
+
+    // 1. Comprobar prioritariamente si corresponde a un tripulante del catálogo oficial de 89 miembros
+    final catalogMember = (fullName.isNotEmpty ? IntranetCrewCatalog.findCrewMember(fullName) : null) ??
+        (rawUser.isNotEmpty ? IntranetCrewCatalog.findCrewMember(rawUser) : null);
+
+    if (catalogMember != null) {
+      return User(
+        id: (json['id'] ?? json['user_id'] ?? catalogMember.id).toString(),
+        name: catalogMember.name,
+        role: json['role']?.toString().isNotEmpty == true ? json['role'].toString() : catalogMember.roleName,
+        avatarURL: json['avatar_url']?.toString() ?? json['avatarURL']?.toString(),
+        sector: json['sector']?.toString().isNotEmpty == true
+            ? json['sector'].toString()
+            : (catalogMember.isOnBoard ? "Buque ${catalogMember.shipName}" : "En Tierra"),
+        birthDate: json['birth_date'] != null ? DateTime.tryParse(json['birth_date'].toString()) : null,
+      );
+    }
+
+    // 2. Personal de oficina / gerencia
     final rawName = fullName.toLowerCase();
     if (fullName.isEmpty ||
         rawUser.contains('lopresti') ||
@@ -43,10 +63,10 @@ class User {
     return User(
       id: (json['id'] ?? json['user_id'] ?? json['username'])?.toString() ?? '',
       name: fullName,
-      role: json['role']?.toString() ?? '',
+      role: json['role']?.toString() ?? 'Personal de Oficina',
       avatarURL: json['avatar_url']?.toString() ?? json['avatarURL']?.toString(),
       sector: json['sector']?.toString() ?? (fullName == 'Alejandro Lo Presti' ? 'Gerencia' : 'Operaciones'),
-      birthDate: json['birth_date'] != null ? DateTime.parse(json['birth_date']) : null,
+      birthDate: json['birth_date'] != null ? DateTime.tryParse(json['birth_date'].toString()) : null,
     );
   }
 
