@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/storage.dart';
+import 'core/app_navigator.dart';
 import 'app/theme.dart';
 import 'modules/auth/login_view.dart';
 import 'modules/main/main_tab_view.dart';
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
     final session = Provider.of<SessionManager>(context);
     
     return MaterialApp(
+      navigatorKey: appNavigatorKey,
       title: 'Naviera Cruz del Sur',
       debugShowCheckedModeBanner: false,
       theme: ColorTheme.lightTheme,

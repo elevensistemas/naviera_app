@@ -6,7 +6,8 @@ import '../../app/ncs_hero_header.dart';
 
 class CrewListView extends StatefulWidget {
   final String? shipId;
-  const CrewListView({super.key, this.shipId});
+  final String? shipName;
+  const CrewListView({super.key, this.shipId, this.shipName});
 
   @override
   State<CrewListView> createState() => _CrewListViewState();
@@ -16,6 +17,7 @@ class _CrewListViewState extends State<CrewListView> {
   final List<CrewMember> _crewMembers = [];
   final List<Ship> _ships = [];
   String? _selectedShipId;
+  String? _selectedShipName;
   bool _isLoading = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -24,6 +26,18 @@ class _CrewListViewState extends State<CrewListView> {
   void initState() {
     super.initState();
     _selectedShipId = widget.shipId;
+    _selectedShipName = widget.shipName;
+    if (_selectedShipName == null && widget.shipId != null) {
+      final s = widget.shipId!.toUpperCase();
+      if (s.contains('ALFA') || s == '1' || s == '2071' || s == 'S1') {
+        _selectedShipName = 'ALFA C';
+      } else if (s.contains('GUSTAVO') || s == '2' || s == '6' || s == '2073' || s == 'S2') {
+        _selectedShipName = 'GUSTAVO U';
+      } else if (s.contains('NANY') || s == '4' || s == '5' || s == 'S3') {
+        _selectedShipName = 'NANY';
+      }
+    }
+    _selectedShipName ??= 'ALFA C';
     _initData();
   }
 
@@ -47,14 +61,17 @@ class _CrewListViewState extends State<CrewListView> {
         } else {
           // Fallback ships matching database IDs and design
           _ships.addAll([
-            Ship(id: "4", name: "ALFA C", status: ShipStatus.active, totalCargo: 1500, latitude: -42.76, longitude: -65.03),
-            Ship(id: "6", name: "GUSTAVO U", status: ShipStatus.active, totalCargo: 1200, latitude: -38.00, longitude: -57.55),
-            Ship(id: "5", name: "NANY", status: ShipStatus.docked, totalCargo: 800, latitude: -54.80, longitude: -68.30),
+            Ship(id: "1", name: "ALFA C", status: ShipStatus.active, totalCargo: 1500, latitude: -42.76, longitude: -65.03),
+            Ship(id: "2", name: "GUSTAVO U", status: ShipStatus.active, totalCargo: 1200, latitude: -38.00, longitude: -57.55),
+            Ship(id: "4", name: "NANY", status: ShipStatus.docked, totalCargo: 800, latitude: -54.80, longitude: -68.30),
           ]);
         }
         
-        if (_selectedShipId == null && _ships.isNotEmpty) {
-          _selectedShipId = _ships.first.id;
+        if (_selectedShipName != null) {
+          final matched = _ships.where((s) => s.name.toUpperCase().contains(_selectedShipName!.toUpperCase()));
+          if (matched.isNotEmpty) {
+            _selectedShipId = matched.first.id;
+          }
         }
       });
 
@@ -67,12 +84,12 @@ class _CrewListViewState extends State<CrewListView> {
   }
 
   Future<void> _loadCrew() async {
-    final targetId = _selectedShipId ?? (_ships.isNotEmpty ? _ships.first.id : '4');
+    final targetQuery = _selectedShipName ?? 'ALFA C';
     
     setState(() => _isLoading = true);
     try {
       final fleetService = FleetService();
-      final crew = await fleetService.fetchCrew(targetId);
+      final crew = await fleetService.fetchCrew(targetQuery);
       
       final seenIds = <String>{};
       final uniqueCrew = <CrewMember>[];
@@ -108,8 +125,8 @@ class _CrewListViewState extends State<CrewListView> {
   }
 
   void _loadFallbackCrew() async {
-    final shipId = _selectedShipId ?? '4';
-    final fallbackList = await MockFleetService().fetchCrew(shipId);
+    final targetQuery = _selectedShipName ?? 'ALFA C';
+    final fallbackList = await MockFleetService().fetchCrew(targetQuery);
     if (mounted) {
       final embarkedOnly = fallbackList.where((m) =>
           m.isOnBoard &&
@@ -364,37 +381,38 @@ class _CrewListViewState extends State<CrewListView> {
     final shipsList = _ships.isNotEmpty
         ? _ships
         : [
-            Ship(id: "4", name: "ALFA C", status: ShipStatus.active, totalCargo: 0, latitude: 0, longitude: 0),
-            Ship(id: "6", name: "GUSTAVO U", status: ShipStatus.active, totalCargo: 0, latitude: 0, longitude: 0),
-            Ship(id: "5", name: "NANY", status: ShipStatus.active, totalCargo: 0, latitude: 0, longitude: 0),
+            Ship(id: "1", name: "ALFA C", status: ShipStatus.active),
+            Ship(id: "2", name: "GUSTAVO U", status: ShipStatus.active),
+            Ship(id: "4", name: "NANY", status: ShipStatus.active),
           ];
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: shipsList.map((ship) {
-          final isSelected = (_selectedShipId != null &&
-                  (_selectedShipId == ship.id ||
-                      _selectedShipId!.toUpperCase() == ship.name.toUpperCase() ||
-                      (_selectedShipId == '4' && ship.name.contains('ALFA')) ||
-                      (_selectedShipId == 's1' && ship.name.contains('ALFA')) ||
-                      (_selectedShipId == '6' && ship.name.contains('GUSTAVO')) ||
-                      (_selectedShipId == 's2' && ship.name.contains('GUSTAVO')) ||
-                      (_selectedShipId == '5' && ship.name.contains('NANY')) ||
-                      (_selectedShipId == 's3' && ship.name.contains('NANY')))) ||
-              (_selectedShipId == null && ship == shipsList.first);
+          final isSelected = _selectedShipName != null
+              ? ship.name.toUpperCase().contains(_selectedShipName!.toUpperCase())
+              : (_selectedShipId == ship.id || ship == shipsList.first);
 
           final nameUpper = ship.name.toUpperCase();
-          Color chipBg;
+          Color activeColor;
           if (nameUpper.contains("ALFA")) {
-            chipBg = ColorTheme.primary; // Azul
+            activeColor = const Color(0xFF0057B8); // Brand Blue
           } else if (nameUpper.contains("NANY")) {
-            chipBg = ColorTheme.accent; // Naranja
-          } else if (nameUpper.contains("GUSTAVO")) {
-            chipBg = isDark ? Colors.grey.shade700 : const Color(0xFF94A3B8); // Gris
+            activeColor = const Color(0xFFEA580C); // Warm Orange
           } else {
-            chipBg = isSelected ? ColorTheme.primary : (isDark ? Colors.grey.shade700 : const Color(0xFF94A3B8));
+            activeColor = const Color(0xFF475569); // Slate Grey
           }
+
+          final chipBg = isSelected
+              ? activeColor
+              : (isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9));
+          final textColor = isSelected
+              ? Colors.white
+              : (isDark ? Colors.white70 : const Color(0xFF64748B));
+          final borderColor = isSelected
+              ? activeColor
+              : (isDark ? Colors.white12 : const Color(0xFFE2E8F0));
 
           return Padding(
             padding: const EdgeInsets.only(right: 10.0),
@@ -402,6 +420,7 @@ class _CrewListViewState extends State<CrewListView> {
               onTap: () {
                 setState(() {
                   _selectedShipId = ship.id;
+                  _selectedShipName = ship.name;
                 });
                 _loadCrew();
               },
@@ -411,13 +430,11 @@ class _CrewListViewState extends State<CrewListView> {
                 decoration: BoxDecoration(
                   color: chipBg,
                   borderRadius: BorderRadius.circular(22),
-                  border: isSelected
-                      ? Border.all(color: Colors.white.withOpacity(0.9), width: 2)
-                      : null,
+                  border: Border.all(color: borderColor, width: isSelected ? 2 : 1),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: chipBg.withOpacity(0.4),
+                            color: activeColor.withOpacity(0.35),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           )
@@ -426,9 +443,9 @@ class _CrewListViewState extends State<CrewListView> {
                 ),
                 child: Text(
                   ship.name.toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                     fontSize: 13,
                     letterSpacing: 0.4,
                   ),

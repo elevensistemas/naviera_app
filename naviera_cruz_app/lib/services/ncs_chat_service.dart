@@ -19,7 +19,59 @@ class NCSChatService {
     return "$_baseURL/api/chat/tts?text=$encoded";
   }
 
-  Stream<NCSStreamEvent> streamChatResponse(String prompt) async* {
+  Future<String?> queryCentinela(String prompt, {List<Map<String, String>>? history}) async {
+    return _queryCentinelaLLM(prompt, history: history);
+  }
+
+  Future<String?> _queryCentinelaLLM(String prompt, {List<Map<String, String>>? history}) async {
+    final List<String> endpoints = [
+      "https://navieracruzdelsur.dyndns.org:5073/api/ai-chat/external-bot",
+      "https://navieracruzdelsur.dyndns.org:6570/api/v1/chat/ai/",
+      "https://navieracruzdelsur.dyndns.org:6570/api/ai-chat/external-bot",
+      "http://192.168.2.121:3001/api/ai-chat/external-bot",
+    ];
+
+    final token = await SessionManager.shared.getToken();
+    final Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "x-api-key": "centinela-bridge-2026",
+    };
+    if (token != null && token.isNotEmpty) {
+      headers["Authorization"] = "Token $token";
+    }
+
+    final Map<String, dynamic> payload = {
+      "message": prompt,
+      "prompt": prompt,
+      "query": prompt,
+      "stream": false,
+      "history": history ?? [],
+    };
+    final bodyStr = jsonEncode(payload);
+
+    for (final url in endpoints) {
+      try {
+        final response = await http.post(
+          Uri.parse(url),
+          headers: headers,
+          body: bodyStr,
+        ).timeout(const Duration(seconds: 25));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(utf8.decode(response.bodyBytes));
+          final reply = data["reply"] ?? data["response"] ?? data["message"] ?? data["answer"] ?? data["content"];
+          if (reply != null && reply.toString().trim().isNotEmpty) {
+            return reply.toString().trim();
+          }
+        }
+      } catch (e) {
+        // Continue to next endpoint / fallback
+      }
+    }
+    return null;
+  }
+
+  Stream<NCSStreamEvent> streamChatResponse(String prompt, {List<Map<String, String>>? history}) async* {
     final currentUser = SessionManager.shared.currentUser;
 
     // FASE 1: Verificación de Política Corporativa y Seguridad
@@ -28,7 +80,7 @@ class NCSChatService {
       logClass: "info",
       content: "Verificando política corporativa de seguridad y permisos...",
     );
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 150));
 
     final targetShip = NCSCorporateChatPolicy.extractShipFromQuery(prompt);
     final hasShipAccess = targetShip == null || NCSCorporateChatPolicy.hasPermissionForShip(currentUser, targetShip);
@@ -46,7 +98,7 @@ class NCSChatService {
         logClass: "warning",
         content: "Control de acceso: Usuario sin permiso para consultar buques ajenos.",
       );
-      await Future.delayed(const Duration(milliseconds: 200));
+      await Future.delayed(const Duration(milliseconds: 150));
       yield NCSStreamEvent(
         type: "result",
         content: NCSCorporateChatPolicy.unauthorizedVesselMessage,
@@ -61,7 +113,7 @@ class NCSChatService {
         logClass: "warning",
         content: "Política corporativa: Consulta sobre información restringida bloqueada.",
       );
-      await Future.delayed(const Duration(milliseconds: 200));
+      await Future.delayed(const Duration(milliseconds: 150));
       final policyResponse = NCSCorporateChatPolicy.processCorporatePolicy(
         prompt: prompt,
         currentUser: currentUser,
@@ -88,18 +140,39 @@ class NCSChatService {
       return;
     }
 
-    // FASE 2: Consulta dentro de política operativa autorizada
+    // FASE 2: Consulta al LLM corporativo (Centinela IA)
     yield NCSStreamEvent(
       type: "log",
       logClass: "info",
-      content: "Consultando fuentes autorizadas (Flota, Tripulación, Manual de Gestión, Compras)...",
+      content: "Conectando con Centinela IA (LLM local de Naviera Cruz del Sur)...",
     );
-    await Future.delayed(const Duration(milliseconds: 250));
+    await Future.delayed(const Duration(milliseconds: 150));
 
-    final reply = NCSCorporateChatPolicy.processCorporatePolicy(
-      prompt: prompt,
-      currentUser: currentUser,
+    yield NCSStreamEvent(
+      type: "log",
+      logClass: "info",
+      content: "Consultando telemetría AIS en tiempo real y manuales operativos...",
     );
+
+    String? llmReply = await _queryCentinelaLLM(prompt, history: history);
+
+    if (llmReply == null || llmReply.isEmpty) {
+      yield NCSStreamEvent(
+        type: "log",
+        logClass: "warning",
+        content: "Enlace remoto no disponible. Utilizando procesador de contingencia corporativo...",
+      );
+      llmReply = NCSCorporateChatPolicy.processCorporatePolicy(
+        prompt: prompt,
+        currentUser: currentUser,
+      );
+    } else {
+      yield NCSStreamEvent(
+        type: "log",
+        logClass: "success",
+        content: "Respuesta generada exitosamente por Centinela IA.",
+      );
+    }
 
     NCSStructuredVesselData? structured;
     if (targetShip != null &&
@@ -113,7 +186,7 @@ class NCSChatService {
 
     yield NCSStreamEvent(
       type: "result",
-      content: reply,
+      content: llmReply,
       structured: structured,
     );
   }
@@ -291,31 +364,29 @@ Niveles actualizados de recursos en la flota:
     // PRIORITY 4: Estado de Buques y Operaciones por Buque
     else if (lower.contains("alfa")) {
       responseText = """
-### 🚢 Estado Operativo - BT ALFA C
+### 🚢 Monitoreo - BT ALFA C
 
-- **Situación:** En navegación (Vel: 0.1 kn / Rumbo: 115°).
-- **Carga Acumulada:** Raizen (3050.00 m³ • 12 buques atendidos).
-- **Posición GPS:** 42°76'S 65°03'W.
-- **Recursos Tanques:** Combustible 71.34 m³ (71%), Agua 83.0 m³ (27%), Slop 5.20 m³ (14%).
+- **Cámara a Bordo:** Transmisión de video Ezviz en tiempo real (Pestaña Flota).
+- **Carga Mensual:** Raizen (14.68 k tons • 25 buques provistos).
+- **Recursos Tanques:** Combustible 150.54 m³, Agua 118.2 m³, Slop 8.31 m³.
 """;
     }
     else if (lower.contains("gustavo")) {
       responseText = """
-### 🚢 Estado Operativo - BT GUSTAVO U
+### 🚢 Monitoreo - BT GUSTAVO U
 
-- **Situación:** En operaciones de carga para cliente WFS.
-- **Carga Acumulada:** WFS (7.39 k t • 16 buques atendidos).
-- **Velocidad:** 11.8 nudos.
-- **Recursos Tanques:** Combustible 62.50 m³ (58%), Agua 65.0 m³ (32%), Slop 4.80 m³ (16%).
+- **Cámara a Bordo:** Transmisión de video Ezviz en tiempo real (Pestaña Flota).
+- **Carga Mensual:** WFS (7.39 k tons • 16 buques provistos).
+- **Recursos Tanques:** Combustible 135.0 m³, Agua 95.0 m³, Slop 6.50 m³.
 """;
     }
     else if (lower.contains("nany")) {
       responseText = """
-### 🚢 Estado Operativo - BT NANY
+### 🚢 Monitoreo - BT NANY
 
-- **Situación:** En puerto completando maniobras de alijo y transferencia de carga para cliente WFS.
-- **Carga Acumulada:** WFS (4.32 k t • 6 buques atendidos).
-- **Recursos Tanques:** Combustible 54.80 m³ (61%), Agua 52.0 m³ (35%), Slop 3.40 m³ (12%).
+- **Cámara a Bordo:** Transmisión de video Ezviz en tiempo real (Pestaña Flota).
+- **Carga Mensual:** WFS (10.99 k tons • 24 buques provistos).
+- **Recursos Tanques:** Combustible 120.0 m³, Agua 88.0 m³, Slop 5.20 m³.
 """;
     }
     else if (lower.contains("estado") ||
@@ -325,11 +396,15 @@ Niveles actualizados de recursos en la flota:
         lower.contains("donde esta") ||
         lower.contains("dónde está")) {
       responseText = """
-### Estado Operativo de la Flota - Asistente de NCS
+### Monitoreo de Flota - Asistente de NCS
 
-- 🚢 **BT ALFA C:** Fondeado en Rada La Plata por condiciones meteorológicas (Ingreso a DDI programado el 08/04). Carga acumulada: 26.02k t para Raizen.
-- 🚢 **BT GUSTAVO U:** En navegación activa completando operaciones de carga para cliente WFS (16.52k t).
-- 🚢 **BT NANY:** En puerto completando maniobras de alijo y transferencia de carga para WFS (12.84k t).
+Las operaciones y estado visual se verifican en tiempo real a través de las cámaras en vivo a bordo:
+
+- 🚢 **BT ALFA C:** Cámara en vivo disponible (Carga: 14.68k t para Raizen).
+- 🚢 **BT GUSTAVO U:** Cámara en vivo disponible (Carga: 7.39k t para WFS).
+- 🚢 **BT NANY:** Cámara en vivo disponible (Carga: 10.99k t para WFS).
+
+> *Para acceder a las transmisiones en directo, ingresa al módulo **Flota**.*
 """;
     }
     // PRIORITY 5: Clima y Meteorología
@@ -398,42 +473,42 @@ Como Asistente de NCS, puedo ayudarte con:
     if (lower.contains("gustavo")) {
       return NCSStructuredVesselData(
         vesselName: "BT GUSTAVO U",
-        status: "En Navegación",
-        speed: "11.8 nudos",
-        coordinates: "38°00'S 57°55'W",
-        eta: "Mañana 09:00",
-        fuelLevel: "180 t (60%)",
-        cargoWeight: "340 Ton",
+        status: "Cámara Onboard",
+        speed: "Flujo HD",
+        coordinates: "Río de la Plata",
+        eta: "Operativo",
+        fuelLevel: "135.0 m³",
+        cargoWeight: "7.39k Tons",
       );
     } else if (lower.contains("nany")) {
       return NCSStructuredVesselData(
         vesselName: "BT NANY",
-        status: "En Puerto",
-        speed: "0.0 nudos",
-        coordinates: "54°80'S 68°30'W",
-        eta: "Hoy 20:00",
-        fuelLevel: "155 t (62%)",
-        cargoWeight: "528 Ton",
+        status: "Cámara Onboard",
+        speed: "Flujo HD",
+        coordinates: "Río de la Plata",
+        eta: "Operativo",
+        fuelLevel: "120.0 m³",
+        cargoWeight: "10.99k Tons",
       );
     } else if (lower.contains("monarca")) {
       return NCSStructuredVesselData(
         vesselName: "BT MONARCA I",
-        status: "En Muelle / Alistamiento",
-        speed: "0.0 nudos",
-        coordinates: "34°36'S 58°22'W",
-        eta: "En Puerto",
-        fuelLevel: "90 t (55%)",
-        cargoWeight: "Alistamiento Técnico",
+        status: "Cámara Onboard",
+        speed: "Flujo HD",
+        coordinates: "Puerto",
+        eta: "Operativo",
+        fuelLevel: "90.0 m³",
+        cargoWeight: "Flota NCS",
       );
     } else if (lower.contains("alfa")) {
       return NCSStructuredVesselData(
         vesselName: "BT ALFA C",
-        status: "Fondeado en Rada",
-        speed: "0.2 nudos",
-        coordinates: "42°76'S 65°03'W",
-        eta: "08/04 DDI",
-        fuelLevel: "210 t (60%)",
-        cargoWeight: "528 Ton",
+        status: "Cámara Onboard",
+        speed: "Flujo HD",
+        coordinates: "Río de la Plata",
+        eta: "Operativo",
+        fuelLevel: "150.54 m³",
+        cargoWeight: "14.68k Tons",
       );
     }
     return null;

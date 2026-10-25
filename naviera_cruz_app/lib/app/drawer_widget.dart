@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../core/storage.dart';
 import 'theme.dart';
 import '../modules/profile/profile_view.dart';
+import '../modules/auth/login_view.dart';
+import '../modules/crew/crew_faq_search_view.dart';
 
 class NavieraDrawer extends StatelessWidget {
   const NavieraDrawer({super.key});
@@ -24,7 +26,10 @@ class NavieraDrawer extends StatelessWidget {
                 Navigator.pop(dialogContext);
                 await SessionManager.shared.logout();
                 if (context.mounted) {
-                  Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
+                  Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const LoginView()),
+                    (route) => false,
+                  );
                 }
               },
               child: const Text("Salir", style: TextStyle(color: Colors.red)),
@@ -42,16 +47,10 @@ class NavieraDrawer extends StatelessWidget {
     final theme = Theme.of(context);
 
     final String rawName = (user?.name ?? '').trim();
-    String displayName = rawName.isEmpty ? 'Alejandro Lo Presti' : rawName;
-    if (displayName.toLowerCase().contains('lopresti') ||
-        displayName.toLowerCase() == 'a. lopresti' ||
-        displayName.toLowerCase() == 'a.lopresti' ||
-        displayName.toLowerCase() == 'usuario autenticado' ||
-        displayName.toLowerCase() == 'usuario naviera' ||
-        displayName.toLowerCase() == 'admin' ||
-        displayName.toLowerCase() == 'alejandro') {
-      displayName = "Alejandro Lo Presti";
-    }
+    String displayName = rawName.isEmpty ? 'Usuario Naviera' : rawName;
+    final String displaySector = (user?.sector ?? '').trim().isNotEmpty
+        ? user!.sector
+        : (session.isTripulanteMode ? 'Buque ALFA C' : 'Operaciones');
 
     return Drawer(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -130,7 +129,7 @@ class NavieraDrawer extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              user.sector,
+                              displaySector,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 10,
@@ -168,6 +167,24 @@ class NavieraDrawer extends StatelessWidget {
                     },
                   ),
                   const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
+                  if (session.isTripulanteMode) ...[
+                    ListTile(
+                      leading: const Icon(Icons.quiz_outlined, color: ColorTheme.primary),
+                      title: const Text(
+                        "Preguntas Frecuentes (FAQ)",
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                      ),
+                      trailing: const Icon(Icons.chevron_right, size: 18),
+                      onTap: () {
+                        Navigator.pop(context); // Close drawer
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const CrewFaqSearchView()),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
+                  ],
                   
                   ListTile(
                     leading: const Icon(Icons.settings_outlined, color: ColorTheme.primary),

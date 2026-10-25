@@ -24,3 +24,7 @@ desktop.ini
 .env.staging
 *.env
 *.env.*
+
+# Scratch / temp files
+scratch/
+naviera_cruz_app/scratch/

@@ -147,7 +147,15 @@ class _AIChatViewState extends State<AIChatView> {
 
     _currentStreamSubscription?.cancel();
 
-    final stream = NCSChatService.shared.streamChatResponse(trimmed);
+    final history = _messages
+        .where((m) => m.text.isNotEmpty && m.id != "w1" && m.id != assistantMsgId)
+        .map((m) => {
+              "role": m.sender == NCSMessageSender.user ? "user" : "assistant",
+              "content": m.text,
+            })
+        .toList();
+
+    final stream = NCSChatService.shared.streamChatResponse(trimmed, history: history);
     _currentStreamSubscription = stream.listen((event) {
       if (!mounted) return;
 

@@ -1,6 +1,4 @@
-import 'dart:convert';
 import '../models/models.dart';
-import '../core/storage.dart';
 
 /// Evento de auditoría de seguridad para registrar intentos bloqueados
 class NCSAuditLogEntry {
@@ -513,6 +511,20 @@ class NCSCorporateChatPolicy {
 
   static const List<NCSManagementProcedure> managementProcedures = [
     NCSManagementProcedure(
+      code: "MS-07",
+      title: "Manual de Seguridad y Medio Ambiente - Trabajos en Caliente",
+      section: "Sección Trabajos en Caliente (Rev. 9, pág. 54)",
+      version: "MS Rev. 9 Vigente",
+      instruction: "Solo se permite trabajo en caliente en áreas ventiladas; fuera del Taller de Sala de Máquinas está prohibido salvo autorización escrita y buque en lastre. Requiere solicitud formal al Superintendente con croquis y copia al DPA, emisión del formulario MS-07 (Permiso de Trabajo en Caliente), cumplimiento de ISGOTT 9.4.4 (un solo trabajo a la vez) y designación obligatoria de un vigilante de incendio durante todo el trabajo y hasta 30 minutos después.",
+    ),
+    NCSManagementProcedure(
+      code: "MO-01 / MO-22",
+      title: "Manual de Gestión de la Seguridad - Maniobras de Amarre",
+      section: "Capítulo Operaciones de Amarre y Desamarre (Rev. 16, pág. 88)",
+      version: "Rev. 16 Vigente",
+      instruction: "Toda maniobra de amarre requiere autorización del Capitán o Primer Oficial, aprobación previa del Plan de Carga (MO-01) y Lista de Verificación (MO-22). La supervisión directa corresponde al Primer Oficial de cubierta con personal certificado en cabrestantes, control de comunicaciones VHF, inspección previa de equipos (MS-02), aplicación del SOPEP/PLANACON (MS-05) e inspección continua cada 2 a 4 horas registrada en el control de lastre (MO-28).",
+    ),
+    NCSManagementProcedure(
       code: "NCS-SGI-01",
       title: "Manual del Sistema de Gestión Integrado",
       section: "Sección 4.2: Responsabilidad y Autoridad del Capitán",
@@ -1022,14 +1034,100 @@ Puedo ayudarte con información operativa autorizada sobre:
   }
 
   static String _handleManagementManualQuery(String lower) {
-    NCSManagementProcedure selected = managementProcedures[0];
+    if (lower.contains("caliente") ||
+        lower.contains("soldadura") ||
+        lower.contains("soldar") ||
+        lower.contains("soplete") ||
+        lower.contains("ms-07") ||
+        lower.contains("ms 07") ||
+        lower.contains("oxicorte")) {
+      return """
+### 📋 Manual de Gestión - Trabajos en Caliente (Permiso MS-07)
+
+Conforme al **MS – Manual de Seguridad y Medio Ambiente Rev. 9 (pág. 54)** y el formulario oficial **MS-07**:
+
+- **Ámbito:** Solo se permite trabajo en caliente en áreas ventiladas; fuera del Taller de la Sala de Máquinas está estrictamente prohibido salvo autorización escrita previa y con el buque en condición de lastre.
+- **Requisitos previos obligatorios:**
+  1. Análisis de riesgo y evaluación de operaciones simultáneas (SIMOPS).
+  2. Inspección previa del equipo de soldadura y verificación rigurosa de su buen estado técnico.
+  3. Ventilación continua del área y uso de EPP ignífugo y respiratorio adecuado.
+- **Autorización y Permiso:**
+  1. Solicitud formal y por escrito a la Superintendencia Técnica con ubicación exacta, croquis detallado y medidas de protección implementadas.
+  2. Aprobación y respuesta escrita del Superintendente con copia notificada al DPA.
+  3. Emisión obligatoria del formulario **MS-07: Permiso de Trabajo en Caliente**, firmado por el Capitán.
+- **Ejecución y Precauciones:**
+  1. Solo un trabajo en caliente a la vez en todo el buque (conforme normativa ISGOTT 9.4.4).
+  2. Designación de un **vigilante de incendio (fire watch)** exclusivo que permanezca en la zona durante todo el trabajo y hasta **30 minutos después** de finalizado.
+  3. Mantener extintores portátiles presurizados y líneas contra incendios de supresión listas en el área.
+- **Cierre del Permiso:**
+  1. Inspección final y verificación de extinción completa de cualquier rescoldo, llama o chispa.
+  2. Registro de observaciones en el formulario MS-07 y devolución al Capitán para cierre formal.
+  3. Todo desvío o anomalía debe reportarse mediante **MG-07 (Reporte de incidente náutico)** o **MG-05 (Nota de No Conformidad)**.
+
+📚 **Fuentes oficiales del SGS:**
+- *MS – Manual de seguridad y medio ambiente Rev. 9.pdf*, página 54.
+- Catálogo oficial de formularios del SGS – código **MS-07: Permiso de Trabajo en Caliente**.
+""".trim();
+    }
+
+    if (lower.contains("amarre") ||
+        lower.contains("amarrar") ||
+        lower.contains("desamarre") ||
+        lower.contains("cabrestante") ||
+        lower.contains("winche") ||
+        lower.contains("mo-22") ||
+        lower.contains("mo-01")) {
+      return """
+### 📋 Manual de Gestión - Procedimientos de Seguridad en Maniobras de Amarre
+
+Conforme al **Manual de Gestión de la Seguridad Rev. 16 (pág. 88)** y procedimientos operativos vigentes:
+
+1. **Planificación y autorización:**
+   - Sólo el **Capitán o Primer Oficial** autoriza el inicio de la maniobra de amarre.
+   - Aprobar y verificar el **Plan de Carga (MO-01)** y la **Lista de Verificación de Operación Buque-Buque o Muelle (MO-22)** antes de iniciar.
+
+2. **Designación de roles operativos:**
+   - **Supervisor de maniobra:** Primer Oficial de cubierta.
+   - **Operadores de cabrestante y guardia de amarre:** Personal de cubierta certificado.
+   - Establecer canal de trabajo VHF exclusivo y confirmar la señal de *"listo para amarrar"*.
+
+3. **Inspección previa de equipos (MS-02 Guía de Verificación de Equipos):**
+   - Cabrestantes, winches, cadenas, cabos de amarre sintéticos, grilletes y dispositivos de sujeción en buen estado.
+   - Sistemas de comunicación y alarmas acústicas de sobrecarga plenamente operativas.
+
+4. **Control de riesgos de derrames y protección ambiental (MS-05 pág. 2):**
+   - Aplicar el **SOPEP** del buque; mantener barreras de contención, paños absorbentes y personal entrenado en puesto.
+
+5. **Ejecución de la maniobra paso a paso:**
+   - **Posicionamiento:** Práctico o remolcador ubica el buque en la zona designada a velocidad y rumbo seguros.
+   - **Lanzamiento de amarras:** Personal bajo supervisión directa; verificación de longitud y tipo de cabo/cable.
+   - **Aplicación de tensión:** Ajuste paulatino en cabrestantes controlando indicadores de carga para evitar sobretensión.
+   - **Revisión final:** Supervisor constata que todas las amarras queden aseguradas y los grilletes y pasadores en posición.
+
+6. **Monitoreo continuo:**
+   - Inspecciones periódicas cada **2 a 4 horas** durante toda la estadía amarrado.
+   - Registrar cualquier desvío, aflojamiento o cambio en el **Registro de Control de Lastre (MO-28)**.
+
+7. **Emergencias y desvíos:**
+   - Activar el Plan de Contingencia de Derrames (**PLANACON**) ante fallas de sujeción o pérdida de integridad.
+   - Notificar al Capitán y DPA, y asentar en el formulario **MG-07 (Reporte de incidente náutico)** o **MG-05 (Nota de No Conformidad)**.
+
+📚 **Fuentes oficiales del SGS:**
+- *Manual de gestión de la seguridad Rev. 16 03-26.pdf*, página 88.
+- *MO-01: Plan de Carga* y *MO-22: Lista de Verificación Operación Buque-Buque*.
+- *MS-02: Guía de Verificación de Equipos*.
+- *MS-05: Registro de análisis de riesgo sustancias contaminantes*, página 2.
+""".trim();
+    }
+
+    NCSManagementProcedure selected = managementProcedures[2]; // Default to SGI-01 general
 
     if (lower.contains("alijo") || lower.contains("sts") || lower.contains("transferencia") || lower.contains("rada")) {
-      selected = managementProcedures[1];
-    } else if (lower.contains("sopep") || lower.contains("derrame") || lower.contains("emergencia") || lower.contains("contaminacion") || lower.contains("contaminación")) {
-      selected = managementProcedures[2];
-    } else if (lower.contains("mantenimiento") || lower.contains("maquinaria") || lower.contains("equipo critico") || lower.contains("equipo crítico")) {
       selected = managementProcedures[3];
+    } else if (lower.contains("sopep") || lower.contains("derrame") || lower.contains("emergencia") || lower.contains("contaminacion") || lower.contains("contaminación")) {
+      selected = managementProcedures[4];
+    } else if (lower.contains("mantenimiento") || lower.contains("maquinaria") || lower.contains("equipo critico") || lower.contains("equipo crítico")) {
+      selected = managementProcedures[5];
     }
 
     return """

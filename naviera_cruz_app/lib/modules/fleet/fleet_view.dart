@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'dart:math' as math;
 import '../../models/models.dart';
 import '../../services/services.dart';
@@ -19,18 +20,34 @@ class _FleetViewState extends State<FleetView> {
   bool _isLoading = false;
   String? _errorMessage;
   int _selectedShipIndex = 0;
+  Timer? _autoRefreshTimer;
+  DateTime? _lastSyncTime;
 
   @override
   void initState() {
     super.initState();
     _loadShips();
+    // Auto-actualización periódica de recursos y programas de carga 4 veces al día (cada 6 horas)
+    _autoRefreshTimer = Timer.periodic(const Duration(hours: 6), (_) {
+      if (mounted) {
+        _loadShips(isSilent: true);
+      }
+    });
   }
 
-  Future<void> _loadShips() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+  @override
+  void dispose() {
+    _autoRefreshTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadShips({bool isSilent = false}) async {
+    if (!isSilent) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final fleetService = FleetService();
@@ -46,21 +63,30 @@ class _FleetViewState extends State<FleetView> {
           name: "ALFA C",
           flag: "Panamá 🇵🇦",
           imoNumber: "9711652",
-          targetShips: alfa.targetShips.isNotEmpty && !alfa.targetShips.any((t) => t.name.toUpperCase().contains('KOCIE') || t.name.toUpperCase().contains('ARTEM'))
+          targetShips: alfa.targetShips.isNotEmpty
               ? alfa.targetShips
               : Ship.getDefaultTargetShipsFor("ALFA C"),
+          lastPort: alfa.lastPort.isNotEmpty ? alfa.lastPort : 'BUENOS AIRES',
+          provistosCount: alfa.targetShips.isNotEmpty ? alfa.targetShips.length : 5,
+          weather: '',
         );
         gustavo = gustavo.copyWith(
           name: "GUSTAVO U",
           targetShips: gustavo.targetShips.isNotEmpty
               ? gustavo.targetShips
               : Ship.getDefaultTargetShipsFor("GUSTAVO U"),
+          lastPort: gustavo.lastPort.isNotEmpty ? gustavo.lastPort : 'RADA LA PLATA',
+          provistosCount: gustavo.targetShips.isNotEmpty ? gustavo.targetShips.length : 11,
+          weather: '',
         );
         nany = nany.copyWith(
           name: "NANY",
           targetShips: nany.targetShips.isNotEmpty
               ? nany.targetShips
               : Ship.getDefaultTargetShipsFor("NANY"),
+          lastPort: nany.lastPort.isNotEmpty ? nany.lastPort : 'CAMPANA',
+          provistosCount: nany.targetShips.isNotEmpty ? nany.targetShips.length : 5,
+          weather: '',
         );
 
         sorted.add(alfa);
@@ -73,6 +99,7 @@ class _FleetViewState extends State<FleetView> {
       setState(() {
         _ships.clear();
         _ships.addAll(sorted);
+        _lastSyncTime = DateTime.now();
         if (_selectedShipIndex >= _ships.length) {
           _selectedShipIndex = 0;
         }
@@ -82,13 +109,16 @@ class _FleetViewState extends State<FleetView> {
       setState(() {
         _ships.clear();
         _ships.addAll(_getDefaultShipsList());
+        _lastSyncTime = DateTime.now();
         _selectedShipIndex = 0;
       });
       _resolveCameras();
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -129,10 +159,10 @@ class _FleetViewState extends State<FleetView> {
         id: "4",
         name: "ALFA C",
         status: ShipStatus.active,
-        totalCargo: 71.34,
-        totalCarbon: 71.34,
-        totalWater: 83.0,
-        totalSlop: 5.20,
+        totalCargo: 150.54,
+        totalCarbon: 150.54,
+        totalWater: 118.2,
+        totalSlop: 8.31,
         imoNumber: "9711652",
         flag: "Panamá 🇵🇦",
         latitude: -42.76,
@@ -145,19 +175,18 @@ class _FleetViewState extends State<FleetView> {
         captainName: "Marenco Rubén Darío",
         chiefEngineerName: "Sosa Armando",
         lastPort: "BUENOS AIRES",
-        weather: "Temp: 15°C • Viento: ESE 13 kn",
-        eta: "21/09/2026 a las 08:30",
-        provistosCount: 12,
+        weather: "",
+        provistosCount: 5,
         provistosTotal: 6915.00,
       ),
       Ship(
         id: "6",
         name: "GUSTAVO U",
-        status: ShipStatus.maintenance,
-        totalCargo: 62.50,
-        totalCarbon: 62.50,
-        totalWater: 65.0,
-        totalSlop: 4.80,
+        status: ShipStatus.active,
+        totalCargo: 89.76,
+        totalCarbon: 89.76,
+        totalWater: 90.0,
+        totalSlop: 11.89,
         imoNumber: "9654321",
         flag: "Argentina 🇦🇷",
         latitude: -38.00,
@@ -169,20 +198,19 @@ class _FleetViewState extends State<FleetView> {
         targetShips: Ship.getDefaultTargetShipsFor("GUSTAVO U"),
         captainName: "Ramirez Pedro",
         chiefEngineerName: "Agüero Leandro",
-        lastPort: "CAMPANA",
-        weather: "Temp: 18°C • Viento: SE 10 kn",
-        eta: "22/09/2026 a las 14:00",
-        provistosCount: 4,
-        provistosTotal: 1200.00,
+        lastPort: "RADA LA PLATA",
+        weather: "",
+        provistosCount: 11,
+        provistosTotal: 7390.00,
       ),
       Ship(
         id: "5",
         name: "NANY",
-        status: ShipStatus.docked,
-        totalCargo: 54.80,
-        totalCarbon: 54.80,
-        totalWater: 52.0,
-        totalSlop: 3.40,
+        status: ShipStatus.active,
+        totalCargo: 115.52,
+        totalCarbon: 115.52,
+        totalWater: 125.36,
+        totalSlop: 86.39,
         imoNumber: "9018115",
         flag: "Argentina 🇦🇷",
         latitude: -54.80,
@@ -192,25 +220,28 @@ class _FleetViewState extends State<FleetView> {
           ShipCamera(id: "cam-nany", name: "BT.NANY1", serialNumber: "BF1765344", isActive: true),
         ],
         targetShips: Ship.getDefaultTargetShipsFor("NANY"),
-        captainName: "Maciel Jonathan",
-        chiefEngineerName: "Porto Guillermo",
-        lastPort: "DOCK SUD",
-        weather: "Temp: 14°C • Viento: S 16 kn",
-        eta: "23/09/2026 a las 11:15",
-        provistosCount: 3,
-        provistosTotal: 800.00,
+        captainName: "Hernandez Pablo",
+        chiefEngineerName: "Carlino Hernan",
+        lastPort: "CAMPANA",
+        weather: "",
+        provistosCount: 5,
+        provistosTotal: 4320.00,
       ),
     ];
   }
 
   String _getCargoProgramInfo(Ship ship) {
     final upper = ship.name.toUpperCase();
+    final count = ship.targetShips.isNotEmpty ? ship.targetShips.length : (ship.provistosCount > 0 ? ship.provistosCount : 0);
     if (upper.contains('ALFA')) {
-      return "Raizen (6915.00 m³ • 12 buques)";
+      final totalStr = ship.provistosTotal > 0 ? "${ship.provistosTotal.toStringAsFixed(0)} m³" : "6915 m³";
+      return "Raizen ($totalStr • $count buques)";
     } else if (upper.contains('NANY')) {
-      return "WFS (4.32 k t • 6 buques)";
+      final totalStr = ship.provistosTotal > 0 ? "${(ship.provistosTotal / 1000).toStringAsFixed(2)} k t" : "4.32 k t";
+      return "WFS ($totalStr • $count buques)";
     } else if (upper.contains('GUSTAVO')) {
-      return "WFS (7.39 k t • 16 buques)";
+      final totalStr = ship.provistosTotal > 0 ? "${(ship.provistosTotal / 1000).toStringAsFixed(2)} k t" : "7.39 k t";
+      return "WFS ($totalStr • $count buques)";
     }
     return "Raizen";
   }
@@ -235,11 +266,11 @@ class _FleetViewState extends State<FleetView> {
     final val = ship.totalCarbon > 0 ? ship.totalCarbon : ship.totalCargo;
     if (val <= 0) return 0.0;
     if (ship.name.toUpperCase().contains('ALFA')) {
-      return (val / 100.48).clamp(0.0, 1.0); // 71.34 m³ -> 71%
+      return (val / 200.0).clamp(0.0, 1.0); // 150.54 m³ / 200 = 75%
     } else if (ship.name.toUpperCase().contains('GUSTAVO')) {
-      return (val / 107.76).clamp(0.0, 1.0); // 62.50 m³ -> 58%
+      return (val / 150.0).clamp(0.0, 1.0); // 89.76 m³ / 150 = 60%
     } else {
-      return (val / 89.84).clamp(0.0, 1.0); // 54.80 m³ -> 61%
+      return (val / 160.0).clamp(0.0, 1.0); // 115.52 m³ / 160 = 72%
     }
   }
 
@@ -247,11 +278,11 @@ class _FleetViewState extends State<FleetView> {
     final val = ship.totalWater;
     if (val <= 0) return 0.0;
     if (ship.name.toUpperCase().contains('ALFA')) {
-      return (val / 307.4).clamp(0.0, 1.0); // 83.0 m³ -> 27%
+      return (val / 250.0).clamp(0.0, 1.0); // 118.2 m³ / 250 = 47%
     } else if (ship.name.toUpperCase().contains('GUSTAVO')) {
-      return (val / 203.1).clamp(0.0, 1.0); // 65.0 m³ -> 32%
+      return (val / 200.0).clamp(0.0, 1.0); // 90.0 m³ / 200 = 45%
     } else {
-      return (val / 148.57).clamp(0.0, 1.0); // 52.0 m³ -> 35%
+      return (val / 200.0).clamp(0.0, 1.0); // 125.36 m³ / 200 = 63%
     }
   }
 
@@ -259,11 +290,11 @@ class _FleetViewState extends State<FleetView> {
     final val = ship.totalSlop;
     if (val <= 0) return 0.0;
     if (ship.name.toUpperCase().contains('ALFA')) {
-      return (val / 37.14).clamp(0.0, 1.0); // 5.20 m³ -> 14%
+      return (val / 30.0).clamp(0.0, 1.0); // 8.31 m³ / 30 = 28%
     } else if (ship.name.toUpperCase().contains('GUSTAVO')) {
-      return (val / 30.0).clamp(0.0, 1.0); // 4.80 m³ -> 16%
+      return (val / 30.0).clamp(0.0, 1.0); // 11.89 m³ / 30 = 40%
     } else {
-      return (val / 28.33).clamp(0.0, 1.0); // 3.40 m³ -> 12%
+      return (val / 120.0).clamp(0.0, 1.0); // 86.39 m³ / 120 = 72%
     }
   }
 
@@ -307,22 +338,15 @@ class _FleetViewState extends State<FleetView> {
         ? "Monitoreo en tiempo real • IMO ${currentShip.imoNumber}"
         : "Monitoreo en tiempo real de nuestra flota.";
 
-    return Scaffold(
-      backgroundColor: bodyBg,
-      body: Column(
+    return Container(
+      color: bodyBg,
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Reusable NcsHeroHeader component
           NcsHeroHeader(
             title: bannerTitle,
             subtitle: bannerSubtitle,
-            onTap: () {
-              if (_ships.isNotEmpty) {
-                setState(() {
-                  _selectedShipIndex = (_selectedShipIndex + 1) % _ships.length;
-                });
-              }
-            },
           ),
           
           // Ship Selection Tabs (Cápsulas predefinidas azul, gris y naranja adaptables para móvil)
@@ -412,6 +436,66 @@ class _FleetViewState extends State<FleetView> {
               ),
             ),
           
+          // Sincronización en tiempo real y auto-actualización periódica (4 veces al día)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF22C55E),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _lastSyncTime != null
+                          ? "Sincronizado: ${_lastSyncTime!.hour.toString().padLeft(2, '0')}:${_lastSyncTime!.minute.toString().padLeft(2, '0')} hs • Auto-actualización (4x/día)"
+                          : "Auto-actualización de recursos y programa (4x/día)",
+                      style: TextStyle(
+                        fontSize: isMobile ? 10.5 : 12,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+                InkWell(
+                  onTap: _isLoading ? null : () => _loadShips(),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.refresh_rounded,
+                          size: 14,
+                          color: Color(0xFF0057B8),
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          "Actualizar",
+                          style: TextStyle(
+                            fontSize: isMobile ? 11 : 12,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF0057B8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
           Expanded(
             child: _isLoading && _ships.isEmpty
                 ? const Center(child: CircularProgressIndicator())
@@ -431,7 +515,7 @@ class _FleetViewState extends State<FleetView> {
                           )
                         : ListView(
                             physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+                            padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 8.0, bottom: 90.0),
                             children: [
                               _buildShipCard(context, _ships[_selectedShipIndex], theme),
                             ],
@@ -444,7 +528,6 @@ class _FleetViewState extends State<FleetView> {
   }
 
   Widget _buildShipCard(BuildContext context, Ship ship, ThemeData theme) {
-    final statusCol = _statusColor(ship.status);
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
     final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
@@ -458,7 +541,7 @@ class _FleetViewState extends State<FleetView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header: Ship Name + Status
+            // Header: Ship Name
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -481,40 +564,6 @@ class _FleetViewState extends State<FleetView> {
                       ),
                     ),
                   ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: statusCol.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: statusCol.withValues(alpha: 0.35), width: 0.8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: BoxDecoration(
-                          color: statusCol,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        ship.status == ShipStatus.active
-                            ? "En navegación"
-                            : ship.status == ShipStatus.maintenance
-                                ? "Mantenimiento"
-                                : "En muelle",
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: statusCol,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),
@@ -575,71 +624,7 @@ class _FleetViewState extends State<FleetView> {
               ],
             ),
             
-            // Officers & Weather Subrow matching Intranet
-            Container(
-              margin: const EdgeInsets.only(top: 10, bottom: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.5) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: dividerColor),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.person_outline, size: 15, color: Color(0xFF0057B8)),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          "Capitán: ${ship.resolvedCaptain}",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.engineering_outlined, size: 15, color: Color(0xFFED8B00)),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          "Jefe Máq.: ${ship.resolvedChiefEngineer}",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(Icons.wb_sunny_outlined, size: 14, color: secondaryTextColor),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          ship.resolvedWeather,
-                          style: TextStyle(fontSize: 11.5, color: secondaryTextColor),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Icon(Icons.anchor_outlined, size: 14, color: secondaryTextColor),
-                      const SizedBox(width: 5),
-                      Text(
-                        "Puerto: ${ship.resolvedLastPort}",
-                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: secondaryTextColor),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+
             
             // Header de Cámara a Bordo
             const SizedBox(height: 12),
@@ -802,7 +787,7 @@ class _FleetViewState extends State<FleetView> {
                     Row(
                       children: [
                         Icon(
-                          Icons.directions_boat_filled_rounded,
+                          Icons.assignment_outlined,
                           size: 15,
                           color: shipAccentColor,
                         ),
@@ -828,13 +813,19 @@ class _FleetViewState extends State<FleetView> {
                             color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: shipAccentColor.withOpacity(0.25),
+                              color: shipAccentColor.withValues(alpha: 0.25),
                               width: 0.8,
                             ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              Icon(
+                                Icons.directions_boat,
+                                size: 13,
+                                color: shipAccentColor,
+                              ),
+                              const SizedBox(width: 6),
                               Text(
                                 target.name,
                                 style: TextStyle(
@@ -844,11 +835,13 @@ class _FleetViewState extends State<FleetView> {
                                   color: textColor,
                                 ),
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                target.flag,
-                                style: const TextStyle(fontSize: 14),
-                              ),
+                              if (target.flag.isNotEmpty) ...[
+                                const SizedBox(width: 6),
+                                Text(
+                                  target.flag,
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ],
                             ],
                           ),
                         );
@@ -934,26 +927,6 @@ class _FleetViewState extends State<FleetView> {
                               ),
                             ],
                           ),
-                          if (ship.resolvedEta.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                Icon(Icons.schedule_rounded, size: 13, color: secondaryTextColor),
-                                const SizedBox(width: 4),
-                                Expanded(
-                                  child: Text(
-                                    "ETA: ${ship.resolvedEta}",
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: secondaryTextColor,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
                         ],
                       ),
                     ),
@@ -982,7 +955,7 @@ class _FleetViewState extends State<FleetView> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => CrewListView(shipId: ship.id),
+                      builder: (_) => CrewListView(shipId: ship.id, shipName: ship.name),
                     ),
                   );
                 },

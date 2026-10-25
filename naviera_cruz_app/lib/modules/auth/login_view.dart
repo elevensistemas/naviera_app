@@ -4,6 +4,7 @@ import '../../app/theme.dart';
 import '../../app/logo.dart';
 import '../../services/services.dart';
 import '../../core/storage.dart';
+import '../main/main_tab_view.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -41,6 +42,12 @@ class _LoginViewState extends State<LoginView> {
       final token = result['token'];
       
       await SessionManager.shared.login(token, user);
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainTabView()),
+          (route) => false,
+        );
+      }
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();

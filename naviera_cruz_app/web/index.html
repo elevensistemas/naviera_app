@@ -31,6 +31,13 @@
 
   <title>naviera_cruz_app</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- pdf.js: requerido por pdfx para ver los PDF de boletines en web -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js";
+    pdfRenderOptions = { cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.11.338/cmaps/', cMapPacked: true };
+  </script>
 </head>
 <body>
   <!--

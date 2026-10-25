@@ -124,20 +124,15 @@ class _ScheduleViewState extends State<ScheduleView> {
         ? "Planificación y consolidación mensual de cargas por buque."
         : "Registro detallado por barco y fecha de viaje.";
 
-    return Scaffold(
-      backgroundColor: bodyBg,
-      body: Column(
+    return Container(
+      color: bodyBg,
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Reusable NcsHeroHeader
           NcsHeroHeader(
             title: bannerTitle,
             subtitle: bannerSubtitle,
-            onTap: () {
-              setState(() {
-                _activeTabIndex = (_activeTabIndex + 1) % 2;
-              });
-            },
           ),
           
           // Date Filter Inputs
@@ -259,6 +254,7 @@ class _ScheduleViewState extends State<ScheduleView> {
     double gustavoMonthKtons = 0.0;
     double nanyMonthKtons = 0.0;
     int wfsMonthShips = 0;
+    double wfsTarget = 17.0; // Meta de carga en 17 M para WFS
 
     for (var d in _detailedCharges) {
       if (d.dateApplied != null) {
@@ -292,13 +288,13 @@ class _ScheduleViewState extends State<ScheduleView> {
     if (raizenMonthShips == 0 || raizenMonthKtons == 0.0) {
       for (var c in _summaryCharges) {
         if (c.client.toUpperCase().contains('RAIZEN') || c.ship.toUpperCase().contains('ALFA')) {
-          if (raizenMonthShips == 0) raizenMonthShips = (c.totalShips > 0 && c.totalShips <= 50) ? c.totalShips : 12;
+          if (raizenMonthShips == 0) raizenMonthShips = (c.totalShips > 0 && c.totalShips <= 100) ? c.totalShips : 25;
           if (raizenMonthKtons == 0.0) raizenMonthKtons = c.totalVolume / 1000.0;
           if (c.limit != null && c.limit! > 0) raizenTarget = c.limit! / 1000.0;
         }
       }
-      if (raizenMonthShips == 0) raizenMonthShips = 12;
-      if (raizenMonthKtons == 0.0) raizenMonthKtons = 6.92;
+      if (raizenMonthShips == 0) raizenMonthShips = 25;
+      if (raizenMonthKtons == 0.0) raizenMonthKtons = 14.68;
     }
 
     if (wfsMonthShips == 0 || (gustavoMonthKtons == 0.0 && nanyMonthKtons == 0.0)) {
@@ -312,8 +308,8 @@ class _ScheduleViewState extends State<ScheduleView> {
         }
       }
       if (gustavoMonthKtons == 0.0) gustavoMonthKtons = 7.39;
-      if (nanyMonthKtons == 0.0) nanyMonthKtons = 4.32;
-      if (wfsMonthShips == 0) wfsMonthShips = 22;
+      if (nanyMonthKtons == 0.0) nanyMonthKtons = 10.99;
+      if (wfsMonthShips == 0) wfsMonthShips = 40;
     }
 
     final double raizenTotal = raizenMonthKtons;
@@ -335,7 +331,7 @@ class _ScheduleViewState extends State<ScheduleView> {
                 children: [
                   Expanded(child: _buildRaizenCard(context, raizenTotal, raizenTrips, raizenTarget)),
                   const SizedBox(width: 16),
-                  Expanded(child: _buildWfsCard(context, gustavoTotal, nanyTotal, wfsTrips)),
+                  Expanded(child: _buildWfsCard(context, gustavoTotal, nanyTotal, wfsTrips, wfsTarget)),
                 ],
               ),
               const SizedBox(height: 20),
@@ -369,7 +365,7 @@ class _ScheduleViewState extends State<ScheduleView> {
           children: [
             _buildRaizenCard(context, raizenTotal, raizenTrips, raizenTarget),
             const SizedBox(height: 16),
-            _buildWfsCard(context, gustavoTotal, nanyTotal, wfsTrips),
+            _buildWfsCard(context, gustavoTotal, nanyTotal, wfsTrips, wfsTarget),
             const SizedBox(height: 20),
             _buildPeriodShipsLoadedCard(context),
             const SizedBox(height: 16),
@@ -772,7 +768,7 @@ class _ScheduleViewState extends State<ScheduleView> {
   // ---------------------------------------------------------
   // CARD 2 NUEVA: Cargas Programadas WFS (GUSTAVO U & NANY)
   // ---------------------------------------------------------
-  Widget _buildWfsCard(BuildContext context, double gustavoTotal, double nanyTotal, int wfsTrips) {
+  Widget _buildWfsCard(BuildContext context, double gustavoTotal, double nanyTotal, int wfsTrips, [double wfsTarget = 17.0]) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
     final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
@@ -984,7 +980,7 @@ class _ScheduleViewState extends State<ScheduleView> {
                       painter: _WfsStackedBarChartPainter(
                         gustavoKtons: gustavoTotal,
                         nanyKtons: nanyTotal,
-                        targetKtons: 15.0,
+                        targetKtons: wfsTarget,
                         isDark: isDark,
                       ),
                     ),
@@ -1185,26 +1181,25 @@ class _ScheduleViewState extends State<ScheduleView> {
     int gustavoUShips = 0;
     int nanyShips = 0;
 
-    for (var c in _summaryCharges) {
-      if (c.ship.toUpperCase().contains('ALFA')) alfaCShips = c.totalShips;
-      if (c.ship.toUpperCase().contains('GUSTAVO')) gustavoUShips = c.totalShips;
-      if (c.ship.toUpperCase().contains('NANY')) nanyShips = c.totalShips;
-    }
-
-    if (alfaCShips == 0 && gustavoUShips == 0 && nanyShips == 0) {
-      for (var d in _detailedCharges) {
-        if (d.dateApplied != null && d.dateApplied!.year == _startDate.year && d.dateApplied!.month == _startDate.month) {
-          if (d.ship.toUpperCase().contains('ALFA')) alfaCShips += (d.totalShips > 0 ? d.totalShips : 1);
-          if (d.ship.toUpperCase().contains('GUSTAVO')) gustavoUShips += (d.totalShips > 0 ? d.totalShips : 1);
-          if (d.ship.toUpperCase().contains('NANY')) nanyShips += (d.totalShips > 0 ? d.totalShips : 1);
-        }
+    // Contar buques SOLO del período seleccionado (no el histórico acumulado
+    // de _summaryCharges ni valores de ejemplo).
+    final bool isCustomMultiMonth = _startDate.month != _endDate.month || _startDate.year != _endDate.year;
+    for (var d in _detailedCharges) {
+      if (d.dateApplied == null) continue;
+      final matchesMonth = d.dateApplied!.year == _startDate.year && d.dateApplied!.month == _startDate.month;
+      final inRange = isCustomMultiMonth
+          ? (!d.dateApplied!.isBefore(_startDate) && !d.dateApplied!.isAfter(_endDate))
+          : matchesMonth;
+      if (!inRange) continue;
+      final ships = d.totalShips > 0 ? d.totalShips : 1;
+      final shipName = d.ship.toUpperCase();
+      if (shipName.contains('ALFA')) {
+        alfaCShips += ships;
+      } else if (shipName.contains('GUSTAVO')) {
+        gustavoUShips += ships;
+      } else if (shipName.contains('NANY')) {
+        nanyShips += ships;
       }
-    }
-
-    if (alfaCShips == 0 && gustavoUShips == 0 && nanyShips == 0) {
-      alfaCShips = 12;
-      gustavoUShips = 16;
-      nanyShips = 6;
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -1295,7 +1290,7 @@ class _ScheduleViewState extends State<ScheduleView> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Total de buques operados (histórico acumulado)",
+                    "Total de buques operados en el período",
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -1798,10 +1793,19 @@ class _ScheduleViewState extends State<ScheduleView> {
 
   // Lista de Operaciones Detalladas (Tab 2)
   Widget _buildOperationsDetailList(BuildContext context, Color textColor, Color secondaryTextColor) {
-    final filteredSchedules = _schedules.where((schedule) {
+    // Aislar estrictamente el último programa de carga de cada barco y limpiar los viejos
+    final Map<String, Schedule> latestScheduleByShip = {};
+    for (var schedule in _schedules) {
       final sDate = DateTime(schedule.date.year, schedule.date.month, schedule.date.day);
-      return !sDate.isBefore(_startDate) && !sDate.isAfter(_endDate);
-    }).toList();
+      final inRange = !sDate.isBefore(_startDate) && !sDate.isAfter(_endDate);
+      final shipKey = schedule.shipId.toUpperCase();
+      if (!latestScheduleByShip.containsKey(shipKey) || schedule.date.isAfter(latestScheduleByShip[shipKey]!.date)) {
+        if (inRange || _schedules.length <= 5) {
+          latestScheduleByShip[shipKey] = schedule;
+        }
+      }
+    }
+    final filteredSchedules = latestScheduleByShip.values.toList()..sort((a, b) => b.date.compareTo(a.date));
 
     if (filteredSchedules.isEmpty) {
       return Center(
@@ -1978,13 +1982,13 @@ class _WfsStackedBarChartPainter extends CustomPainter {
     final double barHeight = 44;
     final double yBar = topMargin;
 
-    const double maxScale = 18.0;
+    const double maxScale = 20.0;
 
     final paintGrid = Paint()
       ..color = isDark ? Colors.white12 : const Color(0xFFE2E8F0)
       ..strokeWidth = 1.0;
 
-    final ticks = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18];
+    final ticks = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20];
     final textStyleAxis = TextStyle(fontSize: 10, color: isDark ? Colors.white60 : const Color(0xFF94A3B8));
 
     for (var tick in ticks) {
@@ -2045,13 +2049,47 @@ class _WfsStackedBarChartPainter extends CustomPainter {
     )..layout();
     tN.paint(canvas, Offset(leftMargin + widthGustavo + widthNany / 2 - tN.width / 2, yBar + barHeight / 2 - tN.height / 2));
 
-    // Red solid threshold line at targetKtons (15.0k)
-    final double xTarget = leftMargin + (targetKtons / maxScale) * chartWidth;
+    // Línea roja de meta/umbral en 17 M (targetKtons = 17.0k)
+    final double effectiveTarget = targetKtons > 0 ? targetKtons : 17.0;
+    final double xTarget = leftMargin + (effectiveTarget / maxScale) * chartWidth;
     final paintTargetLine = Paint()
       ..color = const Color(0xFFEF4444)
       ..strokeWidth = 2.0;
 
     canvas.drawLine(Offset(xTarget, yBar - 8), Offset(xTarget, yBar + barHeight + 6), paintTargetLine);
+
+    // Badge "17 M" sobre la línea roja
+    final String labelText = "${effectiveTarget.toStringAsFixed(0)} M";
+    final labelPainter = TextPainter(
+      text: TextSpan(
+        text: labelText,
+        style: const TextStyle(
+          fontSize: 8.5,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFFEF4444),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    final badgeRect = Rect.fromCenter(
+      center: Offset(xTarget, yBar - 13),
+      width: labelPainter.width + 8,
+      height: labelPainter.height + 4,
+    );
+    final badgeBgPaint = Paint()
+      ..color = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final badgeBorderPaint = Paint()
+      ..color = const Color(0xFFEF4444)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    canvas.drawRRect(RRect.fromRectAndRadius(badgeRect, const Radius.circular(3)), badgeBgPaint);
+    canvas.drawRRect(RRect.fromRectAndRadius(badgeRect, const Radius.circular(3)), badgeBorderPaint);
+    labelPainter.paint(
+      canvas,
+      Offset(xTarget - labelPainter.width / 2, yBar - 13 - labelPainter.height / 2),
+    );
 
     final textTotal = TextPainter(
       text: TextSpan(
@@ -2377,9 +2415,9 @@ class _ShipsLoadedChartPainter extends CustomPainter {
     final double chartHeight = size.height - bottomMargin - topMargin;
 
     final ships = [
-      {'name': 'ALFA C', 'val': alfaCShips > 0 ? alfaCShips : 12, 'color': const Color(0xFF0057B8)},
+      {'name': 'ALFA C', 'val': alfaCShips > 0 ? alfaCShips : 25, 'color': const Color(0xFF0057B8)},
       {'name': 'GUSTAVO U', 'val': gustavoUShips > 0 ? gustavoUShips : 16, 'color': const Color(0xFF64748B)},
-      {'name': 'NANY', 'val': nanyShips > 0 ? nanyShips : 6, 'color': const Color(0xFFED8B00)},
+      {'name': 'NANY', 'val': nanyShips > 0 ? nanyShips : 24, 'color': const Color(0xFFED8B00)},
     ];
 
     // Compute dynamic maximum to guarantee bars never exceed chart bounds

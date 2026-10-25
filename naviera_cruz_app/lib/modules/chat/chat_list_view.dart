@@ -324,16 +324,19 @@ class _ChatListViewState extends State<ChatListView> {
     final inputBg = isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC);
     final inputBorder = isDark ? Colors.white24 : const Color(0xFFE2E8F0);
 
-    return Scaffold(
-      backgroundColor: bodyBg,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Standard NcsHeroHeader with ship ALFA C
-            const NcsHeroHeader(
-              title: "Comunicaciones",
-              subtitle: "Mensajería, contactos y asistente IA.",
-            ),
+    return Container(
+      color: bodyBg,
+      child: Column(
+        children: [
+          // Standard NcsHeroHeader with ship ALFA C - PINNED AT TOP
+          const NcsHeroHeader(
+            title: "Comunicaciones",
+            subtitle: "Mensajería, contactos y asistente IA.",
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
 
             // Main White / Card Container with rounded top corners
             Container(
@@ -547,9 +550,12 @@ class _ChatListViewState extends State<ChatListView> {
                     ),
                 ],
               ),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

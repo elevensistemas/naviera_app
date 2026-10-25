@@ -200,28 +200,26 @@ class _IncidentListViewState extends State<IncidentListView> {
 
     final filtersList = ['Todos', 'ALFA C', 'GUSTAVO U', 'NANY'];
 
-    return Scaffold(
-      backgroundColor: bodyBg,
-      body: _isLoading && _incidents.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadIncidents,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  children: [
-                    // Reusable NcsHeroHeader
-                    NcsHeroHeader(
-                      title: bannerTitle,
-                      subtitle: bannerSubtitle,
-                      onTap: () {
-                        final currIdx = filtersList.indexOf(_selectedShipFilter);
-                        final nextIdx = (currIdx + 1) % filtersList.length;
-                        setState(() {
-                          _selectedShipFilter = filtersList[nextIdx];
-                        });
-                      },
-                    ),
+    return Container(
+      color: bodyBg,
+      child: Column(
+        children: [
+          // Reusable NcsHeroHeader - PINNED AT TOP
+          NcsHeroHeader(
+            title: bannerTitle,
+            subtitle: bannerSubtitle,
+          ),
+
+          // Scrollable Content
+          Expanded(
+            child: _isLoading && _incidents.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+                    onRefresh: _loadIncidents,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        children: [
 
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -615,10 +613,13 @@ class _IncidentListViewState extends State<IncidentListView> {
                         ],
                       ),
                     ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-    );
-  }
+      ),
+    ],
+  ),
+);
+}
 }

@@ -6,8 +6,8 @@ import '../../app/theme.dart';
 import '../../models/models.dart';
 
 class ReportIncidentView extends StatefulWidget {
-  final VoidCallback onIncidentReported;
-  const ReportIncidentView({super.key, required this.onIncidentReported});
+  final VoidCallback? onIncidentReported;
+  const ReportIncidentView({super.key, this.onIncidentReported});
 
   @override
   State<ReportIncidentView> createState() => _ReportIncidentViewState();
@@ -25,6 +25,8 @@ class _ReportIncidentViewState extends State<ReportIncidentView> {
   
   bool _loadingShips = true;
   bool _isLoading = false;
+  bool _isSubmitting = false;
+  String? _clientSubmissionId;
   Uint8List? _selectedImageBytes;
   XFile? _selectedImageFile;
 
@@ -73,7 +75,14 @@ class _ReportIncidentViewState extends State<ReportIncidentView> {
 
     if (shipId == null || title.isEmpty || description.isEmpty) return;
 
+    // Prevención estricta de envíos simultáneos o doble pulsación
+    if (_isSubmitting) return;
+    _isSubmitting = true;
+
     setState(() => _isLoading = true);
+
+    // Identificador único de conciliación / idempotencia de la transacción
+    _clientSubmissionId ??= "CLI-${DateTime.now().millisecondsSinceEpoch}";
 
     try {
       final incidentService = IncidentService();
@@ -82,7 +91,7 @@ class _ReportIncidentViewState extends State<ReportIncidentView> {
         photos.add(_selectedImageBytes!);
       }
       
-      await incidentService.reportIncident(
+      final reported = await incidentService.reportIncident(
         description: description,
         shipId: shipId,
         code: _selectedCode,
@@ -91,17 +100,58 @@ class _ReportIncidentViewState extends State<ReportIncidentView> {
         photos: photos,
       );
       
-      widget.onIncidentReported();
+      widget.onIncidentReported?.call();
       if (mounted) {
-        Navigator.pop(context);
+        final officialNumber = reported.incidentNumber.isNotEmpty
+            ? reported.incidentNumber
+            : (reported.id.isNotEmpty ? reported.id : reported.code);
+
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            title: Row(
+              children: const [
+                Icon(Icons.check_circle, color: Color(0xFF10B981)),
+                SizedBox(width: 8),
+                Text("Reporte Confirmado"),
+              ],
+            ),
+            content: Text(
+              "El incidente ha sido recibido y registrado exitosamente por el servidor de la intranet con el número oficial de reporte:\n\n#$officialNumber\n\nSe ha notificado al Oficial de Seguridad y Capitanía.",
+              style: const TextStyle(fontSize: 14, height: 1.4),
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text("Entendido"),
+              ),
+            ],
+          ),
+        );
+
+        _clientSubmissionId = null; // Limpiar clave tras confirmación efectiva
+
+        widget.onIncidentReported?.call();
+
+        if (mounted) {
+          Navigator.pop(context);
+        }
       }
     } catch (e) {
+      // En caso de fallo o pérdida de conexión, el formulario y fotografías se conservan intactos
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error al reportar incidente: ${e.toString()}")),
+          SnackBar(
+            backgroundColor: Colors.red.shade800,
+            content: Text("No se pudo enviar el reporte: ${e.toString()}.\nLos datos permanecen en pantalla para que puedas reintentar el envío."),
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     } finally {
+      _isSubmitting = false;
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -347,7 +397,7 @@ class _ReportIncidentViewState extends State<ReportIncidentView> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   elevation: 0,
                 ),
-                onPressed: (isFormValid && !_isLoading) ? _submitReport : null,
+                onPressed: (isFormValid && !_isLoading && !_isSubmitting) ? _submitReport : null,
                 child: _isLoading
                     ? const SizedBox(
                         width: 24,

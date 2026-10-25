@@ -97,8 +97,11 @@ class Post {
   final String title;
   final String content;
   final DateTime timestamp;
+  final DateTime? endsAt;
   final PostType type;
   final String? imageUrl;
+  final String target;
+  final String targetDisplay;
 
   Post({
     required this.id,
@@ -107,9 +110,22 @@ class Post {
     this.title = '',
     required this.content,
     required this.timestamp,
+    this.endsAt,
     required this.type,
     this.imageUrl,
+    this.target = 'todos',
+    this.targetDisplay = 'Todos',
   });
+
+  bool get isForOffice {
+    final t = target.toLowerCase();
+    return t.isEmpty || t == 'todos' || t.contains('oficina') || t.contains('tierra');
+  }
+
+  bool get isForCrew {
+    final t = target.toLowerCase();
+    return t.isEmpty || t == 'todos' || t.contains('tripula') || t.contains('buque') || t.contains('mar') || t.contains('embarc');
+  }
 
   factory Post.fromJson(Map<String, dynamic> json) {
     String authorNameStr = json['author_name']?.toString() ?? '';
@@ -138,11 +154,17 @@ class Post {
     final dateRaw = json['starts_at'] ?? json['created_at'] ?? json['timestamp'];
     final parsedDate = dateRaw != null ? DateTime.tryParse(dateRaw.toString()) ?? DateTime.now() : DateTime.now();
 
+    final endsAtRaw = json['ends_at'];
+    final parsedEndsAt = endsAtRaw != null ? DateTime.tryParse(endsAtRaw.toString()) : null;
+
     PostType postType = PostTypeExtension.fromString(json['type']?.toString() ?? '');
     final importance = json['importance'];
     if (importance != null && (importance == 1 || importance == '1' || importance == 'high')) {
       postType = PostType.alert;
     }
+
+    final targetVal = json['target']?.toString() ?? 'todos';
+    final targetDisplayVal = json['target_display']?.toString() ?? 'Todos';
 
     return Post(
       id: json['id']?.toString() ?? '',
@@ -151,8 +173,11 @@ class Post {
       title: titleStr,
       content: textContent,
       timestamp: parsedDate,
+      endsAt: parsedEndsAt,
       type: postType,
       imageUrl: json['image']?.toString() ?? json['image_url']?.toString(),
+      target: targetVal,
+      targetDisplay: targetDisplayVal,
     );
   }
 }
@@ -254,13 +279,13 @@ class Ship {
   Ship({
     required this.id,
     required this.name,
-    required this.status,
-    required this.totalCargo,
+    this.status = ShipStatus.active,
+    this.totalCargo = 0.0,
     this.totalWater = 0.0,
     this.totalSlop = 0.0,
     this.totalCarbon = 0.0,
-    required this.latitude,
-    required this.longitude,
+    this.latitude = -34.6037,
+    this.longitude = -58.3816,
     this.cameraUrl,
     this.cameras = const [],
     this.imoNumber = '',
@@ -280,7 +305,7 @@ class Ship {
     final u = name.toUpperCase();
     if (u.contains('ALFA')) return 'Marenco Rubén Darío';
     if (u.contains('GUSTAVO')) return 'Ramirez Pedro';
-    if (u.contains('NANY')) return 'Maciel Jonathan';
+    if (u.contains('NANY')) return 'Hernandez Pablo';
     return 'Marenco Rubén Darío';
   }
 
@@ -289,52 +314,31 @@ class Ship {
     final u = name.toUpperCase();
     if (u.contains('ALFA')) return 'Sosa Armando';
     if (u.contains('GUSTAVO')) return 'Agüero Leandro';
-    if (u.contains('NANY')) return 'Porto Guillermo';
+    if (u.contains('NANY')) return 'Carlino Hernan';
     return 'Sosa Armando';
   }
 
-  String get resolvedLastPort {
-    if (lastPort.isNotEmpty) return lastPort;
-    final u = name.toUpperCase();
-    if (u.contains('ALFA')) return 'BUENOS AIRES';
-    if (u.contains('GUSTAVO')) return 'CAMPANA';
-    if (u.contains('NANY')) return 'DOCK SUD';
-    return 'BUENOS AIRES';
-  }
+  String get resolvedLastPort => lastPort;
 
-  String get resolvedWeather {
-    if (weather.isNotEmpty) return weather;
-    final u = name.toUpperCase();
-    if (u.contains('ALFA')) return 'Temp: 15°C • Viento: ESE 13 kn';
-    if (u.contains('GUSTAVO')) return 'Temp: 18°C • Viento: SE 10 kn';
-    if (u.contains('NANY')) return 'Temp: 14°C • Viento: S 16 kn';
-    return 'Temp: 15°C • Viento: ESE 13 kn';
-  }
+  String get resolvedWeather => weather;
 
-  String get resolvedEta {
-    if (eta != null && eta!.isNotEmpty) return eta!;
-    final u = name.toUpperCase();
-    if (u.contains('ALFA')) return '21/09/2026 a las 08:30';
-    if (u.contains('GUSTAVO')) return '22/09/2026 a las 14:00';
-    if (u.contains('NANY')) return '23/09/2026 a las 11:15';
-    return '21/09/2026 a las 08:30';
-  }
+  String get resolvedEta => (eta != null && eta!.isNotEmpty) ? eta! : '';
 
   int get resolvedProvistosCount {
     if (provistosCount > 0) return provistosCount;
     final u = name.toUpperCase();
-    if (u.contains('ALFA')) return 12;
-    if (u.contains('GUSTAVO')) return 4;
-    if (u.contains('NANY')) return 3;
-    return 12;
+    if (u.contains('ALFA')) return 6;
+    if (u.contains('GUSTAVO')) return 16;
+    if (u.contains('NANY')) return 17;
+    return 6;
   }
 
   double get resolvedProvistosTotal {
     if (provistosTotal > 0.0) return provistosTotal;
     final u = name.toUpperCase();
     if (u.contains('ALFA')) return 6915.0;
-    if (u.contains('GUSTAVO')) return 1200.0;
-    if (u.contains('NANY')) return 800.0;
+    if (u.contains('GUSTAVO')) return 7390.0;
+    if (u.contains('NANY')) return 4320.0;
     return 6915.0;
   }
 
@@ -389,34 +393,41 @@ class Ship {
   static List<TargetShip> getDefaultTargetShipsFor(String shipName) {
     final upper = shipName.toUpperCase();
     if (upper.contains('ALFA')) {
+      // Programa de Carga oficial ALFA C (Raizen)
       return [
-        TargetShip(name: "Flora K", flag: "🇲🇹", cargoDetails: "Malta", client: "Raizen"),
-        TargetShip(name: "GINGA CHEETAH", flag: "🇰🇾", cargoDetails: "Islas Caimán", client: "Raizen"),
-        TargetShip(name: "HTK DISCOVERY", flag: "🇰🇾", cargoDetails: "Islas Caimán", client: "Raizen"),
-        TargetShip(name: "OCEAN DELIGHT", flag: "🇰🇾", cargoDetails: "Islas Caimán", client: "Raizen"),
-        TargetShip(name: "M/V KEREM", flag: "🇲🇹", cargoDetails: "Malta", client: "Raizen"),
-        TargetShip(name: "OCEAN 06", flag: "🇰🇾", cargoDetails: "Islas Caimán", client: "Raizen"),
-        TargetShip(name: "CORESHIP OL", flag: "🇰🇾", cargoDetails: "Islas Caimán", client: "Raizen"),
-        TargetShip(name: "HAFNIA AMMOLITE", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "Raizen"),
+        TargetShip(name: "SCRUB ISLAND", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "Raizen"),
+        TargetShip(name: "EDESSAIKOS", flag: "🇬🇷", cargoDetails: "Grecia", client: "Raizen"),
+        TargetShip(name: "CARAVOS TRIUMPH", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "Raizen"),
+        TargetShip(name: "ASTRO CASTOR", flag: "🇬🇷", cargoDetails: "Grecia", client: "Raizen"),
+        TargetShip(name: "YAESU", flag: "🇵🇦", cargoDetails: "Panamá", client: "Raizen"),
       ];
     } else if (upper.contains('NANY')) {
+      // Programa de Carga oficial NANY (WFS)
       return [
-        TargetShip(name: "LOWLANDS PATRASCHE", flag: "🇰🇾", cargoDetails: "Islas Caimán", client: "WFS"),
-        TargetShip(name: "ROMY", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
-        TargetShip(name: "GENCO LADDEY", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
-        TargetShip(name: "PACIFIC STAR", flag: "🇵🇦", cargoDetails: "Panamá", client: "WFS"),
-        TargetShip(name: "ERMOUPOLIS", flag: "🇬🇷", cargoDetails: "Grecia", client: "WFS"),
+        TargetShip(name: "SCOT DRESDEN", flag: "🇲🇹", cargoDetails: "Malta", client: "WFS"),
+        TargetShip(name: "CL EMILY BRONTE", flag: "🇱🇷", cargoDetails: "Liberia", client: "WFS"),
+        TargetShip(name: "BBC RAISE", flag: "🇦🇬", cargoDetails: "Antigua y Barbuda", client: "WFS"),
+        TargetShip(name: "BC PISTI", flag: "🇵🇦", cargoDetails: "Panamá", client: "WFS"),
+        TargetShip(name: "STAR NAGA", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
       ];
     } else if (upper.contains('GUSTAVO')) {
+      // Programa de Carga activo GUSTAVO U (WFS)
       return [
-        TargetShip(name: "YC FORTITUDE", flag: "🇰🇾", cargoDetails: "Islas Caimán", client: "WFS"),
-        TargetShip(name: "MAPLE AMBITION", flag: "🇱🇷", cargoDetails: "Liberia", client: "WFS"),
-        TargetShip(name: "CINDY GLORY", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
-        TargetShip(name: "CL ZHANJIANG", flag: "🇭🇰", cargoDetails: "Hong Kong", client: "WFS"),
+        TargetShip(name: "FU RONG FENG", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
+        TargetShip(name: "NAMA", flag: "🇲🇹", cargoDetails: "Malta", client: "WFS"),
+        TargetShip(name: "SOUTHERN STAR", flag: "🇲🇹", cargoDetails: "Malta", client: "WFS"),
+        TargetShip(name: "OAK ANTON", flag: "🇵🇦", cargoDetails: "Panamá", client: "WFS"),
+        TargetShip(name: "BC ARMONIA", flag: "🇵🇦", cargoDetails: "Panamá", client: "WFS"),
+        TargetShip(name: "ANEMON", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
+        TargetShip(name: "HG LIVERPOOL", flag: "🇵🇦", cargoDetails: "Panamá", client: "WFS"),
+        TargetShip(name: "YASA ALBATROSS", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
+        TargetShip(name: "BEATRICE", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
+        TargetShip(name: "BONA", flag: "🇵🇦", cargoDetails: "Panamá", client: "WFS"),
+        TargetShip(name: "STAR FLAME", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
       ];
     }
     return [
-      TargetShip(name: "Flora K", flag: "🇲🇹", cargoDetails: "Malta", client: "Raizen"),
+      TargetShip(name: "SCRUB ISLAND", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "Raizen"),
     ];
   }
 
@@ -474,7 +485,7 @@ class Ship {
       targetShipsList = targetShipsJson.map((e) => TargetShip.fromJson(e)).toList();
       final hasStale = targetShipsList.any((t) {
         final n = t.name.toUpperCase();
-        return n.contains('KOCIE') || n.contains('ARTEM') || n.contains('DSM') || n.contains('PAN CERES');
+        return n.contains('KOCIE') || n.contains('ARTEM') || n.contains('DSM') || n.contains('PAN CERES') || n.contains('VERIGE') || n.contains('NICOLAUS');
       });
       if (hasStale || targetShipsList.isEmpty) {
         targetShipsList = _getDefaultTargetShipsFor(nameStr);
@@ -848,7 +859,19 @@ class Schedule {
 
   factory Schedule.fromJson(Map<String, dynamic> json) {
     DateTime parsedDate = DateTime.now();
-    String ship = json['ship']?.toString() ?? json['ship_id']?.toString() ?? json['voyage_number']?.toString() ?? 'Buque Flota';
+    String ship = (json['ship_detail'] is Map && json['ship_detail']['description'] != null)
+        ? json['ship_detail']['description'].toString()
+        : (json['ship_name']?.toString() ?? json['ship']?.toString() ?? json['ship_id']?.toString() ?? json['voyage_number']?.toString() ?? 'Buque Flota');
+
+    final upperShip = ship.toUpperCase();
+    if (upperShip.contains('ALFA') || ship == '1') {
+      ship = 'Alfa C';
+    } else if (upperShip.contains('GUSTAVO') || ship == '2') {
+      ship = 'Gustavo U';
+    } else if (upperShip.contains('NANY') || ship == '4' || ship == '5') {
+      ship = 'Nany';
+    }
+
     String cargo = json['cargo_type']?.toString() ?? json['observations']?.toString() ?? 'Operación Naviera';
     String details = json['details']?.toString() ?? '';
 
@@ -869,7 +892,7 @@ class Schedule {
         } catch (_) {}
       }
       final stages = records.map((r) => r['stage']?.toString() ?? '').where((s) => s.isNotEmpty).toSet().join(' ➔ ');
-      final obs = records.map((r) => r['observations']?.toString() ?? '').where((o) => o.isNotEmpty).toSet().join(', ');
+      final obs = records.map((r) => r['observations']?.toString() ?? '').where((o) => o.isNotEmpty).toSet().take(5).join(', ');
       if (obs.isNotEmpty) cargo = obs;
       if (stages.isNotEmpty) details = "Ruta: $stages";
     }
@@ -947,6 +970,7 @@ extension IncidentStatusExtension on IncidentStatus {
 
 class Incident {
   final String id;
+  final String incidentNumber;
   final String code;
   final String title;
   final String description;
@@ -961,6 +985,7 @@ class Incident {
 
   Incident({
     required this.id,
+    this.incidentNumber = '',
     this.code = 'MG-21',
     this.title = '',
     required this.description,
@@ -1108,8 +1133,15 @@ class Incident {
     final rawDesc = json['description']?.toString() ?? json['observaciones']?.toString() ?? rawTitle;
     final rawState = json['state']?.toString() ?? json['status']?.toString() ?? json['estado']?.toString() ?? 'process';
 
+    final incNumber = json['incident_number']?.toString() ??
+        json['number']?.toString() ??
+        json['numero']?.toString() ??
+        json['id']?.toString() ??
+        '';
+
     return Incident(
       id: json['id']?.toString() ?? json['number']?.toString() ?? json['numero']?.toString() ?? '',
+      incidentNumber: incNumber,
       code: rawCode,
       title: rawTitle.isNotEmpty ? rawTitle : rawDesc,
       description: rawDesc,

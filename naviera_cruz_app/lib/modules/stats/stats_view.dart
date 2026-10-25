@@ -273,21 +273,21 @@ class _TrainingViewState extends State<TrainingView> {
       return true;
     }).toList();
 
-    return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Official NcsHeroHeader
-            const NcsHeroHeader(
-              title: "Capacitaciones",
-              subtitle: "Programa de formación STCW y cursos normativos.",
-            ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Column(
-                children: [
+    return Container(
+      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      child: Column(
+        children: [
+          // Official NcsHeroHeader - PINNED AT TOP
+          const NcsHeroHeader(
+            title: "Capacitaciones",
+            subtitle: "Programa de formación STCW y cursos normativos.",
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Column(
+                  children: [
                   // Row 1: Summary Stats Cards (12 Cursos disponibles, 3 En progreso, 8 Completados)
                   Row(
                     children: [
@@ -481,14 +481,15 @@ class _TrainingViewState extends State<TrainingView> {
                         return _buildCourseCard(context, course, isDark, cardBg, textColor, secondaryText);
                       },
                     ),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
+      );
+    }
 
   Widget _buildSummaryCard(
     BuildContext context, {
