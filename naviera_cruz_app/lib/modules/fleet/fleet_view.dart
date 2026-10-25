@@ -173,6 +173,32 @@ class _FleetViewState extends State<FleetView> {
     }
   }
 
+  Future<void> _reconnectCamera(Ship ship) async {
+    String? serial;
+    if (ship.name.toUpperCase().contains('ALFA')) serial = 'BF1765385';
+    if (ship.name.toUpperCase().contains('NANY')) serial = 'BF1765344';
+    if (ship.name.toUpperCase().contains('GUSTAVO')) serial = 'BF1767228';
+    if (serial == null) return;
+
+    final index = _ships.indexWhere((s) => s.id == ship.id);
+    if (index == -1) return;
+
+    setState(() {
+      _ships[index] = _ships[index].copyWith(cameraUrl: "");
+    });
+
+    try {
+      final freshUrl = await EzvizService.shared.getLiveStreamUrl(serial, forceRefresh: true);
+      if (mounted && freshUrl.isNotEmpty) {
+        setState(() {
+          _ships[index] = _ships[index].copyWith(cameraUrl: freshUrl);
+        });
+      }
+    } catch (e) {
+      debugPrint("Error reconectando cámara: $e");
+    }
+  }
+
   List<Ship> _getDefaultShipsList() {
     return [
       Ship(
@@ -187,7 +213,7 @@ class _FleetViewState extends State<FleetView> {
         flag: "Panamá 🇵🇦",
         latitude: -42.76,
         longitude: -65.03,
-        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765385_1_1.m3u8?expire=1793052311&id=1034709261508558848&t=89d1249110f715517ebcd5a3a0236c307f274182e5599c4c7f288cb4b5204330&ev=100&c=fe12620732&u=279f366b908f4daaaae9d2afbc2c6aa2",
+        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765385_1_1.m3u8?expire=1793057666&id=1034731720817094656&t=b1022f42f636c55a8150db834133a7227c8fb35d3d87e46b6e245059f217b2b3&ev=100&c=fe12620732&u=062003c5937e4e109fe2e2ad6dab4ed0",
         cameras: [
           ShipCamera(id: "cam-alfa", name: "BT.ALFAC", serialNumber: "BF1765385", isActive: true),
         ],
@@ -235,7 +261,7 @@ class _FleetViewState extends State<FleetView> {
         flag: "Argentina 🇦🇷",
         latitude: -54.80,
         longitude: -68.30,
-        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765344_1_1.m3u8?expire=1793052312&id=1034709262797811712&t=f2a8fbeafa97c299b65da1342175eb53f3380f11056ac0a4236535a35a51b749&ev=100&c=ea289a6356&u=f16b3a1af2984ad9a4cd956b9e4bcf88",
+        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765344_1_1.m3u8?expire=1793057666&id=1034731721643372544&t=e2d7391aed9f93aba28a6d6c465c993b6380cfa009ff52636af82e55b6a49f19&ev=100&c=ea289a6356&u=3085438820eb43d0bc346a7355272e2c",
         cameras: [
           ShipCamera(id: "cam-nany", name: "BT.NANY1", serialNumber: "BF1765344", isActive: true),
         ],
@@ -665,35 +691,52 @@ class _FleetViewState extends State<FleetView> {
                     ),
                   ],
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF22C55E).withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF22C55E).withOpacity(0.4)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color(0xFF22C55E),
-                        ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (ship.cameras.any((c) => c.isActive)) ...[
+                      IconButton(
+                        icon: const Icon(Icons.refresh_rounded, size: 18),
+                        tooltip: "Reconectar señal",
+                        color: isDark ? Colors.white70 : Colors.black54,
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                        onPressed: () => _reconnectCamera(ship),
                       ),
                       const SizedBox(width: 4),
-                      const Text(
-                        "EN VIVO",
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF22C55E),
-                        ),
-                      ),
                     ],
-                  ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF22C55E).withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF22C55E).withOpacity(0.4)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFF22C55E),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Text(
+                            "EN VIVO",
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF22C55E),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -704,6 +747,32 @@ class _FleetViewState extends State<FleetView> {
               SBSCameraPlayer(
                 key: ValueKey(ship.cameraUrl),
                 url: ship.cameraUrl!,
+              )
+            else if (ship.cameras.any((c) => c.isActive))
+              Container(
+                height: 150,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF0F172A) : Colors.grey.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: dividerColor),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        "Conectando transmisión de a bordo...",
+                        style: TypographyTheme.caption(context),
+                      ),
+                    ],
+                  ),
+                ),
               )
             else
               Container(

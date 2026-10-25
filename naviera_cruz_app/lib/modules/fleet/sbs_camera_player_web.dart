@@ -45,7 +45,9 @@ class _SBSWebCameraPlayerState extends State<SBSWebCameraPlayer> {
           ..src = 'hls_player.html?url=${Uri.encodeComponent(widget.url)}'
           ..style.border = 'none'
           ..style.width = '100%'
-          ..style.height = '100%';
+          ..style.height = '100%'
+          ..setAttribute('allow', 'autoplay; fullscreen')
+          ..setAttribute('allowfullscreen', 'true');
         return iframe;
       });
       _registeredViews.add(_viewId);
@@ -54,6 +56,9 @@ class _SBSWebCameraPlayerState extends State<SBSWebCameraPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    return HtmlElementView(viewType: _viewId);
+    return HtmlElementView(
+      key: ValueKey(_viewId),
+      viewType: _viewId,
+    );
   }
 }
