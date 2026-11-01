@@ -361,9 +361,9 @@ class CrewProfile {
     }
 
     if (shipNameVal == null || shipNameVal.isEmpty) {
-      if (shipIdVal == '4' || shipIdVal == 'S1') shipNameVal = 'ALFA C';
+      if (shipIdVal == '1' || shipIdVal == '4' || shipIdVal == 'S1') shipNameVal = 'ALFA C';
       if (shipIdVal == '5' || shipIdVal == 'S3') shipNameVal = 'NANY';
-      if (shipIdVal == '6' || shipIdVal == 'S2') shipNameVal = 'GUSTAVO U';
+      if (shipIdVal == '2' || shipIdVal == '6' || shipIdVal == 'S2') shipNameVal = 'GUSTAVO U';
     }
 
     // 7. Foto

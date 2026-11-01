@@ -413,13 +413,10 @@ class Ship {
   static List<TargetShip> getDefaultTargetShipsFor(String shipName) {
     final upper = shipName.toUpperCase();
     if (upper.contains('ALFA')) {
-      // Programa de Carga oficial ALFA C (Raizen)
+      // Programa de Carga oficial ALFA C (Raizen - 2 buques vigentes)
       return [
-        TargetShip(name: "SCRUB ISLAND", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "Raizen"),
-        TargetShip(name: "EDESSAIKOS", flag: "🇬🇷", cargoDetails: "Grecia", client: "Raizen"),
-        TargetShip(name: "CARAVOS TRIUMPH", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "Raizen"),
-        TargetShip(name: "ASTRO CASTOR", flag: "🇬🇷", cargoDetails: "Grecia", client: "Raizen"),
-        TargetShip(name: "YAESU", flag: "🇵🇦", cargoDetails: "Panamá", client: "Raizen"),
+        TargetShip(name: "MERCOSUL SANTOS", flag: "🇧🇷", cargoDetails: "Brasil", client: "Raizen"),
+        TargetShip(name: "MERCOSUL SUAPE", flag: "🇧🇷", cargoDetails: "Brasil", client: "Raizen"),
       ];
     } else if (upper.contains('NANY')) {
       // Programa de Carga oficial NANY (WFS)
@@ -431,23 +428,15 @@ class Ship {
         TargetShip(name: "STAR NAGA", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
       ];
     } else if (upper.contains('GUSTAVO')) {
-      // Programa de Carga activo GUSTAVO U (WFS)
+      // Programa de Carga activo GUSTAVO U (WFS - 3 buques viaje activo 513)
       return [
-        TargetShip(name: "FU RONG FENG", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
-        TargetShip(name: "NAMA", flag: "🇲🇹", cargoDetails: "Malta", client: "WFS"),
-        TargetShip(name: "SOUTHERN STAR", flag: "🇲🇹", cargoDetails: "Malta", client: "WFS"),
-        TargetShip(name: "OAK ANTON", flag: "🇵🇦", cargoDetails: "Panamá", client: "WFS"),
-        TargetShip(name: "BC ARMONIA", flag: "🇵🇦", cargoDetails: "Panamá", client: "WFS"),
-        TargetShip(name: "ANEMON", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
-        TargetShip(name: "HG LIVERPOOL", flag: "🇵🇦", cargoDetails: "Panamá", client: "WFS"),
-        TargetShip(name: "YASA ALBATROSS", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
-        TargetShip(name: "BEATRICE", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
         TargetShip(name: "BONA", flag: "🇵🇦", cargoDetails: "Panamá", client: "WFS"),
         TargetShip(name: "STAR FLAME", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
+        TargetShip(name: "BEATRICE", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
       ];
     }
     return [
-      TargetShip(name: "SCRUB ISLAND", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "Raizen"),
+      TargetShip(name: "MERCOSUL SANTOS", flag: "🇧🇷", cargoDetails: "Brasil", client: "Raizen"),
     ];
   }
 
@@ -505,7 +494,7 @@ class Ship {
       targetShipsList = targetShipsJson.map((e) => TargetShip.fromJson(e)).toList();
       final hasStale = targetShipsList.any((t) {
         final n = t.name.toUpperCase();
-        return n.contains('KOCIE') || n.contains('ARTEM') || n.contains('DSM') || n.contains('PAN CERES') || n.contains('VERIGE') || n.contains('NICOLAUS');
+        return n.contains('KOCIE') || n.contains('ARTEM') || n.contains('DSM') || n.contains('PAN CERES') || n.contains('VERIGE') || n.contains('NICOLAUS') || n.contains('SCRUB ISLAND') || n.contains('CARAVOS');
       });
       if (hasStale || targetShipsList.isEmpty) {
         targetShipsList = _getDefaultTargetShipsFor(nameStr);

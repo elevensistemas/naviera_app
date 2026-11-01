@@ -28,7 +28,7 @@ class NCSChatService {
       "https://navieracruzdelsur.dyndns.org:5073/api/ai-chat/external-bot",
       "https://navieracruzdelsur.dyndns.org:6570/api/v1/chat/ai/",
       "https://navieracruzdelsur.dyndns.org:6570/api/ai-chat/external-bot",
-      "http://192.168.2.121:3001/api/ai-chat/external-bot",
+      "http://192.168.2.169:3001/api/ai-chat/external-bot",
     ];
 
     final token = await SessionManager.shared.getToken();
@@ -227,45 +227,45 @@ class NCSChatService {
         responseText = """
 ### 👨‍✈️ Dotación y Tripulación - BT ALFA C
 
-Tripulación embarcada activa en regla STCW (15 tripulantes):
+Tripulación embarcada activa en regla STCW (17 tripulantes):
 
-- **Capitán:** Marenco Rubén Darío ➔ 🟢 10 días embarcado
-- **1er Oficial Cubierta:** Maldonado Juan ➔ 🟢 10 días embarcado
-- **2do Oficial Cubierta:** Carattoli Pablo ➔ 🟢 35 días embarcado
-- **3er Oficial Cubierta:** Lambertuchi Pablo ➔ 🟢 10 días embarcado
-- **Jefe de Máquinas:** Sosa Armando ➔ 🟢 18 días embarcado
-- **1er Oficial Máquinas:** Molero Jorge ➔ 🟢 6 días embarcado
-- **2do Oficial Máquinas:** Ledesma Gabriel ➔ 🟢 36 días embarcado
-- **Contramaestre:** Sosa Marcelo ➔ 🟢 23 días embarcado
-- **Marineros I:** Marquez Ruben (36d), Romero José (10d), Miguel Angel Ramirez (23d)
-- **1er Cabo:** Zacarias Walter ➔ 🟢 49 días embarcado
-- **Cocinero:** Kretschel Claudio ➔ 🟢 17 días embarcado
-- **Bomberos:** Aquino Marcos (26d), Mineo Julio (10d)
+- **Capitán:** Carré Leonel ➔ 🟢 2 días embarcado (Relevo reciente)
+- **Capitán / 1er Oficial Cubierta:** Caballero Diego ➔ 🟢 2 días embarcado
+- **3er Oficial Cubierta:** Lambertuchi Pablo ➔ 🟢 29 días embarcado
+- **3er Oficial Cubierta:** Zapata Darío ➔ 🟢 8 días embarcado
+- **Jefe de Máquinas:** Lescano Cristian ➔ 🟢 2 días embarcado (Relevo reciente)
+- **1er Oficial Máquinas:** Molero Jorge ➔ 🟢 25 días embarcado
+- **1er Conductor:** Visgarra Javier ➔ 🟢 2 días embarcado
+- **2do Oficial Máquinas:** Ledesma Gabriel ➔ 🟢 55 días embarcado
+- **Contramaestre:** Quirolo Juan ➔ 🟢 8 días embarcado
+- **Marineros:** Flores mariano gaston (2d), Jonatan Albornoz (12d), Lucas Arias (2d), Romero José (29d)
+- **1er Cabo Engrasador:** Mosqueda Daniel ➔ 🟢 20 días embarcado
+- **Cocinero:** Peralta Pablo ➔ 🟢 2 días embarcado
+- **Bomberos:** Mineo Julio (29d), Rodriguez David (12d)
 
-> **Semáforo de Relevos:** 🟢 15 OK (<60d) | 🟡 0 Próx. Relevo | 🔴 0 Excedidos
-> **Status Dotación:** Dotación mínima completa (15/15).
+> **Semáforo de Relevos:** 🟢 17 OK (<60d) | 🟡 0 Próx. Relevo | 🔴 0 Excedidos
+> **Status Dotación:** Dotación completa a bordo (17 tripulantes).
 """;
       } else if (lower.contains("gustavo")) {
         responseText = """
 ### 👨‍✈️ Dotación y Tripulación - BT GUSTAVO U
 
-Tripulación embarcada activa (15 tripulantes):
+Tripulación embarcada activa (13 tripulantes):
 
-- **Capitán:** Ramirez Pedro ➔ 🟢 20 días embarcado
-- **1er Oficial Cubierta:** Percara Marco ➔ 🟢 9 días embarcado
-- **2do Oficial Cubierta:** Perez Douglas ➔ 🟢 20 días embarcado
-- **Piloto (PLT):** Tobias Joaquin ➔ 🔴 108 días embarcado (Alerta Relevo)
-- **Jefe de Máquinas:** Agüero Leandro ➔ 🟢 14 días embarcado
-- **1er Oficial Máquinas:** Aguirrezarobe Alexis ➔ 🟢 9 días embarcado
-- **2do Oficial Máquinas:** Tomas Ribas Pintos ➔ 🟢 9 días embarcado
-- **Contramaestre:** Cucurulo Gustavo ➔ 🟢 24 días embarcado
-- **Marineros I:** Molina Geronimo (40d), Camacho Pablo Ezequias (29d), Rene Ruben Aceval (12d)
-- **Bomberos:** Jacquet Jorge (20d), Escalante Eduardo (9d)
-- **Engrasador:** Caprioglio Fernando ➔ 🟢 32 días embarcado
-- **Cocinero:** Rodriguez Lucas ➔ 🟢 17 días embarcado
+- **1er Oficial Cubierta (al mando):** Percara Marco ➔ 🟢 28 días embarcado
+- **2do Oficial Cubierta:** Yedro Mariano ➔ 🟢 2 días embarcado
+- **Pilotín:** Tobias Joaquin ➔ 🔴 127 días embarcado (Alerta Relevo)
+- **1er Oficial Máquinas (a cargo de máquinas):** Alday Alexis ➔ 🟢 4 días embarcado
+- **2do Oficial Máquinas:** Ramirez Diego ➔ 🟢 19 días embarcado
+- **2do Oficial Máquinas:** Tomas Ribas Pintos ➔ 🟢 28 días embarcado
+- **Contramaestre:** Godoy Luis ➔ 🟢 2 días embarcado
+- **Marineros:** Escalada Raul (4d), Nestor Carlevaris (4d)
+- **2do Bombero:** Dos Santos Lazaro (30d), Escalante Eduardo (28d)
+- **1er Cabo Engrasador:** Maximiliano Eduardo Gaetan ➔ 🟢 15 días embarcado
+- **Cocinero:** Rodriguez Lucas ➔ 🟢 36 días embarcado
 
-> **Semáforo de Relevos:** 🟢 14 OK (<60d) | 🔴 1 Excedido STCW (Tobias Joaquin: 108d)
-> **Status Dotación:** Dotación mínima completa (15/15).
+> **Semáforo de Relevos:** 🟢 12 OK (<60d) | 🔴 1 Excedido STCW (Tobias Joaquin: 127d)
+> **Status Dotación:** Oficiales a cargo cubriendo puente y máquinas.
 """;
       } else if (lower.contains("nany")) {
         responseText = """
@@ -273,30 +273,29 @@ Tripulación embarcada activa (15 tripulantes):
 
 Tripulación embarcada activa (15 tripulantes):
 
-- **Capitán:** Maciel Jonathan ➔ 🟢 14 días embarcado
-- **1er Oficial Cubierta:** Maidana Francisco ➔ 🟢 18 días embarcado
-- **2do Oficial Cubierta:** Saucedo Nicolás ➔ 🟢 14 días embarcado
-- **3er Oficial Cubierta:** Alan Leguiza ➔ 🟢 14 días embarcado
-- **Jefe de Máquinas:** Porto Guillermo ➔ 🟢 23 días embarcado
-- **1er Oficial Máquinas:** Bequir Ramiro ➔ 🟢 4 días embarcado
-- **2do Conductor:** Rosales Carlos ➔ 🟢 18 días embarcado
-- **Contramaestre:** Torres Ulises ➔ 🟢 9 días embarcado
-- **Marineros I:** Andrada Emiliano (23d), Mora Alejandro (18d), Ganduglia Sergio (14d)
-- **Auxiliar Máquinas:** Correa Motta Nicolas ➔ 🟢 9 días embarcado
-- **Engrasador:** Martin Tarroza ➔ 🟢 50 días embarcado
-- **Cocinero:** Cantore Alejandro ➔ 🟢 4 días embarcado
-- **Bombero:** Medina Felix ➔ 🟢 23 días embarcado
+- **Capitán:** Hernandez Pablo ➔ 🟢 15 días embarcado
+- **1er Oficial Cubierta:** Gallardo Juan ➔ 🟢 11 días embarcado
+- **2do Oficial Cubierta:** Saucedo Nicolás ➔ 🟢 33 días embarcado
+- **3er Oficial Cubierta:** Valentin Rabassa ➔ 🟢 5 días embarcado
+- **Jefe de Máquinas:** Carlino Hernan ➔ 🟢 18 días embarcado
+- **1er Oficial Máquinas:** Bequir Ramiro ➔ 🟢 23 días embarcado
+- **2do Oficial Máquinas:** Villar Maximiliano ➔ 🟢 8 días embarcado
+- **Contramaestre:** Torres Ulises ➔ 🟢 28 días embarcado
+- **Marineros:** Nehemias Bellomo (2d), Santiago Vargas (5d)
+- **Auxiliares Máquinas:** Correa Motta Nicolas (28d), Damian Maffioli (26d), Mariano Vitale (18d)
+- **Cocinero:** Cantore Alejandro ➔ 🟢 23 días embarcado
+- **Bomberos:** Tula Leonardo ➔ 🟢 11 días embarcado
 
 > **Semáforo de Relevos:** 🟢 15 OK (<60d) | 🟡 0 Próx. Relevo | 🔴 0 Excedidos
-> **Status Dotación:** Dotación mínima completa (15/15).
+> **Status Dotación:** Dotación reglamentaria completa a bordo (15/15).
 """;
       } else {
         responseText = """
 ### 👨‍✈️ Resumen de Tripulación y Semáforo de Relevos - NCS Control Center
 
-- 🚢 **BT ALFA C:** 15 tripulantes ➔ Capitán Marenco Rubén Darío | Jefe Máq. Sosa Armando (🟢 15 OK)
-- 🚢 **BT GUSTAVO U:** 15 tripulantes ➔ Capitán Ramirez Pedro | Jefe Máq. Agüero Leandro (🔴 1 Excedido: Tobias J. 108d)
-- 🚢 **BT NANY:** 15 tripulantes ➔ Capitán Maciel Jonathan | Jefe Máq. Porto Guillermo (🟢 15 OK)
+- 🚢 **BT ALFA C:** 17 tripulantes ➔ Capitán Carré Leonel | Jefe Máq. Lescano Cristian (🟢 17 OK)
+- 🚢 **BT GUSTAVO U:** 13 tripulantes ➔ 1er Oficial Cub. Percara Marco | 1er Of. Máq. Alday Alexis (🔴 1 Excedido: Tobias J. 127d)
+- 🚢 **BT NANY:** 15 tripulantes ➔ Capitán Hernandez Pablo | Jefe Máq. Carlino Hernan (🟢 15 OK)
 
 > **Semáforo Total Flota:** 🟢 44 en norma (<60d) | 🔴 1 vencido STCW (>=90d) | Dotación mínima completa en los 3 buques (45 tripulantes a bordo).
 """;

@@ -24,12 +24,20 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
+      border-radius: 12px;
+      background-color: #0B1120;
     }
     video {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
       background-color: #000;
+      transform-origin: center center;
+    }
+    video.gustavo-correction {
+      transform: scale(1.06) rotate(-3.4deg);
+      transform-origin: center center;
     }
     .spinner-overlay {
       position: absolute;
@@ -116,11 +124,16 @@
   <script>
     const urlParams = new URLSearchParams(window.location.search);
     const videoSrc = urlParams.get('url');
+    const vesselParam = (urlParams.get('vessel') || '').toUpperCase();
     const video = document.getElementById('video');
     const spinner = document.getElementById('spinner');
     const spinnerText = document.getElementById('spinnerText');
     const errorOverlay = document.getElementById('errorOverlay');
     const errorText = document.getElementById('errorText');
+
+    if (vesselParam.includes('GUSTAVO') || (videoSrc && videoSrc.includes('BF1767228'))) {
+      video.classList.add('gustavo-correction');
+    }
 
     let hlsInstance = null;
     let stallNudgeCount = 0;
@@ -134,10 +147,17 @@
       spinner.classList.add('hidden');
     }
 
+    function notifyParent(status) {
+      try {
+        window.parent.postMessage({ type: 'camera_status', status: status }, '*');
+      } catch (e) {}
+    }
+
     function showError(msg) {
       hideSpinner();
       errorText.textContent = msg;
       errorOverlay.classList.add('visible');
+      notifyParent('error');
     }
 
     function hideError() {
@@ -148,14 +168,17 @@
       hideSpinner();
       hideError();
       stallNudgeCount = 0;
+      notifyParent('playing');
     });
 
     video.addEventListener('waiting', () => {
       showSpinner('Buffering señal...');
+      notifyParent('buffering');
     });
 
     video.addEventListener('canplay', () => {
       hideSpinner();
+      notifyParent('playing');
     });
 
     function startStream() {

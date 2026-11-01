@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'dart:math' as math;
 import '../../models/models.dart';
 import '../../services/services.dart';
 import '../../app/theme.dart';
@@ -15,17 +14,20 @@ class FleetView extends StatefulWidget {
   State<FleetView> createState() => _FleetViewState();
 }
 
-class _FleetViewState extends State<FleetView> {
+class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
   final List<Ship> _ships = [];
   bool _isLoading = false;
   String? _errorMessage;
   int _selectedShipIndex = 0;
   Timer? _autoRefreshTimer;
   DateTime? _lastSyncTime;
+  final Map<String, CameraPlayerStatus> _cameraStatuses = {};
+  final Set<String> _reconnectingShips = {};
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadShips();
     // Auto-actualización periódica de recursos y programas de carga 4 veces al día (cada 6 horas)
     _autoRefreshTimer = Timer.periodic(const Duration(hours: 6), (_) {
@@ -36,7 +38,18 @@ class _FleetViewState extends State<FleetView> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Al volver a primer plano tras estar en segundo plano en iOS, reconectar si la sesión cayó
+      if (mounted) {
+        _loadCameraForSelectedShip();
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _autoRefreshTimer?.cancel();
     super.dispose();
   }
@@ -67,7 +80,7 @@ class _FleetViewState extends State<FleetView> {
               ? alfa.targetShips
               : Ship.getDefaultTargetShipsFor("ALFA C"),
           lastPort: alfa.lastPort.isNotEmpty ? alfa.lastPort : 'BUENOS AIRES',
-          provistosCount: alfa.targetShips.isNotEmpty ? alfa.targetShips.length : 5,
+          provistosCount: alfa.targetShips.isNotEmpty ? alfa.targetShips.length : 2,
           weather: '',
         );
         gustavo = gustavo.copyWith(
@@ -76,7 +89,7 @@ class _FleetViewState extends State<FleetView> {
               ? gustavo.targetShips
               : Ship.getDefaultTargetShipsFor("GUSTAVO U"),
           lastPort: gustavo.lastPort.isNotEmpty ? gustavo.lastPort : 'RADA LA PLATA',
-          provistosCount: gustavo.targetShips.isNotEmpty ? gustavo.targetShips.length : 11,
+          provistosCount: gustavo.targetShips.isNotEmpty ? gustavo.targetShips.length : 3,
           weather: '',
         );
         nany = nany.copyWith(
@@ -104,7 +117,7 @@ class _FleetViewState extends State<FleetView> {
           _selectedShipIndex = 0;
         }
       });
-      _resolveCameras();
+      _loadCameraForSelectedShip();
     } catch (e) {
       setState(() {
         _ships.clear();
@@ -112,7 +125,7 @@ class _FleetViewState extends State<FleetView> {
         _lastSyncTime = DateTime.now();
         _selectedShipIndex = 0;
       });
-      _resolveCameras();
+      _loadCameraForSelectedShip();
     } finally {
       if (mounted) {
         setState(() {
@@ -122,81 +135,273 @@ class _FleetViewState extends State<FleetView> {
     }
   }
 
-  Future<void> _resolveCameras() async {
-    final Map<String, String> serialMap = {
-      'ALFA': 'BF1765385',
-      'GUSTAVO': 'BF1767228',
-      'NANY': 'BF1765344',
-    };
+  Future<void> _loadCameraForSelectedShip({bool forceRefresh = false}) async {
+    if (_ships.isEmpty || _selectedShipIndex >= _ships.length) return;
+    final ship = _ships[_selectedShipIndex];
 
-    final List<Future> tasks = [];
-    bool needsSetState = false;
-
-    for (int i = 0; i < _ships.length; i++) {
-      final index = i;
-      final ship = _ships[index];
-      String? serial;
-      for (final entry in serialMap.entries) {
-        if (ship.name.toUpperCase().contains(entry.key)) {
-          serial = entry.value;
-          break;
-        }
-      }
-      if (serial != null) {
-        final cached = EzvizService.shared.getCachedStreamUrl(serial);
-        if (cached != null && cached.isNotEmpty && _ships[index].cameraUrl != cached) {
-          _ships[index] = _ships[index].copyWith(cameraUrl: cached);
-          needsSetState = true;
-        }
-
-        tasks.add(() async {
-          try {
-            final liveUrl = await EzvizService.shared.getLiveStreamUrl(serial!);
-            if (liveUrl.isNotEmpty && mounted) {
-              setState(() {
-                _ships[index] = _ships[index].copyWith(cameraUrl: liveUrl);
-              });
-            }
-          } catch (e) {
-            debugPrint("Ezviz live stream resolution for ${ship.name}: $e");
-          }
-        }());
+    String? serial;
+    String? cameraId;
+    if (ship.cameras.isNotEmpty) {
+      final activeCam = ship.cameras.firstWhere(
+        (c) => c.isActive && c.serialNumber.isNotEmpty,
+        orElse: () => ship.cameras.firstWhere(
+          (c) => c.serialNumber.isNotEmpty,
+          orElse: () => ship.cameras.first,
+        ),
+      );
+      if (activeCam.serialNumber.isNotEmpty) {
+        serial = activeCam.serialNumber;
+        cameraId = activeCam.id.isNotEmpty ? activeCam.id : null;
       }
     }
+    // Asignación de respaldo por nombre si el modelo no traía cámaras
+    if (serial == null) {
+      if (ship.name.toUpperCase().contains('ALFA')) {
+        serial = 'BF1765385';
+        cameraId = '10012';
+      } else if (ship.name.toUpperCase().contains('NANY')) {
+        serial = 'BF1765344';
+        cameraId = '9';
+      } else if (ship.name.toUpperCase().contains('GUSTAVO')) {
+        serial = 'BF1767228';
+        cameraId = '12';
+      }
+    }
+    if (serial == null) return;
 
-    if (needsSetState && mounted) {
-      setState(() {});
+    if (!forceRefresh && ship.cameraUrl != null && ship.cameraUrl!.isNotEmpty) {
+      return;
     }
 
-    if (tasks.isNotEmpty) {
-      await Future.wait(tasks);
+    setState(() {
+      _reconnectingShips.add(ship.id);
+      _cameraStatuses[ship.id] = CameraPlayerStatus.loading;
+    });
+
+    try {
+      if (forceRefresh) {
+        EzvizService.shared.invalidateCache(serial);
+      }
+      final freshUrl = await EzvizService.shared.getLiveStreamUrl(
+        serial,
+        cameraId: cameraId,
+        forceRefresh: forceRefresh,
+      );
+      if (mounted) {
+        setState(() {
+          _ships[_selectedShipIndex] = _ships[_selectedShipIndex].copyWith(cameraUrl: freshUrl);
+          _reconnectingShips.remove(ship.id);
+        });
+      }
+    } catch (e) {
+      debugPrint("Error cargando cámara para ${ship.name}: $e");
+      if (mounted) {
+        setState(() {
+          _reconnectingShips.remove(ship.id);
+          _cameraStatuses[ship.id] = CameraPlayerStatus.error;
+        });
+      }
     }
   }
 
   Future<void> _reconnectCamera(Ship ship) async {
+    final index = _ships.indexWhere((s) => s.id == ship.id);
+    if (index != -1) {
+      setState(() {
+        _ships[index] = _ships[index].copyWith(cameraUrl: "");
+      });
+    }
+
+    String? serial;
+    if (ship.cameras.isNotEmpty) {
+      final cam = ship.cameras.firstWhere(
+        (c) => c.serialNumber.isNotEmpty,
+        orElse: () => ship.cameras.first,
+      );
+      if (cam.serialNumber.isNotEmpty) serial = cam.serialNumber;
+    }
+    if (serial == null) {
+      if (ship.name.toUpperCase().contains('ALFA')) serial = 'BF1765385';
+      if (ship.name.toUpperCase().contains('NANY')) serial = 'BF1765344';
+      if (ship.name.toUpperCase().contains('GUSTAVO')) serial = 'BF1767228';
+    }
+    if (serial != null) {
+      EzvizService.shared.clearOfflineStatus(serial);
+      EzvizService.shared.invalidateCache(serial);
+    }
+
+    await _loadCameraForSelectedShip(forceRefresh: true);
+  }
+
+  Widget _buildCameraBadge(Ship ship, bool isDark) {
     String? serial;
     if (ship.name.toUpperCase().contains('ALFA')) serial = 'BF1765385';
     if (ship.name.toUpperCase().contains('NANY')) serial = 'BF1765344';
     if (ship.name.toUpperCase().contains('GUSTAVO')) serial = 'BF1767228';
-    if (serial == null) return;
 
-    final index = _ships.indexWhere((s) => s.id == ship.id);
-    if (index == -1) return;
+    final hasConfiguredCamera = ship.cameras.isNotEmpty && ship.cameras.any((c) => c.serialNumber.isNotEmpty);
+    final hasActiveCameraConfig = ship.cameras.any((c) => c.isActive && c.serialNumber.isNotEmpty);
+    final isDeviceOffline = serial != null && EzvizService.shared.isDeviceOffline(serial);
+    final isReconnecting = _reconnectingShips.contains(ship.id);
+    final status = _cameraStatuses[ship.id] ?? 
+        (isReconnecting 
+            ? CameraPlayerStatus.loading 
+            : (ship.cameraUrl != null && ship.cameraUrl!.isNotEmpty ? CameraPlayerStatus.loading : CameraPlayerStatus.error));
 
-    setState(() {
-      _ships[index] = _ships[index].copyWith(cameraUrl: "");
-    });
-
-    try {
-      final freshUrl = await EzvizService.shared.getLiveStreamUrl(serial, forceRefresh: true);
-      if (mounted && freshUrl.isNotEmpty) {
-        setState(() {
-          _ships[index] = _ships[index].copyWith(cameraUrl: freshUrl);
-        });
-      }
-    } catch (e) {
-      debugPrint("Error reconectando cámara: $e");
+    // SIN CÁMARA: el buque no tiene una cámara configurada en el sistema o está deshabilitada administrativamente
+    // (IMPORTANTE: isActive: false representa configuración administrativa, NO desconexión física del equipo)
+    if (!hasConfiguredCamera || !hasActiveCameraConfig) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: Colors.grey.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.videocam_off_outlined, size: 11, color: Colors.grey),
+            SizedBox(width: 4),
+            Text(
+              "SIN CÁMARA",
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      );
     }
+
+    // FUERA DE LÍNEA: EZVIZ confirma mediante telemetría que la cámara física está desconectada/offline
+    if (isDeviceOffline) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: Colors.blueGrey.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.blueGrey.withValues(alpha: 0.35)),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_off_rounded, size: 11, color: Colors.blueGrey),
+            SizedBox(width: 4),
+            Text(
+              "FUERA DE LÍNEA",
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueGrey,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // CONECTANDO...: mientras resuelve la URL o inicializa el reproductor
+    if (isReconnecting || status == CameraPlayerStatus.loading) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0284C7).withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.4)),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 8,
+              height: 8,
+              child: CircularProgressIndicator(
+                strokeWidth: 1.5,
+                color: Color(0xFF0284C7),
+              ),
+            ),
+            SizedBox(width: 5),
+            Text(
+              "CONECTANDO...",
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0284C7),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // NO DISPONIBLE: cuando la transmisión no pudo reproducir o falló la conexión
+    if (status == CameraPlayerStatus.error) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEF4444).withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Color(0xFFEF4444),
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Text(
+              "NO DISPONIBLE",
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFEF4444),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // EN VIVO: cuando el stream está reproduciendo activamente
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: const Color(0xFF22C55E).withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF22C55E).withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFF22C55E),
+            ),
+          ),
+          const SizedBox(width: 4),
+          const Text(
+            "EN VIVO",
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF22C55E),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   List<Ship> _getDefaultShipsList() {
@@ -213,16 +418,16 @@ class _FleetViewState extends State<FleetView> {
         flag: "Panamá 🇵🇦",
         latitude: -42.76,
         longitude: -65.03,
-        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765385_1_1.m3u8?expire=1793057666&id=1034731720817094656&t=b1022f42f636c55a8150db834133a7227c8fb35d3d87e46b6e245059f217b2b3&ev=100&c=fe12620732&u=062003c5937e4e109fe2e2ad6dab4ed0",
+        cameraUrl: "",
         cameras: [
           ShipCamera(id: "cam-alfa", name: "BT.ALFAC", serialNumber: "BF1765385", isActive: true),
         ],
         targetShips: Ship.getDefaultTargetShipsFor("ALFA C"),
-        captainName: "Marenco Rubén Darío",
-        chiefEngineerName: "Sosa Armando",
+        captainName: "Carré Leonel",
+        chiefEngineerName: "Lescano Cristian",
         lastPort: "BUENOS AIRES",
         weather: "",
-        provistosCount: 5,
+        provistosCount: 2,
         provistosTotal: 6915.00,
       ),
       Ship(
@@ -239,15 +444,15 @@ class _FleetViewState extends State<FleetView> {
         longitude: -57.55,
         cameraUrl: "",
         cameras: [
-          ShipCamera(id: "cam-gustavo", name: "BT.GUSTAVO.U", serialNumber: "BF1767228", isActive: false),
+          ShipCamera(id: "cam-gustavo", name: "BT.GUSTAVO.U", serialNumber: "BF1767228", isActive: true),
         ],
         targetShips: Ship.getDefaultTargetShipsFor("GUSTAVO U"),
-        captainName: "Ramirez Pedro",
-        chiefEngineerName: "Agüero Leandro",
+        captainName: "Percara Marco",
+        chiefEngineerName: "Alday Alexis",
         lastPort: "RADA LA PLATA",
         weather: "",
-        provistosCount: 11,
-        provistosTotal: 7390.00,
+        provistosCount: 3,
+        provistosTotal: 1300.00,
       ),
       Ship(
         id: "5",
@@ -261,7 +466,7 @@ class _FleetViewState extends State<FleetView> {
         flag: "Argentina 🇦🇷",
         latitude: -54.80,
         longitude: -68.30,
-        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765344_1_1.m3u8?expire=1793057666&id=1034731721643372544&t=e2d7391aed9f93aba28a6d6c465c993b6380cfa009ff52636af82e55b6a49f19&ev=100&c=ea289a6356&u=3085438820eb43d0bc346a7355272e2c",
+        cameraUrl: "",
         cameras: [
           ShipCamera(id: "cam-nany", name: "BT.NANY1", serialNumber: "BF1765344", isActive: true),
         ],
@@ -437,9 +642,15 @@ class _FleetViewState extends State<FleetView> {
                       padding: const EdgeInsets.symmetric(horizontal: 3.0),
                       child: GestureDetector(
                         onTap: () {
-                          setState(() {
-                            _selectedShipIndex = index;
-                          });
+                          if (_selectedShipIndex != index) {
+                            setState(() {
+                              _selectedShipIndex = index;
+                            });
+                            final selected = _ships[index];
+                            if (selected.cameraUrl == null || selected.cameraUrl!.isEmpty) {
+                              _reconnectCamera(selected);
+                            }
+                          }
                         },
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
@@ -561,9 +772,19 @@ class _FleetViewState extends State<FleetView> {
                           )
                         : ListView(
                             physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 8.0, bottom: 90.0),
+                            padding: EdgeInsets.only(
+                              left: isMobile ? 10.0 : 16.0,
+                              right: isMobile ? 10.0 : 16.0,
+                              top: 8.0,
+                              bottom: 90.0,
+                            ),
                             children: [
-                              _buildShipCard(context, _ships[_selectedShipIndex], theme),
+                              Center(
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 960),
+                                  child: _buildShipCard(context, _ships[_selectedShipIndex], theme),
+                                ),
+                              ),
                             ],
                           ),
                   ),
@@ -581,13 +802,22 @@ class _FleetViewState extends State<FleetView> {
     final shipAccentColor = _getShipThemeColor(ship.name);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header: Ship Name
+      margin: const EdgeInsets.only(bottom: 14.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: dividerColor, width: 1.0),
+      ),
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14.0, 14.0, 14.0, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header: Ship Name
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -706,63 +936,65 @@ class _FleetViewState extends State<FleetView> {
                       ),
                       const SizedBox(width: 4),
                     ],
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF22C55E).withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF22C55E).withOpacity(0.4)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color(0xFF22C55E),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Text(
-                            "EN VIVO",
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF22C55E),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    _buildCameraBadge(ship, isDark),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+      const SizedBox(height: 8),
 
-            // Video Player or Fallback for SBS camera
-            if (ship.cameraUrl != null && ship.cameraUrl!.isNotEmpty)
-              SBSCameraPlayer(
-                key: ValueKey(ship.cameraUrl),
-                url: ship.cameraUrl!,
-              )
-            else if (ship.cameras.any((c) => c.isActive))
-              Container(
-                height: 150,
+          // Video Player or Fallback for SBS camera: full width within card (border 1px)
+          if (ship.cameraUrl != null && ship.cameraUrl!.isNotEmpty)
+            SBSCameraPlayer(
+              key: ValueKey('${ship.id}-${ship.cameraUrl}'),
+              url: ship.cameraUrl!,
+              vesselName: ship.name,
+              onStatusChanged: (status) {
+                if (mounted) {
+                  setState(() {
+                    _cameraStatuses[ship.id] = status;
+                  });
+                  // Un enlace rechazado por el reproductor debe invalidarse de inmediato
+                  // aunque en teoría todavía no haya alcanzado su fecha de expiración
+                  if (status == CameraPlayerStatus.error) {
+                    String? serial;
+                    if (ship.cameras.isNotEmpty) {
+                      final cam = ship.cameras.firstWhere(
+                        (c) => c.serialNumber.isNotEmpty,
+                        orElse: () => ship.cameras.first,
+                      );
+                      if (cam.serialNumber.isNotEmpty) serial = cam.serialNumber;
+                    }
+                    if (serial == null) {
+                      if (ship.name.toUpperCase().contains('ALFA')) serial = 'BF1765385';
+                      if (ship.name.toUpperCase().contains('NANY')) serial = 'BF1765344';
+                      if (ship.name.toUpperCase().contains('GUSTAVO')) serial = 'BF1767228';
+                    }
+                    if (serial != null) {
+                      EzvizService.shared.invalidateCache(serial);
+                    }
+                  }
+                }
+              },
+              onRetry: () => _reconnectCamera(ship),
+            )
+          else if (ship.cameras.any((c) => c.isActive))
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Container(
                 decoration: BoxDecoration(
                   color: isDark ? const Color(0xFF0F172A) : Colors.grey.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: dividerColor),
                 ),
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const SizedBox(
-                        width: 22,
-                        height: 22,
+                        width: 24,
+                        height: 24,
                         child: CircularProgressIndicator(strokeWidth: 2.5),
                       ),
                       const SizedBox(height: 10),
@@ -773,20 +1005,20 @@ class _FleetViewState extends State<FleetView> {
                     ],
                   ),
                 ),
-              )
-            else
-              Container(
-                height: 150,
+              ),
+            )
+          else
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Container(
                 decoration: BoxDecoration(
                   color: Colors.grey.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.videocam_off_outlined, color: Colors.grey, size: 30),
+                      const Icon(Icons.videocam_off_outlined, color: Colors.grey, size: 32),
                       const SizedBox(height: 6),
                       Text(
                         "Cámara SBS no disponible",
@@ -796,8 +1028,14 @@ class _FleetViewState extends State<FleetView> {
                   ),
                 ),
               ),
-            
-            Divider(height: 24, color: dividerColor),
+            ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14.0, 14.0, 14.0, 14.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Divider(height: 16, color: dividerColor),
 
             // Native Mobile Resources Container (Combustible, Agua, Slop)
             Container(
@@ -1076,7 +1314,9 @@ class _FleetViewState extends State<FleetView> {
           ],
         ),
       ),
-    );
+    ],
+  ),
+);
   }
 
   Widget _buildResourceMetric({

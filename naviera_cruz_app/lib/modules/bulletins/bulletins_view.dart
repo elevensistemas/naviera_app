@@ -396,24 +396,13 @@ class _BulletinTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 52,
-                height: 64,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [_navy, Color(0xFF0E3A66)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.picture_as_pdf_rounded, color: _teal, size: 24),
-                    SizedBox(height: 2),
-                    Text('PDF', style: TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold)),
-                  ],
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.asset(
+                  'assets/images/pdf_icon.png',
+                  width: 52,
+                  height: 58,
+                  fit: BoxFit.contain,
                 ),
               ),
               const SizedBox(width: 14),

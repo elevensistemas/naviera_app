@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
@@ -8,7 +10,81 @@ import '../services/crew_profile_service.dart';
 import 'app_navigator.dart';
 import 'url_cleaner.dart';
 
-class SessionManager with ChangeNotifier {
+/// Franjas horarias oficiales de Naviera Cruz del Sur:
+/// - Mañana: 06:00 a 13:59
+/// - Tarde: 14:00 a 19:59
+/// - Noche: 20:00 a 05:59
+enum DayTimeSlot { manana, tarde, noche }
+
+class NcsHeroSchedule {
+  /// Determina la franja horaria según la hora local del dispositivo:
+  /// - Mañana: 06:00 (360m) a 13:59 (839m)
+  /// - Tarde: 14:00 (840m) a 19:59 (1199m)
+  /// - Noche: 20:00 (1200m) a 05:59 (359m)
+  static DayTimeSlot getTimeSlot([DateTime? time]) {
+    final now = time ?? DateTime.now();
+    final hour = now.hour;
+    if (hour >= 6 && hour < 14) {
+      return DayTimeSlot.manana;
+    } else if (hour >= 14 && hour < 20) {
+      return DayTimeSlot.tarde;
+    } else {
+      return DayTimeSlot.noche;
+    }
+  }
+
+  /// Retorna el asset oficial de Flutter para un buque y horario:
+  /// - ALFA C: alfa_dia (mañana), alfa_tarde (tarde), alfa_noche (noche)
+  /// - NANY: nany_dia (mañana), nany_tarde (tarde), nany_noche (noche)
+  /// - GUSTAVO U: banner_flota.png (asset disponible corporativo sin usar fotos de otro buque)
+  /// - Neutral (desembarcado, sin buque o buque no habilitado como MONARCA I): banner_flota.png
+  static String getAssetForShip(String? shipName, [DateTime? time]) {
+    if (shipName == null || shipName.trim().isEmpty) {
+      return 'assets/images/banner_flota.png';
+    }
+
+    final s = shipName.toUpperCase().trim();
+    final slot = getTimeSlot(time);
+
+    // MONARCA I está estrictamente excluido de la aplicación -> Estado neutral
+    if (s.contains('MONARCA')) {
+      return 'assets/images/banner_flota.png';
+    }
+
+    if (s.contains('ALFA')) {
+      switch (slot) {
+        case DayTimeSlot.manana:
+          return 'assets/images/alfa_dia.png';
+        case DayTimeSlot.tarde:
+          return 'assets/images/alfa_tarde.png';
+        case DayTimeSlot.noche:
+          return 'assets/images/alfa_noche.png';
+      }
+    }
+
+    if (s.contains('NANY')) {
+      switch (slot) {
+        case DayTimeSlot.manana:
+          return 'assets/images/nany_dia.png';
+        case DayTimeSlot.tarde:
+          return 'assets/images/nany_tarde.png';
+        case DayTimeSlot.noche:
+          return 'assets/images/nany_noche.png';
+      }
+    }
+
+    if (s.contains('GUSTAVO')) {
+      // Requisito: No utilizar imágenes de otro buque como reemplazo.
+      // Reutiliza el asset corporativo oficial de flota disponible para GUSTAVO U.
+      return 'assets/images/banner_flota.png';
+    }
+
+    // Estado neutral por defecto
+    return 'assets/images/banner_flota.png';
+  }
+}
+
+class SessionManager with ChangeNotifier, WidgetsBindingObserver {
   static final SessionManager shared = SessionManager._internal();
   SessionManager._internal();
 
@@ -20,6 +96,29 @@ class SessionManager with ChangeNotifier {
   bool _isDarkMode = false;
   Set<String> _blockedUserIds = {};
   int _unreadNotificationCount = 0;
+  Timer? _timeSlotTimer;
+
+  // Situación activa de dotación para tripulantes (sincronizada desde API de Intranet)
+  String? _activeCrewShip;
+  bool? _isCrewOnBoard;
+
+  String? get activeCrewShip => _activeCrewShip;
+  bool? get isCrewOnBoard => _isCrewOnBoard;
+
+  void updateCrewShipStatus({String? shipName, bool? isOnBoard}) {
+    bool changed = false;
+    if (_activeCrewShip != shipName) {
+      _activeCrewShip = shipName;
+      changed = true;
+    }
+    if (_isCrewOnBoard != isOnBoard) {
+      _isCrewOnBoard = isOnBoard;
+      changed = true;
+    }
+    if (changed) {
+      notifyListeners();
+    }
+  }
 
   bool get isAuthenticated => _isAuthenticated;
   User? get currentUser => _currentUser;
@@ -49,15 +148,75 @@ class SessionManager with ChangeNotifier {
   static const String _userKey = "com.navieracruz.currentUser";
   static const String _themeKey = "com.navieracruz.isDarkMode";
   static const String _blockedKey = "com.navieracruz.blockedUsers";
-  static const String _officeCoverIndexKey = "com.navieracruz.officeCoverIndex";
+  static const String _officeShipKey = "com.navieracruz.officeSelectedShip";
 
-  int _officeCoverIndex = 0;
-  int get officeCoverIndex => _officeCoverIndex;
+  // Catálogo oficial de buques seleccionables para Oficina (MONARCA I estrictamente excluido)
+  static const List<String> officeShips = ['ALFA C', 'NANY', 'GUSTAVO U'];
+
+  // Catálogo histórico de portadas para compatibilidad
+  static const List<Map<String, String>> officeCoversList = [
+    {'name': 'Alfa C - Día', 'asset': 'assets/images/alfa_dia.png', 'ship': 'ALFA C'},
+    {'name': 'Alfa C - Atardecer', 'asset': 'assets/images/alfa_tarde.png', 'ship': 'ALFA C'},
+    {'name': 'Alfa C - Noche', 'asset': 'assets/images/alfa_noche.png', 'ship': 'ALFA C'},
+    {'name': 'Nany - Día', 'asset': 'assets/images/nany_dia.png', 'ship': 'NANY'},
+    {'name': 'Nany - Tarde', 'asset': 'assets/images/nany_tarde.png', 'ship': 'NANY'},
+    {'name': 'Nany - Noche', 'asset': 'assets/images/nany_noche.png', 'ship': 'NANY'},
+  ];
+
+  String _officeSelectedShip = 'ALFA C';
+  String get officeSelectedShip => _officeSelectedShip;
+
+  void setOfficeShip(String ship) {
+    final sUpper = ship.toUpperCase().trim();
+    String? matched;
+    for (final s in officeShips) {
+      if (s == sUpper || s.contains(sUpper) || sUpper.contains(s)) {
+        matched = s;
+        break;
+      }
+    }
+    if (matched == null) return;
+    _officeSelectedShip = matched;
+    try {
+      _prefs.setString(_officeShipKey, _officeSelectedShip);
+    } catch (_) {}
+    notifyListeners();
+  }
+
+  void nextOfficeShip() {
+    final idx = officeShips.indexOf(_officeSelectedShip);
+    final nextIdx = (idx + 1) % officeShips.length;
+    setOfficeShip(officeShips[nextIdx]);
+  }
+
+  void previousOfficeShip() {
+    final idx = officeShips.indexOf(_officeSelectedShip);
+    final prevIdx = (idx - 1 + officeShips.length) % officeShips.length;
+    setOfficeShip(officeShips[prevIdx]);
+  }
+
+  // Compatibilidad con código previo de portadas y gestos de cabecera
+  void nextOfficeCover() => nextOfficeShip();
+  void previousOfficeCover() => previousOfficeShip();
+  void cycleOfficeCover() => nextOfficeShip();
+  void toggleOfficeShipCover() => nextOfficeShip();
+
+  int get officeCoverIndex => officeShips.indexOf(_officeSelectedShip);
+  String get currentOfficeShipName => _officeSelectedShip;
+  String get currentOfficeCoverName {
+    final slot = NcsHeroSchedule.getTimeSlot();
+    final slotStr = slot == DayTimeSlot.manana ? 'Mañana' : (slot == DayTimeSlot.tarde ? 'Tarde' : 'Noche');
+    return "$_officeSelectedShip - $slotStr";
+  }
 
   /// Retorna si el usuario actual pertenece a la dotación/tripulación del buque NANY
   bool get isUserNanyCrew {
     final u = _currentUser;
     if (u == null) return false;
+
+    if (_activeCrewShip != null) {
+      return _activeCrewShip!.toUpperCase().contains('NANY');
+    }
 
     try {
       final shipParam = Uri.base.queryParameters['ship']?.toUpperCase();
@@ -65,14 +224,12 @@ class SessionManager with ChangeNotifier {
       if (shipParam == 'ALFA' || shipParam == 'ALFAC' || shipParam == 'ALFA C' || shipParam == 'GUSTAVO' || shipParam == 'GUSTAVO U') return false;
     } catch (_) {}
 
-    // Usuarios de oficina / gerencia nunca son tripulación del Nany
     if (!isTripulanteMode || isUserAdmin) return false;
 
     final sectorUpper = u.sector.toUpperCase();
     if (sectorUpper.contains('ALFA') || sectorUpper.contains('GUSTAVO')) return false;
     if (sectorUpper.contains('NANY')) return true;
 
-    // Si coincide en el catálogo oficial de la Intranet con el buque NANY
     final member = IntranetCrewCatalog.findCrewMember(u.name);
     if (member != null &&
         member.shipName != null &&
@@ -88,20 +245,22 @@ class SessionManager with ChangeNotifier {
     final u = _currentUser;
     if (u == null) return false;
 
+    if (_activeCrewShip != null) {
+      return _activeCrewShip!.toUpperCase().contains('ALFA');
+    }
+
     try {
       final shipParam = Uri.base.queryParameters['ship']?.toUpperCase();
       if (shipParam == 'ALFA' || shipParam == 'ALFAC' || shipParam == 'ALFA C') return true;
       if (shipParam == 'NANY' || shipParam == 'GUSTAVO' || shipParam == 'GUSTAVO U') return false;
     } catch (_) {}
 
-    // Usuarios de oficina / gerencia nunca son tripulación
     if (!isTripulanteMode || isUserAdmin) return false;
 
     final sectorUpper = u.sector.toUpperCase();
     if (sectorUpper.contains('NANY') || sectorUpper.contains('GUSTAVO')) return false;
     if (sectorUpper.contains('ALFA')) return true;
 
-    // Si coincide en el catálogo oficial de la Intranet con el buque ALFA C
     final member = IntranetCrewCatalog.findCrewMember(u.name);
     if (member != null &&
         member.shipName != null &&
@@ -117,20 +276,22 @@ class SessionManager with ChangeNotifier {
     final u = _currentUser;
     if (u == null) return false;
 
+    if (_activeCrewShip != null) {
+      return _activeCrewShip!.toUpperCase().contains('GUSTAVO');
+    }
+
     try {
       final shipParam = Uri.base.queryParameters['ship']?.toUpperCase();
       if (shipParam == 'GUSTAVO' || shipParam == 'GUSTAVOU' || shipParam == 'GUSTAVO U') return true;
       if (shipParam == 'ALFA' || shipParam == 'ALFAC' || shipParam == 'ALFA C' || shipParam == 'NANY') return false;
     } catch (_) {}
 
-    // Usuarios de oficina / gerencia nunca son tripulación
     if (!isTripulanteMode || isUserAdmin) return false;
 
     final sectorUpper = u.sector.toUpperCase();
     if (sectorUpper.contains('ALFA') || sectorUpper.contains('NANY')) return false;
     if (sectorUpper.contains('GUSTAVO')) return true;
 
-    // Si coincide en el catálogo oficial de la Intranet con el buque GUSTAVO U
     final member = IntranetCrewCatalog.findCrewMember(u.name);
     if (member != null &&
         member.shipName != null &&
@@ -141,152 +302,89 @@ class SessionManager with ChangeNotifier {
     return false;
   }
 
-  /// Catálogo de portadas disponibles para oficina (Alfa C y Nany)
-  static const List<Map<String, String>> officeCoversList = [
-    {'name': 'Alfa C - Día', 'asset': 'assets/images/alfa_dia.png', 'ship': 'ALFA C'},
-    {'name': 'Alfa C - Atardecer', 'asset': 'assets/images/header_bg.png', 'ship': 'ALFA C'},
-    {'name': 'Alfa C - Noche', 'asset': 'assets/images/alfa_noche.png', 'ship': 'ALFA C'},
-    {'name': 'Nany - Día', 'asset': 'assets/images/nany_dia.png', 'ship': 'NANY'},
-    {'name': 'Nany - Tarde', 'asset': 'assets/images/nany_tarde.png', 'ship': 'NANY'},
-    {'name': 'Nany - Noche', 'asset': 'assets/images/nany_noche.png', 'ship': 'NANY'},
-  ];
-
-  String get currentOfficeCoverName {
-    final idx = _officeCoverIndex % officeCoversList.length;
-    return officeCoversList[idx]['name']!;
-  }
-
-  String get currentOfficeShipName {
-    final idx = _officeCoverIndex % officeCoversList.length;
-    return officeCoversList[idx]['ship'] ?? 'ALFA C';
-  }
-
-  /// Alterna la portada de oficina al hacer doble clic o deslizar
-  void cycleOfficeCover() {
-    _officeCoverIndex = (_officeCoverIndex + 1) % officeCoversList.length;
-    try {
-      _prefs.setInt(_officeCoverIndexKey, _officeCoverIndex);
-    } catch (_) {}
-    notifyListeners();
-  }
-
-  /// Desliza hacia la siguiente portada (Alfa C y Nany)
-  void nextOfficeCover() {
-    cycleOfficeCover();
-  }
-
-  /// Desliza hacia la portada anterior (Alfa C y Nany)
-  void previousOfficeCover() {
-    _officeCoverIndex = (_officeCoverIndex - 1 + officeCoversList.length) % officeCoversList.length;
-    try {
-      _prefs.setInt(_officeCoverIndexKey, _officeCoverIndex);
-    } catch (_) {}
-    notifyListeners();
-  }
-
-  /// Conmuta directamente entre el buque Alfa C y Nany
-  void toggleOfficeShipCover() {
-    final current = officeCoversList[_officeCoverIndex % officeCoversList.length];
-    final currentShip = current['ship'];
-    for (int i = 0; i < officeCoversList.length; i++) {
-      if (officeCoversList[i]['ship'] != currentShip) {
-        _officeCoverIndex = i;
-        try {
-          _prefs.setInt(_officeCoverIndexKey, _officeCoverIndex);
-        } catch (_) {}
-        notifyListeners();
-        return;
-      }
-    }
-  }
-
   @visibleForTesting
   void setCurrentUserForTesting(User? user) {
     _forceLoggedOut = false;
     _overrideTripulante = null;
     _currentUser = user;
     _isAuthenticated = user != null;
+    _activeCrewShip = null;
+    _isCrewOnBoard = null;
     notifyListeners();
   }
 
-  /// Resuelve la portada a utilizar según rol, buque y hora:
-  /// - Para tripulantes de ALFA C:
-  ///   - Día (06:00 a 17:00): 'assets/images/alfa_dia.png'
-  ///   - Tarde (17:00 a 20:30): 'assets/images/header_bg.png' (Atardecer)
-  ///   - Noche (20:30 a 06:00): 'assets/images/alfa_noche.png'
-  /// - Para tripulantes de GUSTAVO U:
-  ///   - Utiliza las portadas de ALFA C hasta conseguir fotos nuevas
-  /// - Para tripulantes de NANY:
-  ///   - Día (06:00 a 17:00): 'assets/images/nany_dia.png'
-  ///   - Tarde (17:00 a 20:30): 'assets/images/nany_tarde.png'
-  ///   - Noche (20:30 a 06:00): 'assets/images/nany_noche.png'
-  /// - Para usuarios de oficina:
-  ///   - Portadas deslizables entre Alfa C y Nany
+  /// Resuelve dinámicamente el asset del Hero:
+  /// - Para tripulantes: según situación oficial vigente de la Intranet y franja horaria.
+  ///   - Desembarcado / En tierra: estado neutral ('assets/images/banner_flota.png')
+  ///   - Embarcado en ALFA C: alfa_dia (06:00-13:59), alfa_tarde (14:00-19:59), alfa_noche (20:00-05:59)
+  ///   - Embarcado en NANY: nany_dia (06:00-13:59), nany_tarde (14:00-19:59), nany_noche (20:00-05:59)
+  ///   - Embarcado en GUSTAVO U: 'assets/images/banner_flota.png' (asset propio de flota)
+  ///   - Buque no habilitado (ej: MONARCA I): estado neutral
+  /// - Para oficina: buque libremente seleccionado (ALFA C, NANY o GUSTAVO U) según la franja horaria.
   String get activeCoverAsset {
     try {
       final qCover = Uri.base.queryParameters['cover']?.toLowerCase();
-      final qShip = Uri.base.queryParameters['ship']?.toLowerCase();
+      final qShip = Uri.base.queryParameters['ship']?.toUpperCase();
       final qTime = Uri.base.queryParameters['time']?.toLowerCase();
 
       if (qCover != null) {
-        if (qCover.contains('alfa') || qCover.contains('gustavo')) {
+        if (qCover.contains('alfa')) {
           if (qCover.contains('dia')) return 'assets/images/alfa_dia.png';
           if (qCover.contains('noche')) return 'assets/images/alfa_noche.png';
-          return 'assets/images/header_bg.png';
+          return 'assets/images/alfa_tarde.png';
         }
-        if (qCover.contains('dia')) return 'assets/images/nany_dia.png';
-        if (qCover.contains('tarde')) return 'assets/images/nany_tarde.png';
-        if (qCover.contains('noche')) return 'assets/images/nany_noche.png';
-      }
-      if (qShip != null) {
-        if (qShip.contains('alfa') || qShip.contains('gustavo')) {
-          if (qTime == 'dia') return 'assets/images/alfa_dia.png';
-          if (qTime == 'tarde') return 'assets/images/header_bg.png';
-          if (qTime == 'noche') return 'assets/images/alfa_noche.png';
-          return 'assets/images/alfa_dia.png';
-        } else if (qShip.contains('nany')) {
-          if (qTime == 'dia') return 'assets/images/nany_dia.png';
-          if (qTime == 'tarde') return 'assets/images/nany_tarde.png';
-          if (qTime == 'noche') return 'assets/images/nany_noche.png';
+        if (qCover.contains('nany')) {
+          if (qCover.contains('dia')) return 'assets/images/nany_dia.png';
+          if (qCover.contains('tarde')) return 'assets/images/nany_tarde.png';
+          if (qCover.contains('noche')) return 'assets/images/nany_noche.png';
           return 'assets/images/nany_dia.png';
         }
+        if (qCover.contains('gustavo') || qCover.contains('neutral') || qCover.contains('flota')) {
+          return 'assets/images/banner_flota.png';
+        }
       }
-      if (qTime == 'dia') return (isUserAlfaCrew || isUserGustavoCrew) ? 'assets/images/alfa_dia.png' : 'assets/images/nany_dia.png';
-      if (qTime == 'tarde') return (isUserAlfaCrew || isUserGustavoCrew) ? 'assets/images/header_bg.png' : 'assets/images/nany_tarde.png';
-      if (qTime == 'noche') return (isUserAlfaCrew || isUserGustavoCrew) ? 'assets/images/alfa_noche.png' : 'assets/images/nany_noche.png';
+
+      if (qShip != null) {
+        DateTime? mockTime;
+        if (qTime == 'dia' || qTime == 'manana') mockTime = DateTime(2026, 11, 1, 9, 0);
+        if (qTime == 'tarde') mockTime = DateTime(2026, 11, 1, 15, 0);
+        if (qTime == 'noche') mockTime = DateTime(2026, 11, 1, 22, 0);
+        return NcsHeroSchedule.getAssetForShip(qShip, mockTime);
+      }
     } catch (_) {}
 
     final now = DateTime.now();
-    final minutes = now.hour * 60 + now.minute;
 
-    // Tripulación de ALFA C y GUSTAVO U (Gustavo U utiliza las de Alfa C hasta fotos nuevas)
-    if (isUserAlfaCrew || isUserGustavoCrew) {
-      // Día: 06:00 (360m) a 17:00 (1020m)
-      // Tarde: 17:00 (1020m) a 20:30 (1230m)
-      // Noche: 20:30 (1230m) a 06:00 (360m)
-      if (minutes >= 360 && minutes < 1020) {
-        return 'assets/images/alfa_dia.png';
-      } else if (minutes >= 1020 && minutes < 1230) {
-        return 'assets/images/header_bg.png';
-      } else {
-        return 'assets/images/alfa_noche.png';
+    // 1. Perfil de Tripulación
+    if (isTripulanteMode) {
+      // Si está registrado como desembarcado / en tierra -> Estado neutral
+      if (_isCrewOnBoard == false) {
+        return 'assets/images/banner_flota.png';
       }
+
+      // Si tenemos buque confirmado por la API
+      if (_activeCrewShip != null && _activeCrewShip!.trim().isNotEmpty) {
+        if (_activeCrewShip!.toUpperCase().contains('MONARCA')) {
+          return 'assets/images/banner_flota.png'; // Buque no habilitado
+        }
+        return NcsHeroSchedule.getAssetForShip(_activeCrewShip, now);
+      }
+
+      // Fallback a detección por catálogo mientras se completa la consulta de perfil
+      if (isUserNanyCrew) {
+        return NcsHeroSchedule.getAssetForShip('NANY', now);
+      } else if (isUserAlfaCrew) {
+        return NcsHeroSchedule.getAssetForShip('ALFA C', now);
+      } else if (isUserGustavoCrew) {
+        return NcsHeroSchedule.getAssetForShip('GUSTAVO U', now);
+      }
+
+      // Estado neutral por defecto para tripulantes sin buque asignado o desembarcados
+      return 'assets/images/banner_flota.png';
     }
 
-    // Tripulación exclusiva del NANY
-    if (isUserNanyCrew) {
-      if (minutes >= 360 && minutes < 1020) {
-        return 'assets/images/nany_dia.png';
-      } else if (minutes >= 1020 && minutes < 1230) {
-        return 'assets/images/nany_tarde.png';
-      } else {
-        return 'assets/images/nany_noche.png';
-      }
-    }
-
-    // Oficina: selección de portadas deslizables entre Alfa C y Nany
-    final idx = _officeCoverIndex % officeCoversList.length;
-    return officeCoversList[idx]['asset']!;
+    // 2. Perfil de Oficina: buque seleccionado libremente por el usuario
+    return NcsHeroSchedule.getAssetForShip(_officeSelectedShip, now);
   }
 
   /// Verifica si el usuario autenticado tiene rol de administración o gerencia
@@ -348,16 +446,50 @@ class SessionManager with ChangeNotifier {
     _prefs = await SharedPreferences.getInstance();
     // Limpieza de cualquier persistencia previa para garantizar rol limpio
     await _prefs.remove("com.navieracruz.overrideTripulanteMode");
-    _officeCoverIndex = _prefs.getInt(_officeCoverIndexKey) ?? 0;
+
+    _officeSelectedShip = _prefs.getString(_officeShipKey) ?? 'ALFA C';
+    if (!officeShips.contains(_officeSelectedShip)) {
+      _officeSelectedShip = 'ALFA C';
+    }
+
+    // Registro de observador de ciclo de vida para refresco al regresar de segundo plano
+    WidgetsBinding.instance.addObserver(this);
+
+    // Temporizador de baja frecuencia (1 minuto) para verificar franjas horarias
+    _startTimeSlotTimer();
+
     await checkSession();
     _isDarkMode = _prefs.getBool(_themeKey) ?? false;
     _blockedUserIds = (_prefs.getStringList(_blockedKey) ?? []).toSet();
+  }
+
+  void _startTimeSlotTimer() {
+    _timeSlotTimer?.cancel();
+    _timeSlotTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      notifyListeners();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      notifyListeners();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _timeSlotTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> checkSession() async {
     if (_forceLoggedOut) {
       _isAuthenticated = false;
       _currentUser = null;
+      _activeCrewShip = null;
+      _isCrewOnBoard = null;
       notifyListeners();
       return;
     }
@@ -376,6 +508,8 @@ class SessionManager with ChangeNotifier {
             avatarURL: "",
           );
           _isAuthenticated = true;
+          _activeCrewShip = 'NANY';
+          _isCrewOnBoard = true;
           notifyListeners();
           return;
         }
@@ -390,6 +524,8 @@ class SessionManager with ChangeNotifier {
               avatarURL: "",
             );
             _isAuthenticated = true;
+            _activeCrewShip = catalogMember.shipName;
+            _isCrewOnBoard = catalogMember.isOnBoard;
             notifyListeners();
             return;
           }
@@ -397,11 +533,13 @@ class SessionManager with ChangeNotifier {
             _currentUser = User(
               id: "1",
               name: "Alejandro Lo Presti",
-              role: "Gerencia General",
-              sector: "Gerencia",
+              role: "Personal de Oficina",
+              sector: "Oficina Central",
               avatarURL: "https://i.pravatar.cc/150?img=60",
             );
             _isAuthenticated = true;
+            _activeCrewShip = null;
+            _isCrewOnBoard = false;
             notifyListeners();
             return;
           }
@@ -409,24 +547,28 @@ class SessionManager with ChangeNotifier {
 
         if (role == 'tripulante') {
           _currentUser = User(
-            id: "13",
-            name: "Marenco Rubén Darío",
+            id: "108",
+            name: "Carrá Leonel",
             role: "Capitán",
             sector: "Buque ALFA C",
             avatarURL: "",
           );
           _isAuthenticated = true;
+          _activeCrewShip = 'ALFA C';
+          _isCrewOnBoard = true;
           notifyListeners();
           return;
         } else if (role == 'oficina') {
           _currentUser = User(
             id: "1",
             name: "Alejandro Lo Presti",
-            role: "Gerencia General",
-            sector: "Gerencia",
+            role: "Personal de Oficina",
+            sector: "Oficina Central",
             avatarURL: "https://i.pravatar.cc/150?img=60",
           );
           _isAuthenticated = true;
+          _activeCrewShip = null;
+          _isCrewOnBoard = false;
           notifyListeners();
           return;
         }
@@ -441,8 +583,8 @@ class SessionManager with ChangeNotifier {
           _currentUser = User(
             id: "1",
             name: "Alejandro Lo Presti",
-            role: "Gerencia General",
-            sector: "Gerencia",
+            role: "Personal de Oficina",
+            sector: "Oficina Central",
             avatarURL: "https://i.pravatar.cc/150?img=60",
           );
         }
@@ -461,6 +603,8 @@ class SessionManager with ChangeNotifier {
   Future<void> login(String token, User user) async {
     _forceLoggedOut = false;
     _overrideTripulante = null;
+    _activeCrewShip = null;
+    _isCrewOnBoard = null;
     cleanBrowserUrl();
     // Limpiar caché de datos personales previos
     ProductionCrewProfileService.clearCache();
@@ -475,6 +619,8 @@ class SessionManager with ChangeNotifier {
   Future<void> logout() async {
     _forceLoggedOut = true;
     _overrideTripulante = null;
+    _activeCrewShip = null;
+    _isCrewOnBoard = null;
     cleanBrowserUrl();
     ProductionCrewProfileService.clearCache();
     try {

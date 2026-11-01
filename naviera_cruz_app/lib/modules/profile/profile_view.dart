@@ -240,18 +240,19 @@ class _ProfileViewState extends State<ProfileView> {
                             color: primaryTextColor,
                           ),
                         ),
-                        const SizedBox(height: 4),
-
-                        // Cargo y Sector
-                        Text(
-                          "$displayRole • $displaySector",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: secondaryTextColor,
-                            fontWeight: FontWeight.w500,
+                        // Cargo y Sector (Exclusivo para tripulantes; en Oficina se suprime totalmente)
+                        if (isTripulante) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            "$displayRole • $displaySector",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: secondaryTextColor,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                        ),
+                        ],
                         const SizedBox(height: 12),
 
                         // Badge distintivo de tipo de usuario
@@ -280,7 +281,7 @@ class _ProfileViewState extends State<ProfileView> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                isTripulante ? "PERSONAL DE BUQUE / FLOTA" : "PERSONAL DE OFICINA / GERENCIA",
+                                isTripulante ? "PERSONAL DE BUQUE / FLOTA" : "PERSONAL DE OFICINA",
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,

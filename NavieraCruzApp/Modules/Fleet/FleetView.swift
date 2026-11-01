@@ -1,6 +1,4 @@
 import SwiftUI
-import AVKit
-import AVFoundation
 
 struct FleetView: View {
     @StateObject private var viewModel = FleetViewModel()
@@ -18,7 +16,7 @@ struct FleetView: View {
                     ScrollView {
                         LazyVStack(spacing: 16) {
                             ForEach(viewModel.ships) { ship in
-                                ShipCardView(ship: ship)
+                                ShipCardView(ship: ship, cameraService: viewModel.cameraService)
                             }
                         }
                         .padding()
@@ -38,6 +36,7 @@ struct FleetView: View {
 
 struct ShipCardView: View {
     let ship: Ship
+    let cameraService: CameraServiceProtocol
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -79,28 +78,11 @@ struct ShipCardView: View {
                 }
             }
             
-            // Functional Video Player for SBS Camera (AVKit HLS Player)
-            if let cameraUrlStr = ship.cameraUrl, let url = URL(string: cameraUrlStr) {
-                VideoPlayer(player: AVPlayer(url: url))
-                    .frame(height: 150)
-                    .cornerRadius(8)
-            } else {
-                ZStack {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.1))
-                        .frame(height: 150)
-                        .cornerRadius(8)
-                    
-                    VStack {
-                        Image(systemName: "video.slash.fill")
-                            .foregroundColor(.gray)
-                        Text("Cámara SBS no disponible")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
-                }
-            }
-            .padding(.top, 8)
+            // Functional Video Player for SBS Camera (Native Centinela Gateway Player)
+            CameraPlayerView(ship: ship, cameraService: cameraService)
+                .frame(height: 155)
+                .cornerRadius(8)
+                .padding(.top, 8)
         }
         .padding()
         .background(ColorTheme.background)

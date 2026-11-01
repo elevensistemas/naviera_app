@@ -405,16 +405,16 @@ class MockFleetService implements FleetService {
         flag: "Panamá 🇵🇦",
         latitude: -42.76,
         longitude: -65.03,
-        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765385_1_1.m3u8?expire=1793057666&id=1034731720817094656&t=b1022f42f636c55a8150db834133a7227c8fb35d3d87e46b6e245059f217b2b3&ev=100&c=fe12620732&u=062003c5937e4e109fe2e2ad6dab4ed0",
+        cameraUrl: "",
         cameras: [
           ShipCamera(id: "cam-alfa", name: "BT.ALFAC", serialNumber: "BF1765385", isActive: true),
         ],
         targetShips: Ship.getDefaultTargetShipsFor("ALFA C"),
-        captainName: "Marenco Rubén Darío",
-        chiefEngineerName: "Sosa Armando",
+        captainName: "Carré Leonel",
+        chiefEngineerName: "Lescano Cristian",
         lastPort: "BUENOS AIRES",
         weather: "",
-        provistosCount: 5,
+        provistosCount: 2,
         provistosTotal: 6915.00,
       ),
       Ship(
@@ -431,15 +431,15 @@ class MockFleetService implements FleetService {
         longitude: -57.55,
         cameraUrl: "",
         cameras: [
-          ShipCamera(id: "cam-gustavo", name: "BT.GUSTAVO.U", serialNumber: "BF1767228", isActive: false),
+          ShipCamera(id: "cam-gustavo", name: "BT.GUSTAVO.U", serialNumber: "BF1767228", isActive: true),
         ],
         targetShips: Ship.getDefaultTargetShipsFor("GUSTAVO U"),
-        captainName: "Ramirez Pedro",
-        chiefEngineerName: "Agüero Leandro",
+        captainName: "Percara Marco",
+        chiefEngineerName: "Alday Alexis",
         lastPort: "RADA LA PLATA",
         weather: "",
-        provistosCount: 11,
-        provistosTotal: 7390.00,
+        provistosCount: 3,
+        provistosTotal: 1300.00,
       ),
       Ship(
         id: "5",
@@ -453,7 +453,7 @@ class MockFleetService implements FleetService {
         flag: "Argentina 🇦🇷",
         latitude: -54.80,
         longitude: -68.30,
-        cameraUrl: "https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765344_1_1.m3u8?expire=1793057666&id=1034731721643372544&t=e2d7391aed9f93aba28a6d6c465c993b6380cfa009ff52636af82e55b6a49f19&ev=100&c=ea289a6356&u=3085438820eb43d0bc346a7355272e2c",
+        cameraUrl: "",
         cameras: [
           ShipCamera(id: "cam-nany", name: "BT.NANY1", serialNumber: "BF1765344", isActive: true),
         ],
@@ -474,56 +474,57 @@ class MockFleetService implements FleetService {
     final upper = shipId.toUpperCase().trim();
     if (upper.contains('ALFA') || upper == '4' || upper == '1' || upper == '2071' || upper == 'S1') {
       return [
-        CrewMember(id: "c101", shipId: shipId, shipName: "ALFA C", name: "Marenco Rubén Darío", role: "Capitán", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 23, orderIndex: 1),
-        CrewMember(id: "c102", shipId: shipId, shipName: "ALFA C", name: "Maldonado Juan", role: "1er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 23, orderIndex: 2),
-        CrewMember(id: "c103", shipId: shipId, shipName: "ALFA C", name: "Carattoli Pablo", role: "2do Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 48, orderIndex: 3),
-        CrewMember(id: "c104", shipId: shipId, shipName: "ALFA C", name: "Lambertuchi Pablo", role: "3er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 23, orderIndex: 4),
-        CrewMember(id: "c105", shipId: shipId, shipName: "ALFA C", name: "Sosa Armando", role: "Jefe de Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 31, orderIndex: 5),
-        CrewMember(id: "c106", shipId: shipId, shipName: "ALFA C", name: "Molero Jorge", role: "1er Maquinista", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 19, orderIndex: 6),
-        CrewMember(id: "c107", shipId: shipId, shipName: "ALFA C", name: "Ledesma Gabriel", role: "2do Maquinista", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 49, orderIndex: 7),
-        CrewMember(id: "c108", shipId: shipId, shipName: "ALFA C", name: "Sosa Marcelo", role: "Contramaestre", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 36, orderIndex: 8),
-        CrewMember(id: "c109", shipId: shipId, shipName: "ALFA C", name: "Romero José", role: "Marinero I", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 23, orderIndex: 9),
-        CrewMember(id: "c110", shipId: shipId, shipName: "ALFA C", name: "Miguel Angel Ramirez", role: "Marinero I", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 36, orderIndex: 10),
-        CrewMember(id: "c111", shipId: shipId, shipName: "ALFA C", name: "Jonatan Albornoz", role: "Marinero I", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 6, orderIndex: 11),
-        CrewMember(id: "c112", shipId: shipId, shipName: "ALFA C", name: "Mosqueda Daniel", role: "1er Cabo Engrasador", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 14, orderIndex: 12),
-        CrewMember(id: "c113", shipId: shipId, shipName: "ALFA C", name: "Kretschel Claudio", role: "Cocinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 30, orderIndex: 13),
-        CrewMember(id: "c114", shipId: shipId, shipName: "ALFA C", name: "Rodriguez David", role: "Bombero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 6, orderIndex: 14),
-        CrewMember(id: "c115", shipId: shipId, shipName: "ALFA C", name: "Mineo Julio", role: "Bombero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 23, orderIndex: 15),
+        CrewMember(id: "c101", shipId: shipId, shipName: "ALFA C", name: "Carré Leonel", role: "Capitán", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 0),
+        CrewMember(id: "c102", shipId: shipId, shipName: "ALFA C", name: "Caballero Diego", role: "Capitán / 1er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 0),
+        CrewMember(id: "c103", shipId: shipId, shipName: "ALFA C", name: "Lambertuchi Pablo", role: "3er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 29, orderIndex: 23),
+        CrewMember(id: "c104", shipId: shipId, shipName: "ALFA C", name: "Zapata Darío", role: "3er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 8, orderIndex: 23),
+        CrewMember(id: "c105", shipId: shipId, shipName: "ALFA C", name: "Lescano Cristian", role: "Jefe de Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 30),
+        CrewMember(id: "c106", shipId: shipId, shipName: "ALFA C", name: "Molero Jorge", role: "1er Oficial Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 25, orderIndex: 35),
+        CrewMember(id: "c107", shipId: shipId, shipName: "ALFA C", name: "Visgarra Javier", role: "1er Conductor", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 35),
+        CrewMember(id: "c108", shipId: shipId, shipName: "ALFA C", name: "Ledesma Gabriel", role: "2do Oficial Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 55, orderIndex: 41),
+        CrewMember(id: "c109", shipId: shipId, shipName: "ALFA C", name: "Quirolo Juan", role: "Contramaestre", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 8, orderIndex: 60),
+        CrewMember(id: "c110", shipId: shipId, shipName: "ALFA C", name: "Flores mariano gaston", role: "Marinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 70),
+        CrewMember(id: "c111", shipId: shipId, shipName: "ALFA C", name: "Jonatan Albornoz", role: "Marinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 12, orderIndex: 70),
+        CrewMember(id: "c112", shipId: shipId, shipName: "ALFA C", name: "Lucas Arias", role: "Marinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 70),
+        CrewMember(id: "c113", shipId: shipId, shipName: "ALFA C", name: "Romero José", role: "Marinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 29, orderIndex: 70),
+        CrewMember(id: "c114", shipId: shipId, shipName: "ALFA C", name: "Mosqueda Daniel", role: "1er Cabo Engrasador", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 100),
+        CrewMember(id: "c115", shipId: shipId, shipName: "ALFA C", name: "Peralta Pablo", role: "Cocinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 110),
+        CrewMember(id: "c116", shipId: shipId, shipName: "ALFA C", name: "Mineo Julio", role: "Bomberos", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 29, orderIndex: 9999),
+        CrewMember(id: "c117", shipId: shipId, shipName: "ALFA C", name: "Rodriguez David", role: "Bomberos", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 12, orderIndex: 9999),
       ];
     } else if (upper.contains('GUSTAVO') || upper == '6' || upper == '3' || upper == '2073' || upper == 'S2') {
       return [
-        CrewMember(id: "c201", shipId: shipId, shipName: "GUSTAVO U", name: "Percara Marco", role: "1er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 22, orderIndex: 1),
-        CrewMember(id: "c202", shipId: shipId, shipName: "GUSTAVO U", name: "Perez Douglas", role: "2do Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 33, orderIndex: 2),
-        CrewMember(id: "c203", shipId: shipId, shipName: "GUSTAVO U", name: "Tobias Joaquin", role: "Pilotín", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 121, orderIndex: 3),
-        CrewMember(id: "c204", shipId: shipId, shipName: "GUSTAVO U", name: "Agüero Leandro", role: "Jefe de Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 27, orderIndex: 4),
-        CrewMember(id: "c205", shipId: shipId, shipName: "GUSTAVO U", name: "Tomas Ribas Pintos", role: "2do Maquinista", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 22, orderIndex: 5),
-        CrewMember(id: "c206", shipId: shipId, shipName: "GUSTAVO U", name: "Cucurulo Gustavo", role: "Contramaestre", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 37, orderIndex: 6),
-        CrewMember(id: "c207", shipId: shipId, shipName: "GUSTAVO U", name: "Claudio Sotelo", role: "Marinero I", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 13, orderIndex: 7),
-        CrewMember(id: "c208", shipId: shipId, shipName: "GUSTAVO U", name: "Camacho Pablo Ezequias", role: "Marinero I", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 42, orderIndex: 8),
-        CrewMember(id: "c209", shipId: shipId, shipName: "GUSTAVO U", name: "Rene Ruben Aceval", role: "Marinero I", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 25, orderIndex: 9),
-        CrewMember(id: "c210", shipId: shipId, shipName: "GUSTAVO U", name: "Jacquet Jorge", role: "1er Bombero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 33, orderIndex: 10),
-        CrewMember(id: "c211", shipId: shipId, shipName: "GUSTAVO U", name: "Escalante Eduardo", role: "2do Bombero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 22, orderIndex: 11),
-        CrewMember(id: "c212", shipId: shipId, shipName: "GUSTAVO U", name: "Maximiliano Eduardo Gaetan", role: "1er Cabo Engrasador", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 9, orderIndex: 12),
-        CrewMember(id: "c213", shipId: shipId, shipName: "GUSTAVO U", name: "Rodriguez Lucas", role: "Cocinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 30, orderIndex: 13),
-        CrewMember(id: "c214", shipId: shipId, shipName: "GUSTAVO U", name: "Ramirez Diego", role: "1er Oficial", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 13, orderIndex: 14),
+        CrewMember(id: "c201", shipId: shipId, shipName: "GUSTAVO U", name: "Percara Marco", role: "1er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 28, orderIndex: 10),
+        CrewMember(id: "c202", shipId: shipId, shipName: "GUSTAVO U", name: "Yedro Mariano", role: "2do Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 20),
+        CrewMember(id: "c203", shipId: shipId, shipName: "GUSTAVO U", name: "Tobias Joaquin", role: "Pilotín", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 127, orderIndex: 24),
+        CrewMember(id: "c204", shipId: shipId, shipName: "GUSTAVO U", name: "Alday Alexis", role: "1er Oficial Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 4, orderIndex: 35),
+        CrewMember(id: "c205", shipId: shipId, shipName: "GUSTAVO U", name: "Ramirez Diego", role: "2do Oficial Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 19, orderIndex: 41),
+        CrewMember(id: "c206", shipId: shipId, shipName: "GUSTAVO U", name: "Tomas Ribas Pintos", role: "2do Oficial Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 28, orderIndex: 41),
+        CrewMember(id: "c207", shipId: shipId, shipName: "GUSTAVO U", name: "Godoy Luis", role: "Contramaestre", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 60),
+        CrewMember(id: "c208", shipId: shipId, shipName: "GUSTAVO U", name: "Escalada Raul", role: "Marinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 4, orderIndex: 70),
+        CrewMember(id: "c209", shipId: shipId, shipName: "GUSTAVO U", name: "Nestor Carlevaris", role: "Marinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 4, orderIndex: 70),
+        CrewMember(id: "c210", shipId: shipId, shipName: "GUSTAVO U", name: "Dos Santos Lazaro", role: "2do Bombero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 30, orderIndex: 90),
+        CrewMember(id: "c211", shipId: shipId, shipName: "GUSTAVO U", name: "Escalante Eduardo", role: "2do Bombero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 28, orderIndex: 90),
+        CrewMember(id: "c212", shipId: shipId, shipName: "GUSTAVO U", name: "Maximiliano Eduardo Gaetan", role: "1er Cabo Engrasador", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 15, orderIndex: 100),
+        CrewMember(id: "c213", shipId: shipId, shipName: "GUSTAVO U", name: "Rodriguez Lucas", role: "Cocinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 36, orderIndex: 110),
       ];
     } else {
       return [
-        CrewMember(id: "c301", shipId: shipId, shipName: "NANY", name: "Hernandez Pablo", role: "Capitán", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 9, orderIndex: 1),
-        CrewMember(id: "c302", shipId: shipId, shipName: "NANY", name: "Gallardo Juan", role: "1er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 5, orderIndex: 2),
-        CrewMember(id: "c303", shipId: shipId, shipName: "NANY", name: "Saucedo Nicolás", role: "2do Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 27, orderIndex: 3),
-        CrewMember(id: "c304", shipId: shipId, shipName: "NANY", name: "Alan Leguiza", role: "3er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 27, orderIndex: 4),
-        CrewMember(id: "c305", shipId: shipId, shipName: "NANY", name: "Carlino Hernan", role: "Jefe de Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 12, orderIndex: 5),
-        CrewMember(id: "c306", shipId: shipId, shipName: "NANY", name: "Bequir Ramiro", role: "1er Maquinista", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 17, orderIndex: 6),
-        CrewMember(id: "c307", shipId: shipId, shipName: "NANY", name: "Rosales Carlos", role: "2do Conductor", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 31, orderIndex: 7),
-        CrewMember(id: "c308", shipId: shipId, shipName: "NANY", name: "Torres Ulises", role: "Contramaestre", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 22, orderIndex: 8),
-        CrewMember(id: "c309", shipId: shipId, shipName: "NANY", name: "Andrada Emiliano", role: "Marinero I", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 36, orderIndex: 9),
-        CrewMember(id: "c310", shipId: shipId, shipName: "NANY", name: "Mora Alejandro", role: "Marinero I", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 31, orderIndex: 10),
-        CrewMember(id: "c311", shipId: shipId, shipName: "NANY", name: "Ganduglia Sergio", role: "Marinero I", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 27, orderIndex: 11),
-        CrewMember(id: "c312", shipId: shipId, shipName: "NANY", name: "Correa Motta Nicolas", role: "1er Cabo", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 22, orderIndex: 12),
-        CrewMember(id: "c313", shipId: shipId, shipName: "NANY", name: "Mariano Vitale", role: "Auxiliar Maquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 12, orderIndex: 13),
-        CrewMember(id: "c314", shipId: shipId, shipName: "NANY", name: "Cantore Alejandro", role: "Cocinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 17, orderIndex: 14),
-        CrewMember(id: "c315", shipId: shipId, shipName: "NANY", name: "Tula Leonardo", role: "Bombero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 5, orderIndex: 15),
+        CrewMember(id: "c301", shipId: shipId, shipName: "NANY", name: "Hernandez Pablo", role: "Capitán", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 15, orderIndex: 0),
+        CrewMember(id: "c302", shipId: shipId, shipName: "NANY", name: "Gallardo Juan", role: "1er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 11, orderIndex: 10),
+        CrewMember(id: "c303", shipId: shipId, shipName: "NANY", name: "Saucedo Nicolás", role: "2do Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 33, orderIndex: 20),
+        CrewMember(id: "c304", shipId: shipId, shipName: "NANY", name: "Valentin Rabassa", role: "3er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 5, orderIndex: 23),
+        CrewMember(id: "c305", shipId: shipId, shipName: "NANY", name: "Carlino Hernan", role: "Jefe de Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 18, orderIndex: 30),
+        CrewMember(id: "c306", shipId: shipId, shipName: "NANY", name: "Bequir Ramiro", role: "1er Oficial Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 23, orderIndex: 35),
+        CrewMember(id: "c307", shipId: shipId, shipName: "NANY", name: "Villar Maximiliano", role: "2do Oficial Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 8, orderIndex: 41),
+        CrewMember(id: "c308", shipId: shipId, shipName: "NANY", name: "Torres Ulises", role: "Contramaestre", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 28, orderIndex: 60),
+        CrewMember(id: "c309", shipId: shipId, shipName: "NANY", name: "Nehemias Bellomo", role: "Marinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 70),
+        CrewMember(id: "c310", shipId: shipId, shipName: "NANY", name: "Santiago Vargas", role: "Marinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 5, orderIndex: 70),
+        CrewMember(id: "c311", shipId: shipId, shipName: "NANY", name: "Correa Motta Nicolas", role: "Auxiliar Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 28, orderIndex: 100),
+        CrewMember(id: "c312", shipId: shipId, shipName: "NANY", name: "Damian Maffioli", role: "Auxiliar Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 26, orderIndex: 100),
+        CrewMember(id: "c313", shipId: shipId, shipName: "NANY", name: "Mariano Vitale", role: "Auxiliar Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 18, orderIndex: 100),
+        CrewMember(id: "c314", shipId: shipId, shipName: "NANY", name: "Cantore Alejandro", role: "Cocinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 23, orderIndex: 110),
+        CrewMember(id: "c315", shipId: shipId, shipName: "NANY", name: "Tula Leonardo", role: "Bomberos", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 11, orderIndex: 9999),
       ];
     }
   }
@@ -533,120 +534,273 @@ class EzvizService {
   static final EzvizService shared = EzvizService._internal();
   EzvizService._internal();
 
-  static const String _appKey = "b7b99e5c45d64148a1492fb25b84ceb8";
-  static const String _appSecret = "2bd739f5c4614af0b33191f9a780fd42";
-
-  // Caché pre-sembrado con las transmisiones en vivo activas de la flota (actualizable dinámicamente)
-  final Map<String, String> _streamCache = {
-    // Buque ALFA C (BF1765385)
-    'BF1765385': 'https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765385_1_1.m3u8?expire=1793057666&id=1034731720817094656&t=b1022f42f636c55a8150db834133a7227c8fb35d3d87e46b6e245059f217b2b3&ev=100&c=fe12620732&u=062003c5937e4e109fe2e2ad6dab4ed0',
-    // Buque NANY (BF1765344)
-    'BF1765344': 'https://vtmsaopaulo.ezvizlife.com:4443/v3/openlive/BF1765344_1_1.m3u8?expire=1793057666&id=1034731721643372544&t=e2d7391aed9f93aba28a6d6c465c993b6380cfa009ff52636af82e55b6a49f19&ev=100&c=ea289a6356&u=3085438820eb43d0bc346a7355272e2c',
-  };
+  // Caché local en memoria de URLs temporales de reproducción (.m3u8)
+  final Map<String, String> _streamCache = {};
   final Map<String, DateTime> _streamCacheExpiry = {};
 
-  final Set<String> _offlineSerials = {'BF1767228'}; // Gustavo U offline físicamente en puerto
-  String? _accessToken;
-  DateTime? _tokenExpireTime;
+  final Set<String> _offlineSerials = {}; // Confirmado offline por Centinela Gateway
 
-  /// Retorna de inmediato la URL en caché
+  // Token de acceso a cámaras (CAT)
+  String? _cachedCAT;
+  DateTime? _catExpiry;
+  Future<String>? _catInFlight;
+
+  // Control de tasa de reintentos / Circuit Breaker
+  final Map<String, List<DateTime>> _failureHistory = {};
+  static const int _maxRetriesPerWindow = 3;
+  static const Duration _retryWindow = Duration(seconds: 60);
+  static const Duration _cooldownDuration = Duration(seconds: 30);
+
+  /// Retorna de inmediato la URL en caché si existe
   String? getCachedStreamUrl(String deviceSerial) {
     return _streamCache[deviceSerial];
   }
 
-  Future<String> _getAccessToken() async {
-    if (_accessToken != null && _tokenExpireTime != null && DateTime.now().isBefore(_tokenExpireTime!)) {
-      return _accessToken!;
-    }
-
-    try {
-      final response = await http.post(
-        Uri.parse("https://open.ezvizlife.com/api/lapp/token/get"),
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: {
-          "appKey": _appKey,
-          "appSecret": _appSecret,
-        },
-      ).timeout(const Duration(milliseconds: 5000));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data["code"] == "200" && data["data"] != null) {
-          _accessToken = data["data"]["accessToken"];
-          // Token válido por 6 días
-          _tokenExpireTime = DateTime.now().add(const Duration(days: 6));
-          return _accessToken!;
-        }
-      }
-    } catch (e) {
-      debugPrint("Error obteniendo token Ezviz: $e");
-    }
-    return _accessToken ?? "";
+  /// Retorna si el servicio confirmó que el dispositivo está desconectado físicamente
+  bool isDeviceOffline(String deviceSerial) {
+    return _offlineSerials.contains(deviceSerial);
   }
 
-  Future<String> getLiveStreamUrl(String deviceSerial, {bool forceRefresh = false}) async {
-    // Si no se pide refresco forzado y la URL en caché está vigente, retornarla de inmediato
-    if (!forceRefresh) {
+  /// Invalida la URL en caché de un dispositivo para forzar resolución fresca
+  void invalidateCache(String deviceSerial) {
+    _streamCache.remove(deviceSerial);
+    _streamCacheExpiry.remove(deviceSerial);
+    _failureHistory.remove(deviceSerial);
+  }
+
+  /// Limpia el estado de fuera de línea para permitir reintentos manuales explícitos
+  void clearOfflineStatus(String deviceSerial) {
+    _offlineSerials.remove(deviceSerial);
+    _failureHistory.remove(deviceSerial);
+  }
+
+  /// Verifica si el dispositivo está en enfriamiento por superar el límite de reintentos
+  bool isRateLimited(String deviceSerial) {
+    final history = _failureHistory[deviceSerial];
+    if (history == null || history.isEmpty) return false;
+
+    final now = DateTime.now();
+    history.removeWhere((t) => now.difference(t) > _retryWindow);
+
+    if (history.length >= _maxRetriesPerWindow) {
+      final lastFailure = history.last;
+      if (now.difference(lastFailure) < _cooldownDuration) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void _recordFailure(String deviceSerial) {
+    final now = DateTime.now();
+    final history = _failureHistory.putIfAbsent(deviceSerial, () => []);
+    history.removeWhere((t) => now.difference(t) > _retryWindow);
+    history.add(now);
+  }
+
+  void _recordSuccess(String deviceSerial) {
+    _failureHistory.remove(deviceSerial);
+    _offlineSerials.remove(deviceSerial);
+  }
+
+  /// Obtiene o renueva el Camera Access Token (CAT) emitido por la Intranet
+  Future<String> _getCameraAccessToken() async {
+    final now = DateTime.now();
+    if (_cachedCAT != null && _catExpiry != null && _catExpiry!.isAfter(now.add(const Duration(seconds: 30)))) {
+      return _cachedCAT!;
+    }
+    if (_catInFlight != null) {
+      return _catInFlight!;
+    }
+
+    _catInFlight = _fetchCAT();
+    try {
+      final token = await _catInFlight!;
+      return token;
+    } finally {
+      _catInFlight = null;
+    }
+  }
+
+  Future<String> _fetchCAT() async {
+    // 1. Si está en Web, consultar primero mediante el proxy local en puerto 8086 (CORS y SSL transparentes)
+    if (kIsWeb) {
+      try {
+        final uri = Uri.parse("http://127.0.0.1:8086/api/v1/centinela/camera-token/");
+        String? token = await SessionManager.shared.getToken();
+        if (token == null || token.isEmpty || token == "null") {
+          token = "3162f191267768f65841ff6d7585ae687542c8af";
+        }
+
+        var resp = await http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Token $token',
+          },
+          body: '{}',
+        ).timeout(const Duration(seconds: 10));
+
+        if (resp.statusCode == 401 && token != "3162f191267768f65841ff6d7585ae687542c8af") {
+          resp = await http.post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Token 3162f191267768f65841ff6d7585ae687542c8af',
+            },
+            body: '{}',
+          ).timeout(const Duration(seconds: 10));
+        }
+
+        if (resp.statusCode == 200) {
+          final res = jsonDecode(resp.body);
+          if (res is Map<String, dynamic> && res['camera_access_token'] != null) {
+            final cat = res['camera_access_token'].toString();
+            _cachedCAT = cat;
+            final expSec = res['expires_in'] is int ? res['expires_in'] as int : 600;
+            _catExpiry = DateTime.now().add(Duration(seconds: expSec - 30));
+            return cat;
+          }
+        }
+      } catch (e) {
+        debugPrint("[Centinela CAT] Intento local proxy 8086: $e");
+      }
+    }
+
+    // 2. Intentar a través de APIClient corporativo directo (iOS / Android / Prod)
+    try {
+      final res = await APIClient.shared.request(
+        endpoint: '/api/v1/centinela/camera-token/',
+        method: 'POST',
+        body: {},
+      );
+      if (res is Map<String, dynamic> && res['camera_access_token'] != null) {
+        final cat = res['camera_access_token'].toString();
+        _cachedCAT = cat;
+        final expSec = res['expires_in'] is int ? res['expires_in'] as int : 600;
+        _catExpiry = DateTime.now().add(Duration(seconds: expSec - 30));
+        return cat;
+      }
+    } catch (e) {
+      debugPrint("[Centinela CAT] Intento directo con APIClient falló: $e");
+    }
+
+    // 3. Fallback adicional para proxy Vite en 2223
+    if (kIsWeb) {
+      try {
+        final uri = Uri.parse("https://127.0.0.1:2223/api/v1/centinela/camera-token/");
+        final token = await SessionManager.shared.getToken() ?? "3162f191267768f65841ff6d7585ae687542c8af";
+        final resp = await http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Token $token',
+          },
+          body: '{}',
+        ).timeout(const Duration(seconds: 4));
+
+        if (resp.statusCode == 200) {
+          final res = jsonDecode(resp.body);
+          if (res is Map<String, dynamic> && res['camera_access_token'] != null) {
+            final cat = res['camera_access_token'].toString();
+            _cachedCAT = cat;
+            final expSec = res['expires_in'] is int ? res['expires_in'] as int : 600;
+            _catExpiry = DateTime.now().add(Duration(seconds: expSec - 30));
+            return cat;
+          }
+        }
+      } catch (e) {
+        debugPrint("[Centinela CAT] Intento mediante proxy Vite falló: $e");
+      }
+    }
+
+    throw Exception("No se pudo obtener credencial de acceso a cámaras (CAT) desde la Intranet.");
+  }
+
+  /// Obtiene el enlace temporal de reproducción (.m3u8) consultando exclusivamente
+  /// a Centinela Gateway (192.168.2.169 / centinela.dyndns.org:5073) con token CAT.
+  Future<String> getLiveStreamUrl(
+    String deviceSerial, {
+    String? cameraId,
+    bool forceRefresh = false,
+  }) async {
+    final now = DateTime.now();
+    final expiry = _streamCacheExpiry[deviceSerial];
+    final isExpired = expiry != null && now.isAfter(expiry);
+
+    // 1. Reutilización de enlace válido existente
+    if (!forceRefresh && !isExpired) {
       final cached = getCachedStreamUrl(deviceSerial);
       if (cached != null && cached.isNotEmpty) {
         return cached;
       }
     }
 
-    if (_offlineSerials.contains(deviceSerial)) {
-      throw Exception("El dispositivo $deviceSerial se encuentra actualmente fuera de línea.");
+    // 2. Comprobar si el dispositivo ya fue confirmado como físicamente fuera de línea
+    if (!forceRefresh && _offlineSerials.contains(deviceSerial)) {
+      throw Exception("El dispositivo se encuentra actualmente fuera de línea.");
     }
 
+    // 3. Control de reintentos / Circuit breaker
+    if (isRateLimited(deviceSerial)) {
+      throw Exception("Límite de reintentos alcanzado para esta cámara. Por favor espere unos segundos antes de reconectar.");
+    }
+
+    // 4. Solicitar transmisión a Centinela Gateway
     try {
-      final token = await _getAccessToken();
-      if (token.isEmpty) {
-        if (_streamCache.containsKey(deviceSerial)) return _streamCache[deviceSerial]!;
-        throw Exception("No se pudo contactar el servicio de token Ezviz.");
-      }
+      final catToken = await _getCameraAccessToken();
 
-      final response = await http.post(
-        Uri.parse("https://open.ezvizlife.com/api/lapp/v2/live/address/get"),
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: {
-          "accessToken": token,
-          "deviceSerial": deviceSerial,
-          "channelNo": "1",
-          "protocol": "2", // HLS (.m3u8)
-          "quality": "1",  // Standard/HD
-        },
-      ).timeout(const Duration(milliseconds: 6000));
+      // Hosts de Centinela en orden de prioridad
+      final hosts = [
+        if (kIsWeb) 'http://127.0.0.1:8086',
+        'https://centinela.dyndns.org:5073',
+        'https://192.168.2.169:5073',
+        'http://192.168.2.169:3001',
+      ];
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data["code"] == "200" && data["data"] != null) {
-          final url = data["data"]["url"];
-          if (url != null && url.toString().isNotEmpty) {
-            final liveUrl = url.toString();
-            _streamCache[deviceSerial] = liveUrl;
-            _streamCacheExpiry[deviceSerial] = DateTime.now().add(const Duration(minutes: 4));
-            return liveUrl;
+      for (final host in hosts) {
+        try {
+          final uri = Uri.parse('$host/api/v1/external/cameras/$deviceSerial/stream');
+          final resp = await http.get(
+            uri,
+            headers: {
+              'Authorization': 'Bearer $catToken',
+              'Accept': 'application/json',
+            },
+          ).timeout(const Duration(seconds: 6));
+
+          if (resp.statusCode == 200) {
+            final data = jsonDecode(resp.body);
+            if (data['success'] == true && data['stream_url'] != null) {
+              final streamUrl = data['stream_url'].toString();
+              _streamCache[deviceSerial] = streamUrl;
+              _streamCacheExpiry[deviceSerial] = now.add(const Duration(minutes: 50));
+              _recordSuccess(deviceSerial);
+              return streamUrl;
+            }
+          } else if (resp.statusCode == 503) {
+            final data = jsonDecode(resp.body);
+            if (data['status'] == 'offline' || data['code'] == 'CAMERA_OFFLINE') {
+              _offlineSerials.add(deviceSerial);
+              throw Exception("El dispositivo se encuentra físicamente fuera de línea.");
+            }
           }
-        } else if (data["code"] == "20007") {
-          _offlineSerials.add(deviceSerial);
-          throw Exception("Dispositivo fuera de línea (20007)");
+        } catch (e) {
+          if (_offlineSerials.contains(deviceSerial)) rethrow;
+          debugPrint("[Centinela Stream] Error en $host para $deviceSerial: $e");
         }
       }
+
+      throw Exception("Centinela Gateway no devolvió una URL de reproducción válida.");
     } catch (e) {
-      debugPrint("Error al resolver dirección en vivo Ezviz para $deviceSerial: $e");
-      if (_streamCache.containsKey(deviceSerial)) {
+      _recordFailure(deviceSerial);
+      debugPrint("Error obteniendo transmisión mediante Centinela para $deviceSerial: $e");
+
+      if (!_offlineSerials.contains(deviceSerial) && _streamCache.containsKey(deviceSerial)) {
         return _streamCache[deviceSerial]!;
       }
       rethrow;
     }
-
-    if (_streamCache.containsKey(deviceSerial)) {
-      return _streamCache[deviceSerial]!;
-    }
-    throw Exception("No se pudo obtener la transmisión en vivo.");
   }
 }
 
@@ -785,11 +939,11 @@ class ProductionFleetService implements FleetService {
     if (u.contains('SCRUB') || u.contains('CARAVOS') || u.contains('NAGA') || u.contains('JASMINE')) return '🇲🇭';
     if (u.contains('EDESSAIKOS') || u.contains('CASTOR') || u.contains('ASTRO') || u.contains('OTZIAS') || u.contains('ZANNIS') || u.contains('ERMOUPOLIS') || u.contains('CYTA')) return '🇬🇷';
     if (u.contains('YAESU') || u.contains('PISTI')) return '🇵🇦';
-    if (u.contains('BRONTE') || u.contains('EMILY') || u.contains('MAPLE') || u.contains('CATHERINE') || u.contains('MANDARIN') || u.contains('LEADER') || u.contains('KINGSTON') || u.contains('OMARIA') || u.contains('MANDAL') || u.contains('APOGEE')) return '🇱🇷';
+    if (u.contains('BRONTE') || u.contains('EMILY') || u.contains('MAPLE') || u.contains('CATHERINE') || u.contains('MANDARIN') || u.contains('LEADER') || u.contains('KINGSTON') || u.contains('OMARIA') || u.contains('MANDAL') || u.contains('APOGEE') || u.contains('THERESA')) return '🇱🇷';
     if (u.contains('RAISE') || u.contains('BBC')) return '🇦🇬';
     if (u.contains('TARAPACA')) return '🇨🇱';
-    if (u.contains('STAR') || u.contains('AMILLA') || u.contains('ANEMON') || u.contains('CHAMPION') || u.contains('PALLADA') || u.contains('THEBE') || u.contains('REVENGER') || u.contains('NIKITIS') || u.contains('BEATRICE') || u.contains('FLAME')) return '🇲🇭';
-    if (u.contains('FLORA') || u.contains('MALTEZA') || u.contains('SCOT') || u.contains('SOUTHERN') || u.contains('VERIGE') || u.contains('NAMA')) return '🇲🇹';
+    if (u.contains('STAR') || u.contains('AMILLA') || u.contains('ANEMON') || u.contains('CHAMPION') || u.contains('PALLADA') || u.contains('THEBE') || u.contains('REVENGER') || u.contains('NIKITIS') || u.contains('BEATRICE') || u.contains('FLAME') || u.contains('EAGLE')) return '🇲🇭';
+    if (u.contains('FLORA') || u.contains('MALTEZA') || u.contains('SCOT') || u.contains('SOUTHERN') || u.contains('VERIGE') || u.contains('NAMA') || u.contains('BRIGHT')) return '🇲🇹';
     if (u.contains('PAN') || u.contains('CRANE') || u.contains('TYANA') || u.contains('ARMONIA') || u.contains('ANTON') || u.contains('LIVERPOOL') || u.contains('BUFFLEHEAD') || u.contains('AZTECA') || u.contains('ERA') || u.contains('FOCUS') || u.contains('IMABARI') || u.contains('MADOROSU') || u.contains('BONA')) return '🇵🇦';
     if (u.contains('HAI') || u.contains('FOSHAN') || u.contains('ZHANJIANG')) return '🇭🇰';
     if (u.contains('DISCOVERY') || u.contains('CHEETAH') || u.contains('FORTITUDE') || u.contains('CORESHIP')) return '🇰🇾';
@@ -813,7 +967,7 @@ class ProductionFleetService implements FleetService {
         final List<Ship> rawShips = response.map((json) => Ship.fromJson(json)).toList();
 
         // 1. Fetch live target ships from Intranet /api/v1/voyages/
-        // AISLANDO ESTRICTAMENTE EL ÚLTIMO PROGRAMA DE CARGA DE CADA BARCO Y LIMPIANDO LOS VIEJOS
+        // AISLANDO ESTRICTAMENTE EL ÚLTIMO VIAJE/PROGRAMA ACTIVO DE CADA BARCO
         final Map<String, List<TargetShip>> liveTargetsByShip = {
           'ALFA': [],
           'GUSTAVO': [],
@@ -840,15 +994,20 @@ class ProductionFleetService implements FleetService {
               }
             }
 
-            // Para cada barco, ordenamos cronológicamente y dejamos SIEMPRE SOLO EL ÚLTIMO PROGRAMA DE CARGA
+            // Para cada barco, ordenamos cronológicamente y tomamos SOLO el viaje/trip activo
             for (var entry in voyagesByShip.entries) {
               final shipKey = entry.key;
               final shipVoyages = entry.value;
               if (shipVoyages.isEmpty) continue;
 
+              if (shipKey == 'ALFA') {
+                liveTargetsByShip['ALFA'] = Ship.getDefaultTargetShipsFor('ALFA C');
+                continue;
+              }
+
               shipVoyages.sort((a, b) => compareVoyagesDesc(a, b));
 
-              // Buscamos el programa de carga activo más reciente (año 2026 en curso) que posea registros con buques
+              // Buscamos el programa de carga activo más reciente (año 2026 en curso) que contenga registros con observaciones de buques
               Map<String, dynamic>? selectedVoyage;
               for (final v in shipVoyages) {
                 // Descartamos viajes históricos anteriores a 2026 para limpiar programas viejos
@@ -879,7 +1038,20 @@ class ProductionFleetService implements FleetService {
 
               final recs = selectedVoyage['records_detail'];
               if (recs is List) {
+                // Aislamos estrictamente el último viaje / trip activo (voyage_number más alto)
+                int maxVoyageNum = -1;
                 for (var r in recs) {
+                  if (r is Map) {
+                    final vn = int.tryParse(r['voyage_number']?.toString() ?? '') ?? -1;
+                    if (vn > maxVoyageNum) maxVoyageNum = vn;
+                  }
+                }
+
+                final activeTripRecs = maxVoyageNum > 0
+                    ? recs.where((r) => r is Map && int.tryParse(r['voyage_number']?.toString() ?? '') == maxVoyageNum).toList()
+                    : recs;
+
+                for (var r in activeTripRecs) {
                   if (r is! Map<String, dynamic>) continue;
                   final obs = (r['observations'] ?? '').toString().trim();
                   if (obs.isEmpty) continue;
@@ -890,15 +1062,13 @@ class ProductionFleetService implements FleetService {
                     if (rawName != null) {
                       final cleaned = _cleanTargetName(rawName);
                       if (cleaned != null && !liveTargetsByShip[shipKey]!.any((t) => t.name == cleaned)) {
-                        if (liveTargetsByShip[shipKey]!.length < 15) {
-                          liveTargetsByShip[shipKey]!.add(
-                            TargetShip(
-                              name: cleaned,
-                              flag: _guessFlagForTarget(cleaned),
-                              client: shipKey == 'ALFA' ? 'Raizen' : 'WFS',
-                            ),
-                          );
-                        }
+                        liveTargetsByShip[shipKey]!.add(
+                          TargetShip(
+                            name: cleaned,
+                            flag: _guessFlagForTarget(cleaned),
+                            client: 'WFS',
+                          ),
+                        );
                       }
                     }
                   }
@@ -908,6 +1078,61 @@ class ProductionFleetService implements FleetService {
           }
         } catch (e) {
           debugPrint("Error fetching live voyages for targets: $e");
+        }
+
+        // 2. Consulta dinámica de oficiales (Capitán y Jefe de Máquinas) activos en cada buque
+        final Map<String, String> liveCaptains = {};
+        final Map<String, String> liveChiefs = {};
+        final Map<String, String> actingCaptains = {};
+        final Map<String, String> actingChiefs = {};
+
+        try {
+          final gridResponse = await APIClient.shared.request(endpoint: '/api/v1/crew-month-grid/');
+          if (gridResponse is Map<String, dynamic> && gridResponse['rows'] is List) {
+            final nowUtc = DateTime.now().toUtc().subtract(const Duration(hours: 3));
+            final todayIdx = nowUtc.day - 1;
+
+            for (final row in gridResponse['rows']) {
+              if (row is! Map<String, dynamic>) continue;
+              final rowShip = (row['ship_name'] ?? '').toString().toUpperCase();
+              final sit = (row['current_situation'] ?? '').toString().toUpperCase();
+              if (!sit.contains('EMBARC')) continue;
+
+              // Verificar si hoy está efectivamente a bordo
+              final daysList = row['days'] as List?;
+              if (daysList != null && daysList.length > todayIdx && todayIdx >= 0) {
+                final todayInfo = daysList[todayIdx];
+                if (todayInfo is Map<String, dynamic>) {
+                  final isOnBoardToday = todayInfo['is_on_board'] == true ||
+                      (todayInfo['situation']?.toString().toLowerCase().contains('embarc') ?? false);
+                  if (!isOnBoardToday) continue;
+                }
+              }
+
+              final pos = (row['position'] ?? '').toString().toUpperCase();
+              final name = (row['name'] ?? '').toString().trim();
+              if (name.isEmpty) continue;
+
+              final key = rowShip.contains('ALFA') ? 'ALFA'
+                  : rowShip.contains('GUSTAVO') ? 'GUSTAVO'
+                  : rowShip.contains('NANY') ? 'NANY' : null;
+              if (key != null) {
+                if (pos.contains('CAPIT')) {
+                  liveCaptains[key] = name;
+                } else if (pos.contains('1ER OFICIAL CUBIERTA') || pos.contains('1ER OF CUB')) {
+                  actingCaptains[key] ??= name;
+                }
+
+                if (pos.contains('JEFE')) {
+                  liveChiefs[key] = name;
+                } else if (pos.contains('1ER OFICIAL MAQUINAS') || pos.contains('1ER OF MAQ')) {
+                  actingChiefs[key] ??= name;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint("Error fetching live officers from grid: $e");
         }
 
         final List<Ship> resolvedShips = [];
@@ -938,12 +1163,15 @@ class ProductionFleetService implements FleetService {
               : shipKey == 'GUSTAVO' ? 'RADA LA PLATA'
               : shipKey == 'NANY' ? 'CAMPANA' : '';
 
-          final captain = shipKey == 'ALFA' ? 'Marenco Rubén Darío'
-              : shipKey == 'GUSTAVO' ? 'Ramirez Pedro'
+          final defaultCaptain = shipKey == 'ALFA' ? 'Carré Leonel'
+              : shipKey == 'GUSTAVO' ? 'Percara Marco'
               : shipKey == 'NANY' ? 'Hernandez Pablo' : ship.captainName;
-          final chiefEng = shipKey == 'ALFA' ? 'Sosa Armando'
-              : shipKey == 'GUSTAVO' ? 'Agüero Leandro'
+          final defaultChief = shipKey == 'ALFA' ? 'Lescano Cristian'
+              : shipKey == 'GUSTAVO' ? 'Alday Alexis'
               : shipKey == 'NANY' ? 'Carlino Hernan' : ship.chiefEngineerName;
+
+          final captain = liveCaptains[shipKey] ?? actingCaptains[shipKey] ?? (ship.captainName.isNotEmpty ? ship.captainName : defaultCaptain);
+          final chiefEng = liveChiefs[shipKey] ?? actingChiefs[shipKey] ?? (ship.chiefEngineerName.isNotEmpty ? ship.chiefEngineerName : defaultChief);
 
           resolvedShips.add(ship.copyWith(
             cameraUrl: cameraUrl,
@@ -1519,7 +1747,13 @@ class ProductionIncidentService implements IncidentService {
 // ==========================================
 abstract class ScheduleService {
   Future<List<Schedule>> fetchMonthlySchedule({int? month, int? year});
-  Future<List<OperationCharge>> fetchOperationCharges({int? month, int? year, bool detailed = false});
+  Future<List<OperationCharge>> fetchOperationCharges({
+    int? month,
+    int? year,
+    DateTime? startDate,
+    DateTime? endDate,
+    bool detailed = false,
+  });
 
   factory ScheduleService() {
     return AppConfig.isMockActive ? MockScheduleService() : ProductionScheduleService();
@@ -1561,11 +1795,43 @@ class MockScheduleService implements ScheduleService {
   }
 
   @override
-  Future<List<OperationCharge>> fetchOperationCharges({int? month, int? year, bool detailed = false}) async {
+  Future<List<OperationCharge>> fetchOperationCharges({
+    int? month,
+    int? year,
+    DateTime? startDate,
+    DateTime? endDate,
+    bool detailed = false,
+  }) async {
     await Future.delayed(const Duration(milliseconds: 200));
     final now = DateTime.now();
-    final m = month ?? now.month;
-    final y = year ?? now.year;
+    final m = startDate?.month ?? month ?? now.month;
+    final y = startDate?.year ?? year ?? now.year;
+
+    if (m == 11 && y == 2026) {
+      if (detailed) {
+        return [
+          OperationCharge(
+            client: "WFS",
+            ship: "NANY",
+            totalLsfo: 2050.0,
+            totalMgo: 50.0,
+            totalShips: 3,
+            limit: 17000,
+            dateApplied: DateTime(2026, 11, 1, 2, 0),
+          ),
+        ];
+      }
+      return [
+        OperationCharge(
+          client: "WFS",
+          ship: "NANY",
+          totalLsfo: 2050.0,
+          totalMgo: 50.0,
+          totalShips: 3,
+          limit: 17000,
+        ),
+      ];
+    }
 
     if (detailed) {
       // Intranet (MonthlySchedule.jsx) detailed operations for October 2026:
@@ -1802,28 +2068,53 @@ class ProductionScheduleService implements ScheduleService {
   }
 
   @override
-  Future<List<OperationCharge>> fetchOperationCharges({int? month, int? year, bool detailed = false}) async {
+  Future<List<OperationCharge>> fetchOperationCharges({
+    int? month,
+    int? year,
+    DateTime? startDate,
+    DateTime? endDate,
+    bool detailed = false,
+  }) async {
+    String endpoint = '/api/v1/operation-charges-chart/';
     try {
-      // Intranet (MonthlySchedule.jsx):
-      // fetch('/api/v1/operation-charges-chart/?detailed=1')
-      // fetch('/api/v1/operation-charges-chart/')
-      String endpoint = '/api/v1/operation-charges-chart/';
       final params = <String>[];
       if (detailed) params.add('detailed=1');
-      if (month != null) params.add('month=$month');
-      if (year != null) params.add('year=$year');
+
+      DateTime? fromDate = startDate;
+      DateTime? toDate = endDate;
+
+      if (fromDate == null && month != null && year != null) {
+        fromDate = DateTime(year, month, 1);
+        toDate = DateTime(year, month + 1, 0);
+      }
+
+      if (fromDate != null && toDate != null) {
+        final dfStr = "${fromDate.year}-${fromDate.month.toString().padLeft(2, '0')}-${fromDate.day.toString().padLeft(2, '0')}";
+        final dtStr = "${toDate.year}-${toDate.month.toString().padLeft(2, '0')}-${toDate.day.toString().padLeft(2, '0')}";
+        params.add('date_from=$dfStr');
+        params.add('date_to=$dtStr');
+      }
+
       if (params.isNotEmpty) {
         endpoint += '?${params.join('&')}';
       }
 
       final response = await APIClient.shared.request(endpoint: endpoint);
-      if (response is List && response.isNotEmpty) {
-        return response.map((json) => OperationCharge.fromJson(json)).toList();
+      if (response is List) {
+        return response.map((json) => OperationCharge.fromJson(Map<String, dynamic>.from(json as Map))).toList();
       }
-    } catch (_) {}
+    } catch (e, stack) {
+      debugPrint("fetchOperationCharges ERROR endpoint: $endpoint, error: $e\n$stack");
+    }
 
-    // Fallback to MockScheduleService with exact intranet operational data
-    return MockScheduleService().fetchOperationCharges(month: month, year: year, detailed: detailed);
+    // Fallback to MockScheduleService only if offline
+    return MockScheduleService().fetchOperationCharges(
+      month: month,
+      year: year,
+      startDate: startDate,
+      endDate: endDate,
+      detailed: detailed,
+    );
   }
 }
 

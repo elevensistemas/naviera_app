@@ -5,7 +5,7 @@
 
 // PASO 1: Especificar la IP real de la computadora donde está Centinela.
 // Si Centinela está en 192.168.2.14, pon esa IP aquí:
-const CENTINELA_IP = '192.168.2.121';
+const CENTINELA_IP = '192.168.2.169';
 const CENTINELA_PORT = 3001; 
 const API_KEY = 'centinela-bridge-2026';
 

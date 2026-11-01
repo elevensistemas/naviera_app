@@ -3,6 +3,7 @@ import '../models/crew_profile.dart';
 import '../models/models.dart';
 import '../models/intranet_crew_catalog.dart';
 import '../core/network.dart';
+import '../core/storage.dart';
 
 abstract class CrewProfileService {
   Future<CrewProfile> fetchCurrentCrewProfile({required User? currentUser});
@@ -45,12 +46,44 @@ class ProductionCrewProfileService implements CrewProfileService {
       try {
         final profileRes = await APIClient.shared.request(endpoint: '/api/v1/profile/');
         if (profileRes is Map<String, dynamic>) {
-          if (profileRes['crew_member'] != null || profileRes['crew_member_detail'] != null) {
-            final crewData = (profileRes['crew_member_detail'] ?? profileRes['crew_member']) as Map<String, dynamic>;
+          if (profileRes['crew_member_detail'] is Map<String, dynamic>) {
+            final crewData = profileRes['crew_member_detail'] as Map<String, dynamic>;
             final profile = CrewProfile.fromIntranet(json: crewData);
             _cachedProfile = profile;
             _cachedUserId = uid;
+            SessionManager.shared.updateCrewShipStatus(
+              shipName: profile.shipName,
+              isOnBoard: profile.isOnBoard,
+            );
             return profile;
+          } else if (profileRes['crew_member'] is Map<String, dynamic>) {
+            final crewData = profileRes['crew_member'] as Map<String, dynamic>;
+            final profile = CrewProfile.fromIntranet(json: crewData);
+            _cachedProfile = profile;
+            _cachedUserId = uid;
+            SessionManager.shared.updateCrewShipStatus(
+              shipName: profile.shipName,
+              isOnBoard: profile.isOnBoard,
+            );
+            return profile;
+          } else if (profileRes['crew_member'] != null) {
+            // El backend devuelve el ID entero de crew_member (ej: 108)
+            final cmId = profileRes['crew_member'].toString();
+            try {
+              final cmRes = await APIClient.shared.request(endpoint: '/api/v1/crew-members/$cmId/');
+              if (cmRes is Map<String, dynamic>) {
+                final profile = CrewProfile.fromIntranet(json: cmRes);
+                _cachedProfile = profile;
+                _cachedUserId = uid;
+                SessionManager.shared.updateCrewShipStatus(
+                  shipName: profile.shipName,
+                  isOnBoard: profile.isOnBoard,
+                );
+                return profile;
+              }
+            } catch (e) {
+              debugPrint("Notice: /api/v1/crew-members/$cmId/ query: $e");
+            }
           }
         }
       } catch (e) {
@@ -61,7 +94,13 @@ class ProductionCrewProfileService implements CrewProfileService {
       Map<String, dynamic>? matchedCrewJson;
       try {
         final userParam = Uri.encodeComponent(uid);
-        final crewRes = await APIClient.shared.request(endpoint: '/api/v1/crew-members/?user=$userParam');
+        dynamic crewRes;
+        try {
+          crewRes = await APIClient.shared.request(endpoint: '/api/v1/crew-members/?user=$userParam');
+        } catch (_) {
+          crewRes = await APIClient.shared.request(endpoint: '/api/v1/crew-members/');
+        }
+
         List rawList = [];
         if (crewRes is List) {
           rawList = crewRes;
@@ -69,20 +108,41 @@ class ProductionCrewProfileService implements CrewProfileService {
           rawList = (crewRes['results'] ?? crewRes['data']) as List? ?? [];
         }
 
-        final uIdLower = uid.toLowerCase();
-        final uNameLower = currentUser.name.toLowerCase();
+        if (rawList.isEmpty) {
+          final allCrew = await APIClient.shared.request(endpoint: '/api/v1/crew-members/');
+          if (allCrew is List) {
+            rawList = allCrew;
+          } else if (allCrew is Map<String, dynamic>) {
+            rawList = (allCrew['results'] ?? allCrew['data']) as List? ?? [];
+          }
+        }
+
+        String normalize(String input) {
+          var s = input.toLowerCase().trim();
+          s = s.replaceAll('á', 'a').replaceAll('é', 'e').replaceAll('í', 'i').replaceAll('ó', 'o').replaceAll('ú', 'u');
+          return s;
+        }
+
+        final uIdLower = normalize(uid);
+        final uNameNorm = normalize(currentUser.name);
+        final uWords = uNameNorm.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toSet();
 
         for (final item in rawList) {
           if (item is! Map<String, dynamic>) continue;
           final cUserId = item['user']?.toString().toLowerCase();
           final userDetail = item['user_detail'] as Map<String, dynamic>?;
           final cUsername = userDetail?['username']?.toString().toLowerCase();
-          final cName = (item['name']?.toString() ?? '').toLowerCase();
+          final cNameRaw = (item['name']?.toString() ?? '');
+          final cNameNorm = normalize(cNameRaw);
+          final cWords = cNameNorm.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toSet();
+
+          final bool wordsMatch = cWords.isNotEmpty && uWords.isNotEmpty &&
+              (cWords.containsAll(uWords) || uWords.containsAll(cWords));
 
           if (cUserId == uIdLower ||
               cUsername == uIdLower ||
               (cUsername != null && uIdLower.contains(cUsername)) ||
-              (cName.isNotEmpty && (cName == uNameLower || uNameLower.contains(cName) || cName.contains(uNameLower)))) {
+              (cNameNorm.isNotEmpty && (cNameNorm == uNameNorm || wordsMatch))) {
             matchedCrewJson = item;
             break;
           }
@@ -113,6 +173,10 @@ class ProductionCrewProfileService implements CrewProfileService {
         final profile = CrewProfile.fromIntranet(json: matchedCrewJson, situationJson: situationJson);
         _cachedProfile = profile;
         _cachedUserId = uid;
+        SessionManager.shared.updateCrewShipStatus(
+          shipName: profile.shipName,
+          isOnBoard: profile.isOnBoard,
+        );
         return profile;
       }
 
@@ -123,17 +187,24 @@ class ProductionCrewProfileService implements CrewProfileService {
         final profile = CrewProfile.fromCatalog(catalogMember);
         _cachedProfile = profile;
         _cachedUserId = uid;
+        SessionManager.shared.updateCrewShipStatus(
+          shipName: profile.shipName,
+          isOnBoard: profile.isOnBoard,
+        );
         return profile;
       }
 
-      // 5. Si el usuario está autenticado pero no tiene registro de tripulante en la intranet
-      //    Diferenciamos ausencia de registro de tripulante (ej: usuario administrativo o sin legajo)
+      // 5. Si el usuario está autenticado pero no tiene registro de tripulante en la intranet (ej: oficina)
       final unlinkedProfile = CrewProfile.unlinked(
         name: currentUser.name,
         userId: currentUser.id,
       );
       _cachedProfile = unlinkedProfile;
       _cachedUserId = uid;
+      SessionManager.shared.updateCrewShipStatus(
+        shipName: null,
+        isOnBoard: false,
+      );
       return unlinkedProfile;
 
     } catch (e) {
@@ -145,6 +216,10 @@ class ProductionCrewProfileService implements CrewProfileService {
         final profile = CrewProfile.fromCatalog(catalogMember);
         _cachedProfile = profile;
         _cachedUserId = uid;
+        SessionManager.shared.updateCrewShipStatus(
+          shipName: profile.shipName,
+          isOnBoard: profile.isOnBoard,
+        );
         return profile;
       }
 

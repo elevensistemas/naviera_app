@@ -30,7 +30,7 @@ const HlsVideo = ({ url }) => {
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
-              setErrorDetails('Error de red al cargar el streaming. (Probable bloqueo CORS de Ezviz)');
+              setErrorDetails('Error de red al cargar el streaming.');
               hls.startLoad();
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
@@ -98,7 +98,7 @@ const Fleet = () => {
     fetchFleetData();
   }, []);
 
-  const fetchFleetData = async () => {
+  const fetchFleetData = async (forceRefresh = false) => {
     try {
       setShipsLoading(true);
       setVideoLoading(true);
@@ -127,27 +127,14 @@ const Fleet = () => {
       const shipsData = await res.json();
       setShips(shipsData);
 
-      // Get Ezviz Token
-      const tokenRes = await fetch('/ezviz-api/api/lapp/token/get', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          appKey: import.meta.env.VITE_EZVIZ_APP_KEY || '',
-          appSecret: import.meta.env.VITE_EZVIZ_APP_SECRET || ''
-        })
-      });
-      
-      const tokenData = await tokenRes.json();
-      if (tokenData.code !== '200') throw new Error(tokenData.msg || 'Error obteniendo token de cámaras');
-      const accessToken = tokenData.data.accessToken;
-      
       // Extract authorized cameras from active ships
       const authorizedCams = [];
       shipsData.forEach(ship => {
         if (ship.cameras) {
           ship.cameras.forEach(cam => {
-            if (cam.is_active && cam.serial_number) {
+            if (cam.is_active && (cam.id || cam.serial_number)) {
               authorizedCams.push({
+                id: cam.id,
                 deviceSerial: cam.serial_number,
                 channelName: cam.name,
                 shipCode: ship.code,
@@ -162,27 +149,39 @@ const Fleet = () => {
         throw new Error('No se encontraron cámaras autorizadas en el sistema.');
       }
 
-      // Fetch dynamic HLS streams
+      // Fetch dynamic HLS streams from authenticated corporate backend (never contacting EZVIZ directly)
       const camsWithHls = await Promise.all(authorizedCams.map(async (cam) => {
         try {
-          const addrRes = await fetch('/ezviz-api/api/lapp/v2/live/address/get', {
-             method: 'POST',
-             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-             body: new URLSearchParams({ 
-               accessToken, 
-               deviceSerial: cam.deviceSerial, 
-               channelNo: '1', 
-               protocol: '2', 
-               quality: '1' 
-             })
+          const baseSub = cam.id 
+            ? `/api/v1/cameras/${cam.id}/live-url/`
+            : `/api/v1/cameras/${cam.deviceSerial}/live-url/`;
+          const endpoint = getApiEndpoint(forceRefresh ? `${baseSub}?refresh=true` : baseSub);
+
+          const camRes = await fetch(endpoint, {
+            method: 'GET',
+            headers
           });
-          const addrData = await addrRes.json();
-          const hlsUrl = addrData.data?.url || (typeof addrData.data === 'string' ? addrData.data : '');
-          
+
+          if (!camRes.ok) {
+            console.warn(`Respuesta no exitosa para cámara ${cam.id || cam.deviceSerial}: HTTP ${camRes.status}`);
+            return null;
+          }
+
+          const streamData = await camRes.json();
+          if (streamData.status === 'offline' || streamData.code === '20007') {
+            console.warn(`Cámara ${cam.deviceSerial} confirmada fuera de línea.`);
+            return null;
+          }
+
+          const hlsUrl = streamData.url || '';
+          if (!hlsUrl) return null;
+
           return {
-             deviceSerial: cam.deviceSerial,
-             channelName: cam.channelName,
-             hls: hlsUrl
+            id: cam.id,
+            deviceSerial: cam.deviceSerial,
+            channelName: cam.channelName,
+            shipDesc: cam.shipDesc,
+            hls: hlsUrl
           };
         } catch (e) {
           console.warn(`Error resolviendo cámara ${cam.deviceSerial}:`, e);
@@ -253,7 +252,7 @@ const Fleet = () => {
             {videoLoading ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', gap: '10px' }}>
                 <Loader className="animate-spin" size={24} color="var(--ncs-accent)" />
-                <div style={{ color: 'var(--ncs-accent)', textShadow: '0 0 8px var(--ncs-accent-glow)', fontSize: '13px' }}>Conectando con Servidores Ezviz...</div>
+                <div style={{ color: 'var(--ncs-accent)', textShadow: '0 0 8px var(--ncs-accent-glow)', fontSize: '13px' }}>Conectando con transmisión en vivo...</div>
               </div>
             ) : errorMsg ? (
               <div style={{ padding: '20px', color: 'var(--ncs-secondary)', textShadow: '0 0 8px var(--ncs-secondary-glow)', fontSize: '13px', textAlign: 'center' }}>
@@ -287,7 +286,7 @@ const Fleet = () => {
           ) : shipsError ? (
             <div style={{ padding: '16px', borderRadius: '12px', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--ncs-danger)', fontSize: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <span>{shipsError}</span>
-              <button className="btn-primary" onClick={fetchFleetData} style={{ padding: '8px 12px', fontSize: '12px', alignSelf: 'flex-start' }}>Reintentar</button>
+              <button className="btn-primary" onClick={() => fetchFleetData(true)} style={{ padding: '8px 12px', fontSize: '12px', alignSelf: 'flex-start' }}>Reintentar</button>
             </div>
           ) : ships.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>No se encontraron barcos cargados en la intranet.</div>

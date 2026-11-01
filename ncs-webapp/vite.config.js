@@ -11,14 +11,8 @@ export default defineConfig({
     strictPort: true,
     allowedHosts: ['falling-alfred-powerful-literacy.trycloudflare.com', '.trycloudflare.com', '.loca.lt'],
     proxy: {
-      '/ezviz-api': {
-        target: 'https://open.ezvizlife.com',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/ezviz-api/, '')
-      },
       '/centinela-api': {
-        target: 'https://192.168.2.121:5073',
+        target: 'https://192.168.2.169:5073',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/centinela-api/, '')

@@ -51,5 +51,10 @@ class SessionManager: ObservableObject {
         UserDefaults.standard.removeObject(forKey: "com.navieracruz.currentUser")
         self.currentUser = nil
         self.isAuthenticated = false
+        
+        // Eliminar CAT y sesiones locales al cerrar sesión en la app
+        CentinelaUserAuthenticationProvider.shared.invalidateCAT()
+        CentinelaCameraService.shared.clearCache()
+        CameraStreamCoordinator.shared.resetAll()
     }
 }

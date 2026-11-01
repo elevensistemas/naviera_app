@@ -22,6 +22,8 @@ class _ScheduleViewState extends State<ScheduleView> {
   DateTime _startDate = DateTime(DateTime.now().year, DateTime.now().month, 1);
   DateTime _endDate = DateTime(DateTime.now().year, DateTime.now().month + 1, 0);
 
+  int _loadRequestId = 0;
+
   @override
   void initState() {
     super.initState();
@@ -29,6 +31,7 @@ class _ScheduleViewState extends State<ScheduleView> {
   }
 
   Future<void> _loadData() async {
+    final int currentRequestId = ++_loadRequestId;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -37,13 +40,13 @@ class _ScheduleViewState extends State<ScheduleView> {
     try {
       final scheduleService = ScheduleService();
       final summaryChargesFuture = scheduleService.fetchOperationCharges(
-        month: _startDate.month,
-        year: _startDate.year,
+        startDate: _startDate,
+        endDate: _endDate,
         detailed: false,
       );
       final detailedChargesFuture = scheduleService.fetchOperationCharges(
-        month: _startDate.month,
-        year: _startDate.year,
+        startDate: _startDate,
+        endDate: _endDate,
         detailed: true,
       );
       final schedulesFuture = scheduleService.fetchMonthlySchedule(
@@ -52,6 +55,8 @@ class _ScheduleViewState extends State<ScheduleView> {
       );
 
       final results = await Future.wait([summaryChargesFuture, detailedChargesFuture, schedulesFuture]);
+      if (currentRequestId != _loadRequestId || !mounted) return;
+
       final summaryCharges = results[0] as List<OperationCharge>;
       final detailedCharges = results[1] as List<OperationCharge>;
       final schedules = results[2] as List<Schedule>;
@@ -65,13 +70,16 @@ class _ScheduleViewState extends State<ScheduleView> {
         _schedules.addAll(schedules);
       });
     } catch (e) {
+      if (currentRequestId != _loadRequestId || !mounted) return;
       setState(() {
         _errorMessage = e.toString();
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (currentRequestId == _loadRequestId && mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -256,60 +264,60 @@ class _ScheduleViewState extends State<ScheduleView> {
     int wfsMonthShips = 0;
     double wfsTarget = 17.0; // Meta de carga en 17 M para WFS
 
-    for (var d in _detailedCharges) {
-      if (d.dateApplied != null) {
-        final matchesMonth = d.dateApplied!.year == targetYear && d.dateApplied!.month == targetMonth;
-        final inRange = isCustomMultiMonth
-            ? (!d.dateApplied!.isBefore(_startDate) && !d.dateApplied!.isAfter(_endDate))
-            : matchesMonth;
+    // Extraer límites oficiales de la API si vienen en _summaryCharges
+    for (var c in _summaryCharges) {
+      if (c.limit != null && c.limit! > 0) {
+        if (c.client.toUpperCase().contains('RAIZEN') || c.ship.toUpperCase().contains('ALFA')) {
+          raizenTarget = c.limit! / 1000.0;
+        } else if (c.client.toUpperCase().contains('WFS') || c.ship.toUpperCase().contains('GUSTAVO') || c.ship.toUpperCase().contains('NANY')) {
+          wfsTarget = c.limit! / 1000.0;
+        }
+      }
+    }
 
-        if (inRange) {
-          final valK = (d.totalLsfo + d.totalMgo) / 1000.0;
-          if (d.client.toUpperCase().contains('RAIZEN') || d.ship.toUpperCase().contains('ALFA')) {
-            raizenMonthKtons += valK;
-            raizenMonthShips += (d.totalShips > 0 ? d.totalShips : 1);
-            if (d.limit != null && d.limit! > 0) raizenTarget = d.limit! / 1000.0;
-          } else if (d.ship.toUpperCase().contains('GUSTAVO')) {
-            gustavoMonthKtons += valK;
-            wfsMonthShips += (d.totalShips > 0 ? d.totalShips : 1);
-          } else if (d.ship.toUpperCase().contains('NANY')) {
-            nanyMonthKtons += valK;
-            wfsMonthShips += (d.totalShips > 0 ? d.totalShips : 1);
-          } else if (d.client.toUpperCase().contains('WFS')) {
-            gustavoMonthKtons += valK;
-            wfsMonthShips += (d.totalShips > 0 ? d.totalShips : 1);
+    if (_detailedCharges.isNotEmpty) {
+      for (var d in _detailedCharges) {
+        if (d.dateApplied != null) {
+          final matchesMonth = d.dateApplied!.year == targetYear && d.dateApplied!.month == targetMonth;
+          final inRange = isCustomMultiMonth
+              ? (!d.dateApplied!.isBefore(_startDate) && !d.dateApplied!.isAfter(_endDate))
+              : matchesMonth;
+
+          if (inRange) {
+            final valK = (d.totalLsfo + d.totalMgo) / 1000.0;
+            if (d.client.toUpperCase().contains('RAIZEN') || d.ship.toUpperCase().contains('ALFA')) {
+              raizenMonthKtons += valK;
+              raizenMonthShips += (d.totalShips > 0 ? d.totalShips : 1);
+            } else if (d.ship.toUpperCase().contains('GUSTAVO')) {
+              gustavoMonthKtons += valK;
+              wfsMonthShips += (d.totalShips > 0 ? d.totalShips : 1);
+            } else if (d.ship.toUpperCase().contains('NANY')) {
+              nanyMonthKtons += valK;
+              wfsMonthShips += (d.totalShips > 0 ? d.totalShips : 1);
+            } else if (d.client.toUpperCase().contains('WFS')) {
+              gustavoMonthKtons += valK;
+              wfsMonthShips += (d.totalShips > 0 ? d.totalShips : 1);
+            }
           }
         }
       }
-    }
-
-    // In Intranet (MonthlySchedule.jsx):
-    // Fallback if detailed records don't populate the monthly totals
-    if (raizenMonthShips == 0 || raizenMonthKtons == 0.0) {
+    } else if (_summaryCharges.isNotEmpty) {
       for (var c in _summaryCharges) {
+        final valK = (c.totalLsfo + c.totalMgo) / 1000.0;
         if (c.client.toUpperCase().contains('RAIZEN') || c.ship.toUpperCase().contains('ALFA')) {
-          if (raizenMonthShips == 0) raizenMonthShips = (c.totalShips > 0 && c.totalShips <= 100) ? c.totalShips : 25;
-          if (raizenMonthKtons == 0.0) raizenMonthKtons = c.totalVolume / 1000.0;
-          if (c.limit != null && c.limit! > 0) raizenTarget = c.limit! / 1000.0;
-        }
-      }
-      if (raizenMonthShips == 0) raizenMonthShips = 25;
-      if (raizenMonthKtons == 0.0) raizenMonthKtons = 14.68;
-    }
-
-    if (wfsMonthShips == 0 || (gustavoMonthKtons == 0.0 && nanyMonthKtons == 0.0)) {
-      for (var c in _summaryCharges) {
-        if (c.ship.toUpperCase().contains('GUSTAVO')) {
-          if (gustavoMonthKtons == 0.0) gustavoMonthKtons = c.totalVolume / 1000.0;
+          raizenMonthKtons += valK;
+          raizenMonthShips += c.totalShips;
+        } else if (c.ship.toUpperCase().contains('GUSTAVO')) {
+          gustavoMonthKtons += valK;
           wfsMonthShips += c.totalShips;
         } else if (c.ship.toUpperCase().contains('NANY')) {
-          if (nanyMonthKtons == 0.0) nanyMonthKtons = c.totalVolume / 1000.0;
+          nanyMonthKtons += valK;
+          wfsMonthShips += c.totalShips;
+        } else if (c.client.toUpperCase().contains('WFS')) {
+          gustavoMonthKtons += valK;
           wfsMonthShips += c.totalShips;
         }
       }
-      if (gustavoMonthKtons == 0.0) gustavoMonthKtons = 7.39;
-      if (nanyMonthKtons == 0.0) nanyMonthKtons = 10.99;
-      if (wfsMonthShips == 0) wfsMonthShips = 40;
     }
 
     final double raizenTotal = raizenMonthKtons;
@@ -775,8 +783,8 @@ class _ScheduleViewState extends State<ScheduleView> {
     final secondaryTextColor = isDark ? Colors.white70 : const Color(0xFF64748B);
 
     final double totalWfs = gustavoTotal + nanyTotal;
-    final int gustavoPct = totalWfs > 0 ? ((gustavoTotal / totalWfs) * 100).round() : 63;
-    final int nanyPct = 100 - gustavoPct;
+    final int gustavoPct = totalWfs > 0 ? ((gustavoTotal / totalWfs) * 100).round() : 0;
+    final int nanyPct = totalWfs > 0 ? 100 - gustavoPct : 0;
 
     return Container(
       decoration: BoxDecoration(
@@ -1181,24 +1189,36 @@ class _ScheduleViewState extends State<ScheduleView> {
     int gustavoUShips = 0;
     int nanyShips = 0;
 
-    // Contar buques SOLO del período seleccionado (no el histórico acumulado
-    // de _summaryCharges ni valores de ejemplo).
+    // Contar buques SOLO del período seleccionado según la respuesta de la API
     final bool isCustomMultiMonth = _startDate.month != _endDate.month || _startDate.year != _endDate.year;
-    for (var d in _detailedCharges) {
-      if (d.dateApplied == null) continue;
-      final matchesMonth = d.dateApplied!.year == _startDate.year && d.dateApplied!.month == _startDate.month;
-      final inRange = isCustomMultiMonth
-          ? (!d.dateApplied!.isBefore(_startDate) && !d.dateApplied!.isAfter(_endDate))
-          : matchesMonth;
-      if (!inRange) continue;
-      final ships = d.totalShips > 0 ? d.totalShips : 1;
-      final shipName = d.ship.toUpperCase();
-      if (shipName.contains('ALFA')) {
-        alfaCShips += ships;
-      } else if (shipName.contains('GUSTAVO')) {
-        gustavoUShips += ships;
-      } else if (shipName.contains('NANY')) {
-        nanyShips += ships;
+    if (_detailedCharges.isNotEmpty) {
+      for (var d in _detailedCharges) {
+        if (d.dateApplied == null) continue;
+        final matchesMonth = d.dateApplied!.year == _startDate.year && d.dateApplied!.month == _startDate.month;
+        final inRange = isCustomMultiMonth
+            ? (!d.dateApplied!.isBefore(_startDate) && !d.dateApplied!.isAfter(_endDate))
+            : matchesMonth;
+        if (!inRange) continue;
+        final ships = d.totalShips > 0 ? d.totalShips : 1;
+        final shipName = d.ship.toUpperCase();
+        if (shipName.contains('ALFA')) {
+          alfaCShips += ships;
+        } else if (shipName.contains('GUSTAVO')) {
+          gustavoUShips += ships;
+        } else if (shipName.contains('NANY')) {
+          nanyShips += ships;
+        }
+      }
+    } else if (_summaryCharges.isNotEmpty) {
+      for (var c in _summaryCharges) {
+        final shipName = c.ship.toUpperCase();
+        if (shipName.contains('ALFA')) {
+          alfaCShips += c.totalShips;
+        } else if (shipName.contains('GUSTAVO')) {
+          gustavoUShips += c.totalShips;
+        } else if (shipName.contains('NANY')) {
+          nanyShips += c.totalShips;
+        }
       }
     }
 
@@ -1921,28 +1941,32 @@ class _RaizenBarChartPainter extends CustomPainter {
     }
 
     final double barWidth = ((totalKtons / maxScale) * chartWidth).clamp(0.0, chartWidth);
-    final paintBar = Paint()
-      ..shader = const LinearGradient(
-        colors: [Color(0xFF0066FF), Color(0xFF0044CC)],
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-      ).createShader(Rect.fromLTWH(leftMargin, yBar, barWidth, barHeight));
+    if (barWidth > 0 && totalKtons > 0) {
+      final paintBar = Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xFF0066FF), Color(0xFF0044CC)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ).createShader(Rect.fromLTWH(leftMargin, yBar, barWidth, barHeight));
 
-    final rectBar = Rect.fromLTWH(leftMargin, yBar, barWidth, barHeight);
-    canvas.drawRRect(RRect.fromRectAndRadius(rectBar, const Radius.circular(10)), paintBar);
+      final rectBar = Rect.fromLTWH(leftMargin, yBar, barWidth, barHeight);
+      canvas.drawRRect(RRect.fromRectAndRadius(rectBar, const Radius.circular(10)), paintBar);
 
-    final textValPainter = TextPainter(
-      text: TextSpan(
-        text: "${totalKtons.toStringAsFixed(2)}k",
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    textValPainter.layout();
-    textValPainter.paint(
-      canvas,
-      Offset(leftMargin + barWidth / 2 - textValPainter.width / 2, yBar + barHeight / 2 - textValPainter.height / 2),
-    );
+      if (barWidth > 28) {
+        final textValPainter = TextPainter(
+          text: TextSpan(
+            text: "${totalKtons.toStringAsFixed(2)}k",
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          textDirection: TextDirection.ltr,
+        );
+        textValPainter.layout();
+        textValPainter.paint(
+          canvas,
+          Offset(leftMargin + barWidth / 2 - textValPainter.width / 2, yBar + barHeight / 2 - textValPainter.height / 2),
+        );
+      }
+    }
 
     final textTotal = TextPainter(
       text: TextSpan(
@@ -2009,45 +2033,58 @@ class _WfsStackedBarChartPainter extends CustomPainter {
     final paintGustavo = Paint()..color = const Color(0xFF64748B);
     final paintNany = Paint()..color = const Color(0xFFED8B00);
 
-    final rectG = Rect.fromLTWH(leftMargin, yBar, widthGustavo, barHeight);
-    canvas.drawRRect(
-      RRect.fromRectAndCorners(
-        rectG,
-        topLeft: const Radius.circular(10),
-        bottomLeft: const Radius.circular(10),
-      ),
-      paintGustavo,
-    );
+    if (widthGustavo > 0 && gustavoKtons > 0) {
+      final rectG = Rect.fromLTWH(leftMargin, yBar, widthGustavo, barHeight);
+      canvas.drawRRect(
+        RRect.fromRectAndCorners(
+          rectG,
+          topLeft: const Radius.circular(10),
+          bottomLeft: const Radius.circular(10),
+          topRight: (widthNany > 0 && nanyKtons > 0) ? Radius.zero : const Radius.circular(10),
+          bottomRight: (widthNany > 0 && nanyKtons > 0) ? Radius.zero : const Radius.circular(10),
+        ),
+        paintGustavo,
+      );
 
-    final tG = TextPainter(
-      text: TextSpan(
-        text: "${gustavoKtons.toStringAsFixed(2)}k",
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
-      ),
-      textAlign: TextAlign.center,
-      textDirection: TextDirection.ltr,
-    )..layout();
-    tG.paint(canvas, Offset(leftMargin + widthGustavo / 2 - tG.width / 2, yBar + barHeight / 2 - tG.height / 2));
+      if (widthGustavo > 28) {
+        final tG = TextPainter(
+          text: TextSpan(
+            text: "${gustavoKtons.toStringAsFixed(2)}k",
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.ltr,
+        )..layout();
+        tG.paint(canvas, Offset(leftMargin + widthGustavo / 2 - tG.width / 2, yBar + barHeight / 2 - tG.height / 2));
+      }
+    }
 
-    final rectN = Rect.fromLTWH(leftMargin + widthGustavo, yBar, widthNany, barHeight);
-    canvas.drawRRect(
-      RRect.fromRectAndCorners(
-        rectN,
-        topRight: const Radius.circular(10),
-        bottomRight: const Radius.circular(10),
-      ),
-      paintNany,
-    );
+    if (widthNany > 0 && nanyKtons > 0) {
+      final double xNany = leftMargin + (widthGustavo > 0 && gustavoKtons > 0 ? widthGustavo : 0.0);
+      final rectN = Rect.fromLTWH(xNany, yBar, widthNany, barHeight);
+      canvas.drawRRect(
+        RRect.fromRectAndCorners(
+          rectN,
+          topLeft: (widthGustavo > 0 && gustavoKtons > 0) ? Radius.zero : const Radius.circular(10),
+          bottomLeft: (widthGustavo > 0 && gustavoKtons > 0) ? Radius.zero : const Radius.circular(10),
+          topRight: const Radius.circular(10),
+          bottomRight: const Radius.circular(10),
+        ),
+        paintNany,
+      );
 
-    final tN = TextPainter(
-      text: TextSpan(
-        text: "${nanyKtons.toStringAsFixed(2)}k",
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
-      ),
-      textAlign: TextAlign.center,
-      textDirection: TextDirection.ltr,
-    )..layout();
-    tN.paint(canvas, Offset(leftMargin + widthGustavo + widthNany / 2 - tN.width / 2, yBar + barHeight / 2 - tN.height / 2));
+      if (widthNany > 28) {
+        final tN = TextPainter(
+          text: TextSpan(
+            text: "${nanyKtons.toStringAsFixed(2)}k",
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.ltr,
+        )..layout();
+        tN.paint(canvas, Offset(xNany + widthNany / 2 - tN.width / 2, yBar + barHeight / 2 - tN.height / 2));
+      }
+    }
 
     // Línea roja de meta/umbral en 17 M (targetKtons = 17.0k)
     final double effectiveTarget = targetKtons > 0 ? targetKtons : 17.0;
@@ -2415,9 +2452,9 @@ class _ShipsLoadedChartPainter extends CustomPainter {
     final double chartHeight = size.height - bottomMargin - topMargin;
 
     final ships = [
-      {'name': 'ALFA C', 'val': alfaCShips > 0 ? alfaCShips : 25, 'color': const Color(0xFF0057B8)},
-      {'name': 'GUSTAVO U', 'val': gustavoUShips > 0 ? gustavoUShips : 16, 'color': const Color(0xFF64748B)},
-      {'name': 'NANY', 'val': nanyShips > 0 ? nanyShips : 24, 'color': const Color(0xFFED8B00)},
+      {'name': 'ALFA C', 'val': alfaCShips, 'color': const Color(0xFF0057B8)},
+      {'name': 'GUSTAVO U', 'val': gustavoUShips, 'color': const Color(0xFF64748B)},
+      {'name': 'NANY', 'val': nanyShips, 'color': const Color(0xFFED8B00)},
     ];
 
     // Compute dynamic maximum to guarantee bars never exceed chart bounds
@@ -2478,49 +2515,66 @@ class _ShipsLoadedChartPainter extends CustomPainter {
 
       final double xCenter = leftMargin + (i + 0.5) * stepX;
       final double barWidth = (stepX * 0.52).clamp(24.0, 56.0);
-      final double barHeight = limit > 0 ? ((val / limit) * chartHeight).clamp(4.0, chartHeight) : 4.0;
-      final double yTop = topMargin + chartHeight - barHeight;
 
-      final rect = Rect.fromLTWH(xCenter - barWidth / 2, yTop, barWidth, barHeight);
-      final rrect = RRect.fromRectAndCorners(
-        rect,
-        topLeft: const Radius.circular(6),
-        topRight: const Radius.circular(6),
-        bottomLeft: const Radius.circular(2),
-        bottomRight: const Radius.circular(2),
-      );
+      if (val > 0) {
+        final double barHeight = limit > 0 ? ((val / limit) * chartHeight).clamp(4.0, chartHeight) : 4.0;
+        final double yTop = topMargin + chartHeight - barHeight;
 
-      final barPaint = Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            color,
-            color.withValues(alpha: 0.8),
-          ],
-        ).createShader(rect);
+        final rect = Rect.fromLTWH(xCenter - barWidth / 2, yTop, barWidth, barHeight);
+        final rrect = RRect.fromRectAndCorners(
+          rect,
+          topLeft: const Radius.circular(6),
+          topRight: const Radius.circular(6),
+          bottomLeft: const Radius.circular(2),
+          bottomRight: const Radius.circular(2),
+        );
 
-      canvas.drawRRect(rrect, barPaint);
+        final barPaint = Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              color,
+              color.withValues(alpha: 0.8),
+            ],
+          ).createShader(rect);
 
-      // Value label on top of bar or inside
-      final String valText = val >= 1000 ? "${(val / 1000).toStringAsFixed(1)}k" : val.toString();
-      final valPainter = TextPainter(
-        text: TextSpan(
-          text: valText,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 11,
+        canvas.drawRRect(rrect, barPaint);
+
+        // Value label on top of bar or inside
+        final String valText = val >= 1000 ? "${(val / 1000).toStringAsFixed(1)}k" : val.toString();
+        final valPainter = TextPainter(
+          text: TextSpan(
+            text: valText,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
           ),
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      valPainter.layout();
+          textDirection: TextDirection.ltr,
+        );
+        valPainter.layout();
 
-      if (barHeight > 24) {
-        valPainter.paint(canvas, Offset(xCenter - valPainter.width / 2, yTop + 6));
+        if (barHeight > 24) {
+          valPainter.paint(canvas, Offset(xCenter - valPainter.width / 2, yTop + 6));
+        } else {
+          valPainter.paint(canvas, Offset(xCenter - valPainter.width / 2, yTop - valPainter.height - 3));
+        }
       } else {
-        valPainter.paint(canvas, Offset(xCenter - valPainter.width / 2, yTop - valPainter.height - 3));
+        final valPainter = TextPainter(
+          text: TextSpan(
+            text: "0",
+            style: TextStyle(
+              color: isDark ? Colors.white60 : const Color(0xFF64748B),
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        );
+        valPainter.layout();
+        valPainter.paint(canvas, Offset(xCenter - valPainter.width / 2, topMargin + chartHeight - valPainter.height - 3));
       }
 
       // Ship name label below axis

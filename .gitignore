@@ -28,3 +28,8 @@ desktop.ini
 # Scratch / temp files
 scratch/
 naviera_cruz_app/scratch/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo

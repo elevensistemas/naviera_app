@@ -34,8 +34,14 @@ echo [3/3] Iniciando servicios...
 echo   - Ejecutando React WebApp en ventana independiente (Puerto 2223)...
 start "NCS WebApp (React)" cmd /c "cd /d "%WEBAPP_DIR%" && npm run dev"
 
+echo   - Iniciando Puente Local de Camaras (Puerto 8086)...
+start "NCS Camera Proxy" /min cmd /c "python "%TARGET_DIR%\backend_server\local_camera_proxy.py""
+
+set "CHROME_BIN=C:\Program Files\Google\Chrome\Application\chrome.exe"
+if not exist "%CHROME_BIN%" set "CHROME_BIN=chrome.exe"
+
 echo   - Programando apertura automatica del navegador en cuanto Flutter este listo...
-start "NCS - Esperando Servidor" /min cmd /c "for /l %%i in (1,1,60) do ( curl.exe -s http://127.0.0.1:8085/ >nul && ( start chrome.exe --disable-web-security --ignore-certificate-errors --user-data-dir=\"C:\tmp\chrome_dev_cors\" \"http://127.0.0.1:8085\" & exit ) || ( timeout /t 2 /nobreak >nul ) )"
+start "NCS - Esperando Servidor" /min cmd /c "for /l %%i in (1,1,60) do ( curl.exe -s http://127.0.0.1:8085/ >nul && ( start \"\" \"%CHROME_BIN%\" --disable-web-security --ignore-certificate-errors --user-data-dir=\"C:\tmp\chrome_dev_cors\" \"http://127.0.0.1:8085\" & exit ) || ( timeout /t 2 /nobreak >nul ) )"
 
 echo.
 echo ========================================================
