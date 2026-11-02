@@ -604,7 +604,7 @@ class EzvizService {
   }
 
   /// Obtiene o renueva el Camera Access Token (CAT) emitido por la Intranet
-  Future<String> _getCameraAccessToken() async {
+  Future<String> getCameraAccessToken() async {
     final now = DateTime.now();
     if (_cachedCAT != null && _catExpiry != null && _catExpiry!.isAfter(now.add(const Duration(seconds: 30)))) {
       return _cachedCAT!;
@@ -621,6 +621,8 @@ class EzvizService {
       _catInFlight = null;
     }
   }
+
+  Future<String> _getCameraAccessToken() => getCameraAccessToken();
 
   Future<String> _fetchCAT() async {
     // 1. Si está en Web, consultar primero mediante el proxy local en puerto 8086 (CORS y SSL transparentes)
@@ -1378,33 +1380,47 @@ class ProductionHomeService implements HomeService {
   @override
   Future<List<Post>> fetchPosts() async {
     List<Post> rawList = [];
+    Object? lastError;
 
     // 1. Endpoint oficial de Swagger: /api/v1/announcements/
     try {
       final response = await APIClient.shared.request(endpoint: '/api/v1/announcements/');
-      if (response is List && response.isNotEmpty) {
+      if (response is List) {
         rawList = response.map((json) => Post.fromJson(json)).toList();
       }
-    } catch (_) {}
+    } catch (e) {
+      lastError = e;
+    }
 
     // 2. Swagger fallback: /announcements/
-    if (rawList.isEmpty) {
+    if (rawList.isEmpty && lastError != null) {
       try {
         final response = await APIClient.shared.request(endpoint: '/announcements/');
-        if (response is List && response.isNotEmpty) {
+        if (response is List) {
           rawList = response.map((json) => Post.fromJson(json)).toList();
+          lastError = null;
         }
-      } catch (_) {}
+      } catch (e) {
+        lastError = e;
+      }
     }
 
     // 3. Fallback to /api/v1/posts/
-    if (rawList.isEmpty) {
+    if (rawList.isEmpty && lastError != null) {
       try {
         final response = await APIClient.shared.request(endpoint: '/api/v1/posts/');
-        if (response is List && response.isNotEmpty) {
+        if (response is List) {
           rawList = response.map((json) => Post.fromJson(json)).toList();
+          lastError = null;
         }
-      } catch (_) {}
+      } catch (e) {
+        lastError = e;
+      }
+    }
+
+    // Si hubo falla en la consulta de red y no se pudo obtener respuesta, propagar error
+    if (rawList.isEmpty && lastError != null) {
+      throw lastError;
     }
 
     // 4. Filtrar comunicados viejos/vencidos: solo conservar novedades activas y vigentes

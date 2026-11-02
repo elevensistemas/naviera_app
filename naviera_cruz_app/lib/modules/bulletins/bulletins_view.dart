@@ -55,18 +55,65 @@ class Bulletin {
 
     final rawName = _str(j['file_name']) ?? _str(j['filename']) ?? _str(j['file']) ?? fileUrl;
     final fileName = rawName?.split('/').last.split('?').first;
+
+    final id = j['id'] is int ? j['id'] as int : int.tryParse('${j['id']}') ?? 0;
+    String rawTitle = _str(j['title']) ?? _str(j['name']) ?? _str(j['titulo']) ?? fileName ?? 'Boletín $id';
+
+    // Limpieza de caracteres de codificación legacy
+    if (rawTitle.contains('\uFFFD')) {
+      rawTitle = rawTitle.replaceAll('\uFFFD', '');
+    }
+    // Normalizaciones precisas de títulos oficiales
+    switch (id) {
+      case 14:
+        rawTitle = "Boletín Nº5 - Seguridad Operacional";
+        break;
+      case 11:
+        rawTitle = "MEJORES PRÁCTICAS A BORDO - EL MG-21";
+        break;
+      case 10:
+        rawTitle = "Boletín Nº4 - Prevención y Mantenimiento";
+        break;
+      case 7:
+        rawTitle = "Novedad normativa – Medios de extinción con PFOS";
+        break;
+      case 5:
+        rawTitle = "Boletín Nº1 - Sistema de Gestión";
+        break;
+      case 4:
+        rawTitle = "Boletín Número 2 - Procedimientos Operativos";
+        break;
+      case 3:
+        rawTitle = "Boletín Número 3 - Operaciones y Guardia";
+        break;
+      default:
+        break;
+    }
+
+    final lowerTitle = rawTitle.toLowerCase();
     DateTime? date;
-    for (final k in ['published_at', 'publication_date', 'date', 'fecha', 'created_at', 'starts_at', 'uploaded_at']) {
-      final v = _str(j[k]);
-      if (v != null) {
-        date = DateTime.tryParse(v);
-        if (date != null) break;
+
+    // Calibración cronológica histórica para las primeras ediciones del boletín de seguridad
+    // (en la base de datos se cargaron desfasados: el 3 y 2 el 26/11/2025 y el 1 el 01/12/2025)
+    if (id == 5 || (lowerTitle.contains('bolet') && (lowerTitle.contains('1') || lowerTitle.contains('primero')) && !lowerTitle.contains('11') && !lowerTitle.contains('14') && !lowerTitle.contains('15'))) {
+      date = DateTime(2025, 11, 1, 9, 0);
+    } else if (id == 4 || (lowerTitle.contains('bolet') && (lowerTitle.contains('2') || lowerTitle.contains('segundo')) && !lowerTitle.contains('2026') && !lowerTitle.contains('21') && !lowerTitle.contains('25'))) {
+      date = DateTime(2025, 11, 15, 10, 0);
+    } else if (id == 3 || (lowerTitle.contains('bolet') && (lowerTitle.contains('3') || lowerTitle.contains('tercero')))) {
+      date = DateTime(2025, 11, 26, 10, 37);
+    } else {
+      for (final k in ['published_at', 'publication_date', 'date', 'fecha', 'created_at', 'starts_at', 'uploaded_at']) {
+        final v = _str(j[k]);
+        if (v != null) {
+          date = DateTime.tryParse(v);
+          if (date != null) break;
+        }
       }
     }
-    final id = j['id'] is int ? j['id'] as int : int.tryParse('${j['id']}') ?? 0;
+
     return Bulletin(
       id: id,
-      title: _str(j['title']) ?? _str(j['name']) ?? _str(j['titulo']) ?? fileName ?? 'Boletín $id',
+      title: rawTitle,
       date: date,
       category: _str(j['category']) ?? _str(j['category_name']) ?? _str(j['type']),
       fileUrl: fileUrl,
@@ -171,7 +218,7 @@ class BulletinService {
       "file_name": "BOLETIN_DE_SEGURIDAD_Nro.1.pdf",
       "category": "SGI",
       "uploaded_by": 12,
-      "uploaded_at": "2025-12-01T09:36:01.106968-03:00"
+      "uploaded_at": "2025-11-01T09:36:01.106968-03:00"
     },
     {
       "id": 4,
@@ -181,7 +228,7 @@ class BulletinService {
       "file_name": "BOLETIN_DE_SEGURIDAD_Nro.2.pdf",
       "category": "Procedimientos",
       "uploaded_by": 2,
-      "uploaded_at": "2025-11-26T10:38:09.535134-03:00"
+      "uploaded_at": "2025-11-15T10:38:09.535134-03:00"
     },
     {
       "id": 3,
@@ -195,33 +242,34 @@ class BulletinService {
     }
   ];
 
-  void _sortList(List<Bulletin> list) {
+  void sortList(List<Bulletin> list, {bool descending = true}) {
     list.sort((a, b) {
+      int c = 0;
       if (a.date != null && b.date != null) {
-        final c = b.date!.compareTo(a.date!);
-        if (c != 0) return c;
+        c = descending ? b.date!.compareTo(a.date!) : a.date!.compareTo(b.date!);
       } else if (a.date != null) {
-        return -1;
+        c = descending ? -1 : 1;
       } else if (b.date != null) {
-        return 1;
+        c = descending ? 1 : -1;
       }
-      return b.id.compareTo(a.id);
+      if (c != 0) return c;
+      return descending ? b.id.compareTo(a.id) : a.id.compareTo(b.id);
     });
   }
 
-  Future<List<Bulletin>> fetchBulletins() async {
+  Future<List<Bulletin>> fetchBulletins({bool descending = true}) async {
     try {
-      final res = await APIClient.shared.request(endpoint: '/api/v1/bulletins/');
+      final res = await APIClient.shared.request(endpoint: '/api/v1/bulletins/?ordering=-uploaded_at');
       final List raw = res is List ? res : (res is Map && res['results'] is List ? res['results'] : const []);
       final list = raw.whereType<Map>().map((e) => Bulletin.fromJson(Map<String, dynamic>.from(e))).toList();
       if (list.isNotEmpty) {
-        _sortList(list);
+        sortList(list, descending: descending);
         return list;
       }
     } catch (_) {}
 
     final fallback = _fallbackBulletinsData.map((e) => Bulletin.fromJson(e)).toList();
-    _sortList(fallback);
+    sortList(fallback, descending: descending);
     return fallback;
   }
 
@@ -267,11 +315,17 @@ class _BulletinsViewState extends State<BulletinsView> {
   List<Bulletin>? _items;
   String? _error;
   bool _loading = true;
+  bool _sortDescending = true; // Por default: de más último a más viejo
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  void _sortItems() {
+    if (_items == null) return;
+    BulletinService.shared.sortList(_items!, descending: _sortDescending);
   }
 
   Future<void> _load() async {
@@ -280,7 +334,7 @@ class _BulletinsViewState extends State<BulletinsView> {
       _error = null;
     });
     try {
-      final items = await BulletinService.shared.fetchBulletins();
+      final items = await BulletinService.shared.fetchBulletins(descending: _sortDescending);
       if (!mounted) return;
       setState(() => _items = items);
     } catch (e) {
@@ -350,12 +404,81 @@ class _BulletinsViewState extends State<BulletinsView> {
       ];
     }
     return [
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "DOCUMENTOS DISPONIBLES (${items.length})",
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                  color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                ),
+              ),
+              InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () {
+                  setState(() {
+                    _sortDescending = !_sortDescending;
+                    _sortItems();
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _sortDescending ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                        size: 13,
+                        color: _teal,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        _sortDescending ? "Más recientes" : "Más antiguos",
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : _navy,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
       SliverPadding(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
         sliver: SliverList.separated(
           itemCount: items.length,
           separatorBuilder: (_, _) => const SizedBox(height: 12),
-          itemBuilder: (context, i) => _BulletinTile(bulletin: items[i], isLatest: i == 0, isDark: isDark),
+          itemBuilder: (context, i) => _BulletinTile(
+            bulletin: items[i],
+            isLatest: _sortDescending && i == 0,
+            isDark: isDark,
+          ),
         ),
       ),
     ];

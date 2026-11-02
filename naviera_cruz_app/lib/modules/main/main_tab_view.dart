@@ -71,6 +71,7 @@ class _MainTabViewState extends State<MainTabView> {
     IncidentListView(),
     TrainingView(),
     BulletinsView(),
+    CrewFaqSearchView(isTabModule: true), // FAQ reutilizado de Tripulación (penúltimo)
     ChatListView(),
   ];
 
@@ -212,6 +213,7 @@ class _NavieraBottomBarState extends State<NavieraBottomBar> {
       _NavItemData(label: "Seguridad", icon: Icons.shield_outlined, activeIcon: Icons.shield_rounded),
       _NavItemData(label: "Cursos", icon: Icons.school_outlined, activeIcon: Icons.school_rounded),
       _NavItemData(label: "Boletines", icon: Icons.description_outlined, activeIcon: Icons.description_rounded),
+      _NavItemData(label: "FAQ", icon: Icons.quiz_outlined, activeIcon: Icons.quiz_rounded),
       _NavItemData(label: "Chat", icon: Icons.chat_bubble_outline_rounded, activeIcon: Icons.chat_bubble_rounded),
     ];
 

@@ -13,6 +13,7 @@ import 'crew_faq_search_view.dart';
 import 'crew_novedades_view.dart';
 import '../../services/crew_faq_service.dart';
 import '../../app/ayuda_avatar_data.dart';
+import '../home/welcome_novedades_card.dart';
 
 class CrewHomeView extends StatefulWidget {
   final Function(int)? onNavigateTab;
@@ -34,6 +35,7 @@ class _CrewHomeViewState extends State<CrewHomeView> {
   bool _isLoading = true;
   String? _errorMessage;
   String? _bulletinError;
+  String? _crewPostsError;
 
   // Índice del elemento expandido en Preguntas Frecuentes (0 expandido por defecto)
   int? _expandedFaqIndex = 0;
@@ -56,6 +58,7 @@ class _CrewHomeViewState extends State<CrewHomeView> {
       _isLoading = true;
       _errorMessage = null;
       _bulletinError = null;
+      _crewPostsError = null;
     });
 
     final currentUser = SessionManager.shared.currentUser;
@@ -83,10 +86,13 @@ class _CrewHomeViewState extends State<CrewHomeView> {
 
       // 4. Cargar novedades de la Intranet vía Swagger (/api/v1/announcements/)
       List<Post> crewPosts = [];
+      String? crewPostsErr;
       try {
         final posts = await HomeService().fetchPosts();
         crewPosts = posts.where((p) => p.isForCrew).toList();
-      } catch (_) {}
+      } catch (e) {
+        crewPostsErr = e.toString();
+      }
 
       if (mounted) {
         setState(() {
@@ -94,6 +100,7 @@ class _CrewHomeViewState extends State<CrewHomeView> {
           _latestBulletin = latestBulletin;
           _bulletinError = bulletinErr;
           _crewPosts = crewPosts;
+          _crewPostsError = crewPostsErr;
           _isLoading = false;
         });
       }
@@ -1100,10 +1107,70 @@ class _CrewHomeViewState extends State<CrewHomeView> {
     );
   }
 
+  Widget _buildNovedadesErrorCard(bool isDark) {
+    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.wifi_off_rounded, size: 32, color: isDark ? Colors.white54 : const Color(0xFF64748B)),
+          const SizedBox(height: 10),
+          Text(
+            "No se pudieron cargar las novedades",
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Verificá tu conexión al servidor para actualizar.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDark ? Colors.white54 : const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton.icon(
+            onPressed: _loadAllData,
+            icon: const Icon(Icons.refresh_rounded, size: 15),
+            label: const Text("Reintentar", style: TextStyle(fontSize: 12)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0066CC),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              elevation: 0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // =========================================================================
   // C. TARJETA "NOVEDADES OFICIALES" (CARGADAS DESDE SWAGGER /api/v1/announcements/)
   // =========================================================================
   Widget _buildNovedadesCard(bool isDark) {
+    if (_crewPostsError != null) {
+      return _buildNovedadesErrorCard(isDark);
+    }
+
+    if (_crewPosts.isEmpty) {
+      return const WelcomeNovedadesCard(margin: EdgeInsets.zero);
+    }
+
     final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
 
     return Container(
@@ -1174,45 +1241,8 @@ class _CrewHomeViewState extends State<CrewHomeView> {
             ],
           ),
           const SizedBox(height: 16),
-          if (_crewPosts.isEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-                  width: 0.8,
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.mark_email_read_outlined, size: 28, color: Color(0xFF0066CC)),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Sin novedades pendientes",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Esperando nuevos comunicados oficiales de la compañía.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? Colors.white54 : const Color(0xFF64748B),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          else ...[
-            Builder(
-              builder: (context) {
+          Builder(
+            builder: (context) {
                 final post = _crewPosts.first;
                 final dateStr = "${post.timestamp.day.toString().padLeft(2, '0')}/${post.timestamp.month.toString().padLeft(2, '0')}/${post.timestamp.year}";
                 final bool hasImage = post.imageUrl != null && post.imageUrl!.trim().isNotEmpty;
@@ -1307,7 +1337,6 @@ class _CrewHomeViewState extends State<CrewHomeView> {
                 );
               },
             ),
-          ],
           const SizedBox(height: 4),
         ],
       ),

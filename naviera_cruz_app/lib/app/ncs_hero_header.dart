@@ -2,7 +2,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'ncs_header_data.dart';
-import 'logo.dart';
 import '../core/storage.dart';
 import '../models/models.dart';
 import '../modules/notifications/notifications_view.dart';
@@ -46,7 +45,6 @@ class NcsHeroHeader extends StatelessWidget {
 
     // Portada dinámica (NANY o ALFA C día/tarde/noche para tripulantes, o portada oficina)
     final String coverAsset = session.activeCoverAsset;
-    final bool isDefaultAlfaC = coverAsset.contains('header_bg') || coverAsset.contains('alfa');
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -152,44 +150,26 @@ class NcsHeroHeader extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Builder(
-                                builder: (ctx) {
-                                  final route = ModalRoute.of(ctx);
-                                  final bool canSafelyPop = route != null && route.canPop && !route.isFirst;
-                                  final bool shouldShowBack = showBackButton ?? canSafelyPop;
+                          Builder(
+                            builder: (ctx) {
+                              final route = ModalRoute.of(ctx);
+                              final bool canSafelyPop = route != null && route.canPop && !route.isFirst;
+                              final bool shouldShowBack = showBackButton ?? canSafelyPop;
 
-                                  if (!shouldShowBack) return const SizedBox.shrink();
+                              if (!shouldShowBack) return const SizedBox.shrink();
 
-                                  return Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      _HeaderActionButton(
-                                        icon: Icons.arrow_back_rounded,
-                                        tooltip: 'Volver',
-                                        onTap: () {
-                                          if (onBackTap != null) {
-                                            onBackTap!();
-                                          } else if (Navigator.canPop(ctx) && !(route?.isFirst ?? false)) {
-                                            Navigator.pop(ctx);
-                                          }
-                                        },
-                                      ),
-                                      const SizedBox(width: 8),
-                                    ],
-                                  );
+                              return _HeaderActionButton(
+                                icon: Icons.arrow_back_rounded,
+                                tooltip: 'Volver',
+                                onTap: () {
+                                  if (onBackTap != null) {
+                                    onBackTap!();
+                                  } else if (Navigator.canPop(ctx) && !(route?.isFirst ?? false)) {
+                                    Navigator.pop(ctx);
+                                  }
                                 },
-                              ),
-                              // Si no es la imagen de Alfa C tradicional (que ya tiene el logo impreso en la esquina)
-                              // O si tiene customCoverBytes, mostramos el logo corporativo oficial
-                              if (!isDefaultAlfaC || customCoverBytes != null)
-                                const NavieraLogo(
-                                  size: 26,
-                                  isWhiteVersion: true,
-                                ),
-                            ],
+                              );
+                            },
                           ),
 
                           // Botones de acción en la esquina derecha: Notificaciones + Modo Oscuro + Perfil

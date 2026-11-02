@@ -6,6 +6,10 @@ import '../../app/theme.dart';
 import '../../app/ncs_hero_header.dart';
 import '../../core/storage.dart';
 import '../bulletins/bulletins_view.dart';
+import 'welcome_novedades_card.dart';
+import '../../models/weather_model.dart';
+import '../../services/centinela_weather_service.dart';
+import 'centinela_weather_card.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -20,26 +24,58 @@ class _HomeViewState extends State<HomeView> {
   final List<Post> _posts = [];
   bool _isLoading = false;
   String? _errorMessage;
+  String? _postsError;
   int _activeTab = 0; // 0 for Novedades, 1 for Mis Objetivos
+  CentinelaWeatherData? _weatherData;
+  bool _isWeatherLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _weatherData = CentinelaWeatherService.shared.currentCachedWeather;
     _loadData();
+    _loadWeather();
+  }
+
+  Future<void> _loadWeather({bool force = false}) async {
+    if (!mounted) return;
+    setState(() => _isWeatherLoading = true);
+    try {
+      final w = await CentinelaWeatherService.shared.fetchWeather(forceRefresh: force);
+      if (mounted) {
+        setState(() {
+          _weatherData = w;
+          _isWeatherLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isWeatherLoading = false);
+      }
+    }
   }
 
   Future<void> _loadData() async {
     if (!mounted) return;
+    _loadWeather(force: true);
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _postsError = null;
     });
 
     try {
       final goalService = GoalService();
       final goals = await goalService.fetchGoals().catchError((_) => <Goal>[]);
       final bulletins = await BulletinService.shared.fetchBulletins().catchError((_) => <Bulletin>[]);
-      final posts = await HomeService().fetchPosts().catchError((_) => <Post>[]);
+      
+      List<Post> posts = [];
+      String? pError;
+      try {
+        posts = await HomeService().fetchPosts();
+      } catch (e) {
+        pError = e.toString();
+      }
 
       if (mounted) {
         setState(() {
@@ -49,6 +85,7 @@ class _HomeViewState extends State<HomeView> {
           _bulletins.addAll(bulletins);
           _posts.clear();
           _posts.addAll(posts.where((p) => p.isForOffice).toList());
+          _postsError = pError;
         });
       }
     } catch (e) {
@@ -148,7 +185,7 @@ class _HomeViewState extends State<HomeView> {
     final String bannerTitle = _activeTab == 0 ? "Novedades y noticias" : "Mis objetivos";
     final String bannerSubtitle = _activeTab == 0
         ? "Actualidad y comunicados de Naviera Cruz del Sur."
-        : "Seguimiento de metas operativas y estratégicas.";
+        : "Seguimiento de objetivos personales.";
 
     return Container(
       color: bodyBg,
@@ -274,17 +311,27 @@ class _HomeViewState extends State<HomeView> {
 
               // TAB 0: NOVEDADES Y NOTICIAS (CARGADAS DE LA INTRANET VÍA SWAGGER)
               if (_activeTab == 0) ...[
-                if (_posts.isEmpty)
-                  _buildEmptyNovedades(context, isDark, cardBg, textColor, captionColor)
-                else
+                CentinelaWeatherCard(
+                  weather: _weatherData,
+                  isLoading: _isWeatherLoading,
+                  onRetry: () => _loadWeather(force: true),
+                ),
+                if (_postsError != null) ...[
+                  _buildNovedadesError(context, isDark, cardBg, textColor, captionColor),
+                  const WelcomeNovedadesCard(),
+                ] else if (_posts.isEmpty) ...[
+                  const WelcomeNovedadesCard(),
+                ] else ...[
                   ..._buildNovedadesList(context, isDark, cardBg, textColor, captionColor),
+                  const WelcomeNovedadesCard(),
+                ],
               ]
 
               // TAB 1: MIS OBJETIVOS (COMO ANTES)
               else ...[
                 // KPI Stats Row
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 4.0),
+                  padding: const EdgeInsets.fromLTRB(14.0, 8.0, 14.0, 4.0),
                   child: Row(
                     children: [
                       _buildKpiCard(
@@ -297,7 +344,7 @@ class _HomeViewState extends State<HomeView> {
                         textColor: textColor,
                         captionColor: captionColor,
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       _buildKpiCard(
                         label: "Completados",
                         value: completedCount.toString(),
@@ -308,7 +355,7 @@ class _HomeViewState extends State<HomeView> {
                         textColor: textColor,
                         captionColor: captionColor,
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       _buildKpiCard(
                         label: "En Curso",
                         value: inProgressCount.toString(),
@@ -359,7 +406,7 @@ class _HomeViewState extends State<HomeView> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              "Período $currentYear - S$currentSemester",
+                              "$currentYear",
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -569,8 +616,8 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  // Tarjeta vacía para Novedades (tal como solicitó el usuario: "sin el boletin")
-  Widget _buildEmptyNovedades(
+  // Tarjeta de error para Novedades si falla la conexión
+  Widget _buildNovedadesError(
     BuildContext context,
     bool isDark,
     Color cardBg,
@@ -579,57 +626,53 @@ class _HomeViewState extends State<HomeView> {
   ) {
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 280),
       margin: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 24.0),
-      padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF131D2D) : cardBg,
-        borderRadius: BorderRadius.circular(24),
+        color: isDark ? const Color(0xFF1E293B) : cardBg,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF1E2E44) : const Color(0xFFE2E8F0),
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
           width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 68,
-            height: 68,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF0F3260) : const Color(0xFFE0F0FE),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.newspaper_rounded,
-              size: 32,
-              color: Color(0xFF007AFF),
-            ),
+          Icon(
+            Icons.wifi_off_rounded,
+            size: 36,
+            color: captionColor,
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 12),
           Text(
-            "Sin novedades por el momento",
+            "No se pudieron cargar las novedades",
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 15,
               fontWeight: FontWeight.bold,
               color: textColor,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
-            "No hay avisos o comunicaciones publicadas al momento.",
+            "Verificá tu conexión al servidor para actualizar.",
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 13.5,
+              fontSize: 12.5,
               color: captionColor,
-              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 14),
+          ElevatedButton.icon(
+            onPressed: _loadData,
+            icon: const Icon(Icons.refresh_rounded, size: 16),
+            label: const Text("Reintentar"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: ColorTheme.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              elevation: 0,
             ),
           ),
         ],
@@ -1051,15 +1094,15 @@ class _HomeViewState extends State<HomeView> {
   }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
         decoration: BoxDecoration(
           color: cardBg,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.02),
-              blurRadius: 8,
+              blurRadius: 6,
               offset: const Offset(0, 2),
             ),
           ],
@@ -1067,14 +1110,14 @@ class _HomeViewState extends State<HomeView> {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(7),
+              padding: const EdgeInsets.all(5.5),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, size: 18, color: color),
+              child: Icon(icon, size: 16, color: color),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1083,19 +1126,25 @@ class _HomeViewState extends State<HomeView> {
                   Text(
                     value,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                       color: textColor,
+                      height: 1.1,
                     ),
                   ),
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: captionColor,
-                      fontWeight: FontWeight.w500,
+                  const SizedBox(height: 2),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: TextStyle(
+                        fontSize: 10.0,
+                        color: captionColor,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],

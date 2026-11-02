@@ -3,6 +3,7 @@ import '../../models/models.dart';
 import '../../services/services.dart';
 import '../../app/ncs_hero_header.dart';
 import '../bulletins/bulletins_view.dart';
+import '../home/welcome_novedades_card.dart';
 
 class CrewNovedadesView extends StatefulWidget {
   const CrewNovedadesView({super.key});
@@ -210,34 +211,10 @@ class _CrewNovedadesViewState extends State<CrewNovedadesView> with SingleTicker
     }
 
     if (_posts.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(28.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.mark_email_read_outlined, size: 48, color: Color(0xFF0066CC)),
-              const SizedBox(height: 14),
-              Text(
-                "Sin novedades pendientes",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: isDark ? Colors.white : const Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                "Esperando nuevos comunicados oficiales de la compañía.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? Colors.white54 : const Color(0xFF64748B),
-                ),
-              ),
-            ],
-          ),
-        ),
+      return const SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+        child: WelcomeNovedadesCard(margin: EdgeInsets.zero),
       );
     }
 
