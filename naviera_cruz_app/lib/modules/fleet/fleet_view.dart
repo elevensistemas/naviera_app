@@ -1064,7 +1064,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                     value: _getFuelValue(ship),
                     progressPercentage: _getFuelPercentage(ship),
                   ),
-                  Container(height: 42, width: 1, margin: const EdgeInsets.symmetric(horizontal: 10), color: dividerColor),
+                  Container(height: 58, width: 1, margin: const EdgeInsets.symmetric(horizontal: 6), color: dividerColor),
                   _buildResourceMetric(
                     context: context,
                     icon: Icons.water_drop_rounded,
@@ -1073,7 +1073,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                     value: _getWaterValue(ship),
                     progressPercentage: _getWaterPercentage(ship),
                   ),
-                  Container(height: 42, width: 1, margin: const EdgeInsets.symmetric(horizontal: 10), color: dividerColor),
+                  Container(height: 58, width: 1, margin: const EdgeInsets.symmetric(horizontal: 6), color: dividerColor),
                   _buildResourceMetric(
                     context: context,
                     icon: Icons.opacity_rounded,
@@ -1327,80 +1327,89 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     required String value,
     required double progressPercentage,
   }) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final int pctInt = (progressPercentage * 100).round();
 
     return Expanded(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 12, color: color),
-              const SizedBox(width: 3),
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    softWrap: false,
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      color: isDark ? Colors.white70 : Colors.black87,
-                      fontWeight: FontWeight.w700,
+          // Circular gauge con el número del porcentaje en el centro
+          SizedBox(
+            width: 54,
+            height: 54,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Círculo de fondo tenue
+                SizedBox(
+                  width: 54,
+                  height: 54,
+                  child: CircularProgressIndicator(
+                    value: 1.0,
+                    strokeWidth: 4.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      color.withValues(alpha: isDark ? 0.22 : 0.14),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 2),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: isDark ? 0.25 : 0.12),
-                  borderRadius: BorderRadius.circular(4),
+                // Círculo de progreso activo proporcional al reporte diario
+                SizedBox(
+                  width: 54,
+                  height: 54,
+                  child: CircularProgressIndicator(
+                    value: progressPercentage.clamp(0.0, 1.0),
+                    strokeWidth: 4.5,
+                    strokeCap: StrokeCap.round,
+                    valueColor: AlwaysStoppedAnimation<Color>(color),
+                  ),
                 ),
-                child: Text(
+                // Número del porcentaje en el centro
+                Text(
                   "$pctInt%",
                   style: TextStyle(
-                    fontSize: 8.5,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: color,
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    letterSpacing: -0.3,
                   ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Nombre del recurso con su icono distintivo
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 12, color: color),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white70 : const Color(0xFF334155),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 2),
+
+          // Dato métrico real del reporte diario del buque (sin inventar)
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
               value,
               style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: Container(
-              height: 6,
-              width: double.infinity,
-              color: isDark ? Colors.white10 : Colors.grey.shade200,
-              child: FractionallySizedBox(
-                alignment: Alignment.centerLeft,
-                widthFactor: progressPercentage.clamp(0.0, 1.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
+                fontSize: 11.0,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white60 : const Color(0xFF64748B),
               ),
             ),
           ),
