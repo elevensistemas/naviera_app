@@ -257,6 +257,47 @@ void main() {
       expect(marenco.sector.toLowerCase().contains('buque'), isTrue);
     });
 
+    test('Catálogo oficial completo de 22 miembros de oficina es reconocido sin inventar nombres', () {
+      final officialOfficeList = [
+        "Altamiranda Daniel",
+        "Assalone Silvana",
+        "Awdziej Nicolás",
+        "Capara Belén",
+        "Carnevale Emmanuel",
+        "Carrillo Gustavo",
+        "Di Tondo Gino",
+        "Duarte Ludia",
+        "García Marcelo",
+        "Jacobs Monica Elizabeth",
+        "Lo Presti Alejandro",
+        "Mena Antonella",
+        "Monascal Miguel",
+        "Nunes Nicole",
+        "Pedroso Nahuel",
+        "Pires Fabricio",
+        "Roldan Pablo",
+        "Salaverri JuanMartín",
+        "Sarasúa Javier",
+        "Torres Karen Denise",
+        "Veron Patricia",
+        "Zarate Julio",
+      ];
+
+      for (final person in officialOfficeList) {
+        final member = IntranetOfficeCatalog.findMember(person);
+        expect(member, isNotNull, reason: "Debe encontrar a $person");
+        expect(IntranetOfficeCatalog.isOfficeMember(person), isTrue);
+        expect(IntranetCrewCatalog.isTripulanteUser(username: member!.username), isFalse);
+      }
+
+      // Validación de Torres Karen Denise (Oficina) vs Torres Ulises (Tripulante)
+      expect(IntranetOfficeCatalog.isOfficeMember('k.torres'), isTrue);
+      expect(IntranetOfficeCatalog.isOfficeMember('u.torres'), isFalse);
+      expect(IntranetOfficeCatalog.isOfficeMember('Torres Ulises'), isFalse);
+      expect(IntranetCrewCatalog.isTripulanteUser(username: 'u.torres'), isTrue);
+      expect(IntranetCrewCatalog.isTripulanteUser(username: 'k.torres'), isFalse);
+    });
+
     test('Módulo FAQ exclusivo para Tripulantes contiene las 70 preguntas frecuentes y 14 categorías', () {
       expect(CrewFAQService.catalog.length, equals(70));
       expect(FAQCategory.values.length, equals(14));
