@@ -28,7 +28,10 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _loadShips();
+    // Pre-poblar inmediatamente los buques para iniciar la conexión de Alfa C en el primer frame
+    _ships.addAll(_getDefaultShipsList());
+    _loadCameraForShip(_ships[0], forceRefresh: true);
+    _loadShips(isSilent: true);
     // Auto-actualización periódica de recursos y programas de carga 4 veces al día (cada 6 horas)
     _autoRefreshTimer = Timer.periodic(const Duration(hours: 6), (_) {
       if (mounted) {
@@ -40,9 +43,9 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Al volver a primer plano tras estar en segundo plano en iOS, reconectar si la sesión cayó
-      if (mounted) {
-        _loadCameraForSelectedShip();
+      // Al volver a primer plano, reconectar la cámara seleccionada si la sesión cayó
+      if (mounted && _ships.isNotEmpty && _selectedShipIndex < _ships.length) {
+        _loadCameraForShip(_ships[_selectedShipIndex], forceRefresh: true);
       }
     }
   }
@@ -54,8 +57,38 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     super.dispose();
   }
 
+  static String getShipCameraSerial(Ship ship) {
+    final name = ship.name.toUpperCase();
+    if (name.contains('ALFA')) return 'BF1765385';
+    if (name.contains('NANY')) return 'BF1765344';
+    if (name.contains('GUSTAVO')) return 'BF1767228';
+    if (ship.cameras.isNotEmpty) {
+      final cam = ship.cameras.firstWhere(
+        (c) => c.serialNumber.isNotEmpty,
+        orElse: () => ship.cameras.first,
+      );
+      if (cam.serialNumber.isNotEmpty) return cam.serialNumber;
+    }
+    return 'BF1765385';
+  }
+
+  static String? getShipCameraId(Ship ship) {
+    final name = ship.name.toUpperCase();
+    if (name.contains('ALFA')) return '10012';
+    if (name.contains('NANY')) return '9';
+    if (name.contains('GUSTAVO')) return '12';
+    if (ship.cameras.isNotEmpty) {
+      final cam = ship.cameras.firstWhere(
+        (c) => c.id.isNotEmpty,
+        orElse: () => ship.cameras.first,
+      );
+      if (cam.id.isNotEmpty) return cam.id;
+    }
+    return null;
+  }
+
   Future<void> _loadShips({bool isSilent = false}) async {
-    if (!isSilent) {
+    if (!isSilent && _ships.isEmpty) {
       setState(() {
         _isLoading = true;
         _errorMessage = null;
@@ -109,6 +142,23 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         sorted.addAll(_getDefaultShipsList());
       }
 
+      // Preservar URLs de cámara que ya hayan sido resueltas en memoria para no reiniciarlas
+      final Map<String, String> existingCameraUrls = {
+        for (final s in _ships)
+          if (s.cameraUrl != null && s.cameraUrl!.isNotEmpty)
+            s.name.toUpperCase(): s.cameraUrl!
+      };
+
+      for (int i = 0; i < sorted.length; i++) {
+        final key = sorted[i].name.toUpperCase();
+        for (final entry in existingCameraUrls.entries) {
+          if (key.contains(entry.key) || entry.key.contains(key)) {
+            sorted[i] = sorted[i].copyWith(cameraUrl: entry.value);
+            break;
+          }
+        }
+      }
+
       setState(() {
         _ships.clear();
         _ships.addAll(sorted);
@@ -117,15 +167,22 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
           _selectedShipIndex = 0;
         }
       });
-      _loadCameraForSelectedShip();
+      if (_ships.isNotEmpty) {
+        final current = _ships[_selectedShipIndex];
+        if (current.cameraUrl == null || current.cameraUrl!.isEmpty) {
+          _loadCameraForShip(current, forceRefresh: true);
+        }
+      }
     } catch (e) {
-      setState(() {
-        _ships.clear();
-        _ships.addAll(_getDefaultShipsList());
-        _lastSyncTime = DateTime.now();
-        _selectedShipIndex = 0;
-      });
-      _loadCameraForSelectedShip();
+      if (_ships.isEmpty) {
+        setState(() {
+          _ships.clear();
+          _ships.addAll(_getDefaultShipsList());
+          _lastSyncTime = DateTime.now();
+          _selectedShipIndex = 0;
+        });
+        _loadCameraForShip(_ships[0], forceRefresh: true);
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -135,39 +192,9 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _loadCameraForSelectedShip({bool forceRefresh = false}) async {
-    if (_ships.isEmpty || _selectedShipIndex >= _ships.length) return;
-    final ship = _ships[_selectedShipIndex];
-
-    String? serial;
-    String? cameraId;
-    if (ship.cameras.isNotEmpty) {
-      final activeCam = ship.cameras.firstWhere(
-        (c) => c.isActive && c.serialNumber.isNotEmpty,
-        orElse: () => ship.cameras.firstWhere(
-          (c) => c.serialNumber.isNotEmpty,
-          orElse: () => ship.cameras.first,
-        ),
-      );
-      if (activeCam.serialNumber.isNotEmpty) {
-        serial = activeCam.serialNumber;
-        cameraId = activeCam.id.isNotEmpty ? activeCam.id : null;
-      }
-    }
-    // Asignación de respaldo por nombre si el modelo no traía cámaras
-    if (serial == null) {
-      if (ship.name.toUpperCase().contains('ALFA')) {
-        serial = 'BF1765385';
-        cameraId = '10012';
-      } else if (ship.name.toUpperCase().contains('NANY')) {
-        serial = 'BF1765344';
-        cameraId = '9';
-      } else if (ship.name.toUpperCase().contains('GUSTAVO')) {
-        serial = 'BF1767228';
-        cameraId = '12';
-      }
-    }
-    if (serial == null) return;
+  Future<void> _loadCameraForShip(Ship ship, {bool forceRefresh = false}) async {
+    final serial = getShipCameraSerial(ship);
+    final cameraId = getShipCameraId(ship);
 
     if (!forceRefresh && ship.cameraUrl != null && ship.cameraUrl!.isNotEmpty) {
       return;
@@ -180,6 +207,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
 
     try {
       if (forceRefresh) {
+        EzvizService.shared.clearOfflineStatus(serial);
         EzvizService.shared.invalidateCache(serial);
       }
       final freshUrl = await EzvizService.shared.getLiveStreamUrl(
@@ -187,14 +215,25 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         cameraId: cameraId,
         forceRefresh: forceRefresh,
       );
+
+      // Verificación estricta: asegurar que la URL pertenece al serial específico de este buque
+      if (!freshUrl.contains(serial)) {
+        debugPrint("[CÁMARA RECHAZADA] URL no coincide con serial $serial de ${ship.name}");
+        throw Exception("Inconsistencia en transmisión de ${ship.name}");
+      }
+
       if (mounted) {
         setState(() {
-          _ships[_selectedShipIndex] = _ships[_selectedShipIndex].copyWith(cameraUrl: freshUrl);
+          // Búsqueda ESTRICTA por ID o nombre del buque (NUNCA por índice mutable)
+          final idx = _ships.indexWhere((s) => s.id == ship.id || s.name == ship.name);
+          if (idx != -1) {
+            _ships[idx] = _ships[idx].copyWith(cameraUrl: freshUrl);
+          }
           _reconnectingShips.remove(ship.id);
         });
       }
     } catch (e) {
-      debugPrint("Error cargando cámara para ${ship.name}: $e");
+      debugPrint("Error cargando cámara para ${ship.name} ($serial): $e");
       if (mounted) {
         setState(() {
           _reconnectingShips.remove(ship.id);
@@ -205,43 +244,26 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
   }
 
   Future<void> _reconnectCamera(Ship ship) async {
-    final index = _ships.indexWhere((s) => s.id == ship.id);
-    if (index != -1) {
+    final idx = _ships.indexWhere((s) => s.id == ship.id || s.name == ship.name);
+    if (idx != -1) {
       setState(() {
-        _ships[index] = _ships[index].copyWith(cameraUrl: "");
+        _ships[idx] = _ships[idx].copyWith(cameraUrl: "");
       });
     }
 
-    String? serial;
-    if (ship.cameras.isNotEmpty) {
-      final cam = ship.cameras.firstWhere(
-        (c) => c.serialNumber.isNotEmpty,
-        orElse: () => ship.cameras.first,
-      );
-      if (cam.serialNumber.isNotEmpty) serial = cam.serialNumber;
-    }
-    if (serial == null) {
-      if (ship.name.toUpperCase().contains('ALFA')) serial = 'BF1765385';
-      if (ship.name.toUpperCase().contains('NANY')) serial = 'BF1765344';
-      if (ship.name.toUpperCase().contains('GUSTAVO')) serial = 'BF1767228';
-    }
-    if (serial != null) {
-      EzvizService.shared.clearOfflineStatus(serial);
-      EzvizService.shared.invalidateCache(serial);
-    }
+    final serial = getShipCameraSerial(ship);
+    EzvizService.shared.clearOfflineStatus(serial);
+    EzvizService.shared.invalidateCache(serial);
 
-    await _loadCameraForSelectedShip(forceRefresh: true);
+    await _loadCameraForShip(ship, forceRefresh: true);
   }
 
   Widget _buildCameraBadge(Ship ship, bool isDark) {
-    String? serial;
-    if (ship.name.toUpperCase().contains('ALFA')) serial = 'BF1765385';
-    if (ship.name.toUpperCase().contains('NANY')) serial = 'BF1765344';
-    if (ship.name.toUpperCase().contains('GUSTAVO')) serial = 'BF1767228';
+    final serial = getShipCameraSerial(ship);
 
     final hasConfiguredCamera = ship.cameras.isNotEmpty && ship.cameras.any((c) => c.serialNumber.isNotEmpty);
     final hasActiveCameraConfig = ship.cameras.any((c) => c.isActive && c.serialNumber.isNotEmpty);
-    final isDeviceOffline = serial != null && EzvizService.shared.isDeviceOffline(serial);
+    final isDeviceOffline = EzvizService.shared.isDeviceOffline(serial);
     final isReconnecting = _reconnectingShips.contains(ship.id);
     final status = _cameraStatuses[ship.id] ?? 
         (isReconnecting 
@@ -497,14 +519,6 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     return "Raizen";
   }
 
-  Color _statusColor(ShipStatus status) {
-    switch (status) {
-      case ShipStatus.active: return Colors.green;
-      case ShipStatus.maintenance: return Colors.orange;
-      case ShipStatus.docked: return ColorTheme.primary;
-    }
-  }
-
   Color _getShipThemeColor(String name) {
     final upper = name.toUpperCase();
     if (upper.contains('ALFA')) return const Color(0xFF0057B8); // Azul
@@ -648,7 +662,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                             });
                             final selected = _ships[index];
                             if (selected.cameraUrl == null || selected.cameraUrl!.isEmpty) {
-                              _reconnectCamera(selected);
+                              _loadCameraForShip(selected, forceRefresh: true);
                             }
                           }
                         },
@@ -949,7 +963,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
           // Video Player or Fallback for SBS camera: full width within card (border 1px)
           if (ship.cameraUrl != null && ship.cameraUrl!.isNotEmpty)
             SBSCameraPlayer(
-              key: ValueKey('${ship.id}-${ship.cameraUrl}'),
+              key: ValueKey('${ship.id}-${ship.name}-${ship.cameraUrl}'),
               url: ship.cameraUrl!,
               vesselName: ship.name,
               onStatusChanged: (status) {
@@ -960,22 +974,8 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                   // Un enlace rechazado por el reproductor debe invalidarse de inmediato
                   // aunque en teoría todavía no haya alcanzado su fecha de expiración
                   if (status == CameraPlayerStatus.error) {
-                    String? serial;
-                    if (ship.cameras.isNotEmpty) {
-                      final cam = ship.cameras.firstWhere(
-                        (c) => c.serialNumber.isNotEmpty,
-                        orElse: () => ship.cameras.first,
-                      );
-                      if (cam.serialNumber.isNotEmpty) serial = cam.serialNumber;
-                    }
-                    if (serial == null) {
-                      if (ship.name.toUpperCase().contains('ALFA')) serial = 'BF1765385';
-                      if (ship.name.toUpperCase().contains('NANY')) serial = 'BF1765344';
-                      if (ship.name.toUpperCase().contains('GUSTAVO')) serial = 'BF1767228';
-                    }
-                    if (serial != null) {
-                      EzvizService.shared.invalidateCache(serial);
-                    }
+                    final serial = getShipCameraSerial(ship);
+                    EzvizService.shared.invalidateCache(serial);
                   }
                 }
               },

@@ -793,7 +793,7 @@ class EzvizService {
             if (data['success'] == true && data['stream_url'] != null) {
               final streamUrl = data['stream_url'].toString();
               _streamCache[deviceSerial] = streamUrl;
-              _streamCacheExpiry[deviceSerial] = now.add(const Duration(minutes: 50));
+              _streamCacheExpiry[deviceSerial] = now.add(const Duration(minutes: 5));
               _recordSuccess(deviceSerial);
               return streamUrl;
             }
