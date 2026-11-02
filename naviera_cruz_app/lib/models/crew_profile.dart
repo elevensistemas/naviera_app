@@ -118,8 +118,8 @@ class CrewProfile {
   int? get daysOnBoard {
     if (status != CrewStatus.embarcado || !isOnBoard) return null;
 
-    // 1. Fuente oficial de la intranet
-    if (rawDaysOnBoard != null && rawDaysOnBoard! >= 0) {
+    // 1. Fuente oficial de la intranet (si es mayor a 0)
+    if (rawDaysOnBoard != null && rawDaysOnBoard! > 0) {
       return rawDaysOnBoard;
     }
 
@@ -135,7 +135,30 @@ class CrewProfile {
 
       final difference = todayUtc3.difference(startUtc3).inDays;
       if (difference >= 0) {
-        return difference; // Días calendario transcurridos desde la fecha de inicio
+        return difference + 1; // Días calendario inclusive
+      }
+    }
+
+    return null;
+  }
+
+  /// Días registrados en tierra para tripulantes desembarcados (Franco, Licencia, Vacaciones, etc.)
+  int? get daysOnLand {
+    if (isOnBoard) return null;
+
+    // 1. Si la Intranet proveyó un total explícito mayor a cero para días en tierra
+    if (rawDaysOnBoard != null && rawDaysOnBoard! > 0) {
+      return rawDaysOnBoard;
+    }
+
+    // 2. Cálculo dinámico en base a la fecha de inicio del franco / desembarque (startDate)
+    if (startDate != null) {
+      final nowUtc3 = DateTime.now().toUtc().subtract(const Duration(hours: 3));
+      final startUtc3 = DateTime.utc(startDate!.year, startDate!.month, startDate!.day);
+      final todayUtc3 = DateTime.utc(nowUtc3.year, nowUtc3.month, nowUtc3.day);
+
+      if (!todayUtc3.isBefore(startUtc3)) {
+        return todayUtc3.difference(startUtc3).inDays + 1; // Incluyendo el día de inicio
       }
     }
 
@@ -144,18 +167,16 @@ class CrewProfile {
 
   /// Días de cómputo para mostrar en la interfaz (sean a bordo o en tierra según situación)
   int get displayDays {
-    if (rawDaysOnBoard != null) return rawDaysOnBoard!;
-    final d = daysOnBoard;
-    if (d != null) return d;
-    return 0;
-  }
-
-  /// Días registrados en tierra para tripulantes desembarcados
-  int? get daysOnLand {
-    if (!isOnBoard && rawDaysOnBoard != null) {
-      return rawDaysOnBoard;
+    if (isOnBoard) {
+      final d = daysOnBoard;
+      if (d != null) return d;
+      if (rawDaysOnBoard != null && rawDaysOnBoard! > 0) return rawDaysOnBoard!;
+    } else {
+      final d = daysOnLand;
+      if (d != null) return d;
+      if (rawDaysOnBoard != null && rawDaysOnBoard! > 0) return rawDaysOnBoard!;
     }
-    return null;
+    return 0;
   }
 
   /// Texto descriptivo de la situación para la tarjeta de cabecera
@@ -188,6 +209,10 @@ class CrewProfile {
         }
         return "Días no computados";
       case CrewStatus.enTierra:
+        final landDays = daysOnLand;
+        if (landDays != null) {
+          return "En tierra ($situation) • $landDays ${landDays == 1 ? 'día' : 'días'}";
+        }
         return "En tierra ($situation)";
       case CrewStatus.desembarqueRegistrado:
         return "Desembarque registrado";
@@ -372,9 +397,10 @@ class CrewProfile {
         json['avatar_url']?.toString();
 
     // Fallback de días al catálogo oficial de la intranet si no viene en el payload
-    if (daysCount == null || daysCount == 0) {
+    // IMPORTANTE: Si el tripulante está en tierra (isOnBoard == false), no sobreescribir con días a bordo
+    if (daysCount == null || (daysCount == 0 && isOnBoard)) {
       final catalogMember = IntranetCrewCatalog.findCrewMember(fullName);
-      if (catalogMember != null) {
+      if (catalogMember != null && catalogMember.isOnBoard == isOnBoard) {
         daysCount = catalogMember.days;
       }
     }

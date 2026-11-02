@@ -670,15 +670,22 @@ class CrewMember {
   });
 
   int get calculatedDays {
-    if (daysOnBoard != null) {
+    if (daysOnBoard != null && daysOnBoard! > 0) {
       return daysOnBoard!;
     }
     if (startDate != null && startDate!.isNotEmpty) {
       final parsedDate = DateTime.tryParse(startDate!);
       if (parsedDate != null) {
-        final diff = DateTime.now().difference(parsedDate).inDays;
-        return diff >= 0 ? diff + 1 : 0;
+        final nowUtc3 = DateTime.now().toUtc().subtract(const Duration(hours: 3));
+        final startUtc3 = DateTime.utc(parsedDate.year, parsedDate.month, parsedDate.day);
+        final todayUtc3 = DateTime.utc(nowUtc3.year, nowUtc3.month, nowUtc3.day);
+        if (!todayUtc3.isBefore(startUtc3)) {
+          return todayUtc3.difference(startUtc3).inDays + 1;
+        }
       }
+    }
+    if (daysOnBoard != null) {
+      return daysOnBoard!;
     }
     return 0;
   }

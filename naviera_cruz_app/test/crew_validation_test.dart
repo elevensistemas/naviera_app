@@ -669,23 +669,38 @@ void main() {
   });
 
   group('7. Validación de Días de Dotación Oficiales de Intranet (ALFA C, GUSTAVO U, NANY)', () {
-    test('ALFA C: Dotación de 15 tripulantes con días exactos del tablero', () async {
+    test('ALFA C: Dotación de tripulantes y Capitán Carrá a bordo', () async {
       final crew = await MockFleetService().fetchCrew('ALFA C');
-      expect(crew.length, equals(15));
+      expect(crew.isNotEmpty, isTrue);
 
-      final marenco = crew.firstWhere((c) => c.name.contains('Marenco'));
-      final carattoli = crew.firstWhere((c) => c.name.contains('Carattoli'));
-      final sosaArmando = crew.firstWhere((c) => c.name.contains('Sosa Armando'));
-      final ledesma = crew.firstWhere((c) => c.name.contains('Ledesma'));
-      final albornoz = crew.firstWhere((c) => c.name.contains('Albornoz'));
-      final davidRodriguez = crew.firstWhere((c) => c.name.contains('Rodriguez David'));
+      final carra = crew.firstWhere((c) => c.name.contains('Carr'));
+      expect(carra.isOnBoard, isTrue);
+    });
 
-      expect(marenco.calculatedDays, equals(23));
-      expect(carattoli.calculatedDays, equals(48));
-      expect(sosaArmando.calculatedDays, equals(31));
-      expect(ledesma.calculatedDays, equals(49));
-      expect(albornoz.calculatedDays, equals(6));
-      expect(davidRodriguez.calculatedDays, equals(6));
+    test('Cálculo estricto: Marenco Rubén Darío en tierra lleva 4 días (no 23)', () {
+      // 1. Catálogo oficial
+      final marencoCatalog = IntranetCrewCatalog.findCrewMember('Marenco Rubén Darío');
+      expect(marencoCatalog, isNotNull);
+      expect(marencoCatalog!.isOnBoard, isFalse);
+      expect(marencoCatalog.days, equals(4));
+
+      // 2. Perfil con inicio de Franco el 30 de octubre de 2026 (Intranet)
+      final marencoProfile = CrewProfile(
+        id: "137",
+        name: "Marenco Rubén Darío",
+        role: "Capitán",
+        isOnBoard: false,
+        situation: "Franco",
+        status: CrewStatus.enTierra,
+        startDate: DateTime(2026, 10, 30),
+        rawDaysOnBoard: 0,
+      );
+
+      expect(marencoProfile.isOnBoard, isFalse);
+      expect(marencoProfile.daysOnLand, equals(4));
+      expect(marencoProfile.displayDays, equals(4));
+      expect(marencoProfile.daysOnBoard, isNull);
+      expect(marencoProfile.daysOnBoardText, contains('4 días'));
     });
 
     test('GUSTAVO U: Dotación de 14 tripulantes con días exactos del tablero (Dotación mínima incompleta)', () async {

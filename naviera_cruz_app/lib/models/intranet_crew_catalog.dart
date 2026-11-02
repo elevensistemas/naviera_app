@@ -49,13 +49,13 @@ class IntranetCrewCatalog {
     ),
     IntranetCrewMember(
       id: "ET_02",
-      name: "Carrá Leonel",
+      name: "Marenco Rubén Darío",
       roleCode: "CAP",
       roleName: "Capitán",
       isOnBoard: false,
       shipName: null,
-      days: 20,
-      username: "l.carra",
+      days: 4,
+      username: "r.marenco",
     ),
     IntranetCrewMember(
       id: "ET_03",
@@ -490,13 +490,13 @@ class IntranetCrewCatalog {
     // ALFA C (15 Tripulantes - Dotación mínima completa)
     IntranetCrewMember(
       id: "AC_01",
-      name: "Marenco Rubén Darío",
+      name: "Carrá Leonel",
       roleCode: "CAP",
       roleName: "Capitán",
       isOnBoard: true,
       shipName: "ALFA C",
-      days: 23,
-      username: "r.marenco",
+      days: 4,
+      username: "l.carra",
     ),
     IntranetCrewMember(
       id: "AC_02",

@@ -1292,9 +1292,9 @@ class ProductionFleetService implements FleetService {
       debugPrint("Error fetching dynamic crew from /api/v1/crew-month-grid/: $e");
     }
 
-    // 2. Try exact Intranet endpoint /api/v1/crew-members/ (fetches all crew members with details)
+    // 2. Try exact Intranet endpoint /api/v1/crew-members/?page_size=200 (fetches all crew members with details)
     try {
-      final response = await APIClient.shared.request(endpoint: '/api/v1/crew-members/');
+      final response = await APIClient.shared.request(endpoint: '/api/v1/crew-members/?page_size=200');
       List rawList = [];
       if (response is List) {
         rawList = response;

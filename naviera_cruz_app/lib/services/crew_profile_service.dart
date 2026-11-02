@@ -93,12 +93,13 @@ class ProductionCrewProfileService implements CrewProfileService {
       // 2. Consultar /api/v1/crew-members/ vinculando con la identidad del usuario
       Map<String, dynamic>? matchedCrewJson;
       try {
-        final userParam = Uri.encodeComponent(uid);
         dynamic crewRes;
         try {
-          crewRes = await APIClient.shared.request(endpoint: '/api/v1/crew-members/?user=$userParam');
+          crewRes = await APIClient.shared.request(endpoint: '/api/v1/crew-members/?page_size=200');
         } catch (_) {
-          crewRes = await APIClient.shared.request(endpoint: '/api/v1/crew-members/');
+          try {
+            crewRes = await APIClient.shared.request(endpoint: '/api/v1/crew-members/');
+          } catch (_) {}
         }
 
         List rawList = [];
@@ -106,15 +107,6 @@ class ProductionCrewProfileService implements CrewProfileService {
           rawList = crewRes;
         } else if (crewRes is Map<String, dynamic>) {
           rawList = (crewRes['results'] ?? crewRes['data']) as List? ?? [];
-        }
-
-        if (rawList.isEmpty) {
-          final allCrew = await APIClient.shared.request(endpoint: '/api/v1/crew-members/');
-          if (allCrew is List) {
-            rawList = allCrew;
-          } else if (allCrew is Map<String, dynamic>) {
-            rawList = (allCrew['results'] ?? allCrew['data']) as List? ?? [];
-          }
         }
 
         String normalize(String input) {
