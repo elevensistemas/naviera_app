@@ -74,15 +74,6 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Esta aplicación requiere acceder al micrófono para interactuar con el asistente de Inteligencia Artificial mediante comandos de voz.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Esta aplicación utiliza el reconocimiento de voz para transcribir sus consultas al asistente de Inteligencia Artificial.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Esta aplicación requiere acceder a la cámara para permitirle tomar y adjuntar fotografías en los reportes de incidentes HSE.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Esta aplicación requiere acceder a su galería de fotos para permitirle adjuntar imágenes existentes en los reportes de incidentes HSE.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSAppTransportSecurity</key>
@@ -94,6 +85,5 @@
 		<key>NSAllowsArbitraryLoadsForMedia</key>
 		<true/>
 	</dict>
-
 </dict>
 </plist>

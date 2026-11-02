@@ -1,15 +1,9 @@
-import 'dart:io' show File;
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
-import '../../app/theme.dart';
-import '../../app/config.dart';
-import '../../core/storage.dart';
-import '../../core/video_helper.dart';
 import '../../app/ncs_hero_header.dart';
 import '../../app/training_thumbnail_widget.dart';
 
@@ -134,7 +128,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "Completado",
         description: "Inspección de plumas, grúas, estrobos y grilletes según normativa internacional marítima.",
         instructor: "Ing. Gabriel Rossi",
-        videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-cargo-container-ship-sailing-in-the-sea-41235-large.mp4",
+        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
         completedModules: 3,
         totalModules: 3,
         videoPositionSeconds: 3600,
@@ -155,7 +149,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "En progreso",
         description: "Cultura de seguridad, reporte de cuasi-accidentes (Near Miss) y condiciones inseguras a bordo.",
         instructor: "Lic. Roberto Soria",
-        videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-cargo-ship-sailing-near-the-coast-41233-large.mp4",
+        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
         completedModules: 1,
         totalModules: 3,
         videoPositionSeconds: 720,
@@ -176,7 +170,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "Nuevo",
         description: "Procedimientos Lockout/Tagout (LOTO), aislamiento de tableros eléctricos y protección en salas de máquinas.",
         instructor: "Ing. Carlos Benítez",
-        videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-cargo-container-ship-sailing-in-the-sea-41235-large.mp4",
+        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
         completedModules: 0,
         totalModules: 4,
         videoPositionSeconds: 0,
@@ -198,7 +192,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "En progreso",
         description: "Prácticas seguras en maniobras de cubierta, elementos de protección personal (EPP) y comunicación.",
         instructor: "Cap. Marcos Benítez",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
         completedModules: 1,
         totalModules: 5,
         videoPositionSeconds: 720,
@@ -244,7 +238,6 @@ class _TrainingViewState extends State<TrainingView> {
     final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
     final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
     final secondaryText = isDark ? Colors.white70 : const Color(0xFF64748B);
-    final inputBg = isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9);
 
     // Compute Summary counts
     final int availableCount = _trainings.length;
@@ -1046,25 +1039,29 @@ class _TrainingVideoModalSheetState extends State<_TrainingVideoModalSheet> {
                       ],
                     ),
                   ),
+
+                // Separación clara entre el contenedor del adjunto/video y los botones de acción
+                const SizedBox(height: 22),
+
                 // Button to open course URL on NCS Web Portal
                 if (_current.videoUrl != null && _current.videoUrl!.isNotEmpty) ...[
                   SizedBox(
                     width: double.infinity,
-                    height: 46,
+                    height: 48,
                     child: OutlinedButton.icon(
                       onPressed: () => _openPortalUrl(_current.videoUrl!),
                       icon: const Icon(Icons.language_rounded, color: Color(0xFF0066FF)),
                       label: const Text(
                         "Abrir clase en Portal Web NCS",
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0066FF)),
+                        style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0066FF)),
                       ),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF0066FF), width: 1.2),
+                        side: const BorderSide(color: Color(0xFF0066FF), width: 1.4),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                 ],
 
                 // Save button
@@ -1084,6 +1081,7 @@ class _TrainingVideoModalSheetState extends State<_TrainingVideoModalSheet> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -1124,11 +1122,22 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
   @override
   void initState() {
     super.initState();
+    final rawUrl = widget.videoUrl.trim();
+    // Determinamos si es un archivo de video directo soportado por AVPlayer en iOS y Web
+    final isDirectMedia = rawUrl.endsWith('.mp4') ||
+        rawUrl.endsWith('.m3u8') ||
+        rawUrl.endsWith('.mov') ||
+        rawUrl.endsWith('.webm');
+
     _fallbackUrls = [
-      if (widget.videoUrl.trim().isNotEmpty) widget.videoUrl.trim(),
-      "https://assets.mixkit.co/videos/preview/mixkit-cargo-container-ship-sailing-in-the-sea-41235-large.mp4",
-      "https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-cargo-ship-in-the-sea-41234-large.mp4",
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+      if (isDirectMedia && rawUrl.isNotEmpty) rawUrl,
+      // Video náutico oficial de alta disponibilidad con soporte 206 Partial Content certificado para iOS AVPlayer y Chrome
+      "https://vjs.zencdn.net/v/oceans.mp4",
+      // Stream HLS oficial de Apple para iOS
+      "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8",
+      // Fallback W3C MP4
+      "https://media.w3.org/2010/05/sintel/trailer.mp4",
+      if (!isDirectMedia && rawUrl.isNotEmpty) rawUrl,
     ];
     _initController();
   }
@@ -1143,16 +1152,24 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
 
     try {
       final Uri uri = Uri.parse(targetUrl);
-      _controller = VideoPlayerController.networkUrl(uri);
+      // En iOS es mandatorio configurar mixWithOthers para evitar que AVPlayer aborte por la sesión de audio
+      _controller = VideoPlayerController.networkUrl(
+        uri,
+        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+      );
       await _controller!.initialize();
 
       if (mounted) {
         _chewieController = ChewieController(
           videoPlayerController: _controller!,
-          aspectRatio: _controller!.value.aspectRatio > 0 ? _controller!.value.aspectRatio : 16 / 9,
+          aspectRatio: (_controller!.value.isInitialized && _controller!.value.aspectRatio > 0)
+              ? _controller!.value.aspectRatio
+              : 16 / 9,
           autoPlay: true,
           looping: false,
           showControls: true,
+          allowMuting: true,
+          allowFullScreen: true,
           placeholder: Container(
             color: Colors.black,
             child: const Center(
