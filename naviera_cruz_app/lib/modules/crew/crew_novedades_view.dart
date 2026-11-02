@@ -6,7 +6,14 @@ import '../bulletins/bulletins_view.dart';
 import '../home/welcome_novedades_card.dart';
 
 class CrewNovedadesView extends StatefulWidget {
-  const CrewNovedadesView({super.key});
+  final bool isTabModule;
+  final Function(int)? onNavigateTab;
+
+  const CrewNovedadesView({
+    super.key,
+    this.isTabModule = false,
+    this.onNavigateTab,
+  });
 
   @override
   State<CrewNovedadesView> createState() => _CrewNovedadesViewState();
@@ -129,6 +136,14 @@ class _CrewNovedadesViewState extends State<CrewNovedadesView> with SingleTicker
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0A0F1D) : const Color(0xFFF1F5F9),
+      appBar: widget.isTabModule
+          ? null
+          : AppBar(
+              backgroundColor: isDark ? const Color(0xFF001F3F) : const Color(0xFF003366),
+              foregroundColor: Colors.white,
+              title: const Text("Novedades para Tripulación", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              centerTitle: true,
+            ),
       body: Column(
         children: [
           // Cabecera Hero Edge-to-Edge
@@ -224,7 +239,7 @@ class _CrewNovedadesViewState extends State<CrewNovedadesView> with SingleTicker
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: _posts.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (_, _) => const SizedBox(height: 12),
         itemBuilder: (context, index) {
           final post = _posts[index];
           final dateStr = "${post.timestamp.day.toString().padLeft(2, '0')}/${post.timestamp.month.toString().padLeft(2, '0')}/${post.timestamp.year}";
@@ -242,7 +257,7 @@ class _CrewNovedadesViewState extends State<CrewNovedadesView> with SingleTicker
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                    color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -257,7 +272,7 @@ class _CrewNovedadesViewState extends State<CrewNovedadesView> with SingleTicker
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF007AFF).withOpacity(0.12),
+                          color: const Color(0xFF007AFF).withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(Icons.announcement_outlined, size: 20, color: Color(0xFF007AFF)),
@@ -285,6 +300,22 @@ class _CrewNovedadesViewState extends State<CrewNovedadesView> with SingleTicker
                       ),
                     ],
                   ),
+                  if (post.imageUrl != null && post.imageUrl!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        height: 140,
+                        width: double.infinity,
+                        color: isDark ? Colors.black26 : const Color(0xFFEDF2F7),
+                        child: Image.network(
+                          post.imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (ctx, err, st) => const SizedBox.shrink(),
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 10),
                   Text(
                     post.content,

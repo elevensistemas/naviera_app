@@ -130,6 +130,7 @@ class Post {
   final String title;
   final String content;
   final DateTime timestamp;
+  final DateTime? startsAt;
   final DateTime? endsAt;
   final PostType type;
   final String? imageUrl;
@@ -143,6 +144,7 @@ class Post {
     this.title = '',
     required this.content,
     required this.timestamp,
+    this.startsAt,
     this.endsAt,
     required this.type,
     this.imageUrl,
@@ -187,6 +189,9 @@ class Post {
     final dateRaw = json['starts_at'] ?? json['created_at'] ?? json['timestamp'];
     final parsedDate = dateRaw != null ? DateTime.tryParse(dateRaw.toString()) ?? DateTime.now() : DateTime.now();
 
+    final startsAtRaw = json['starts_at'];
+    final parsedStartsAt = startsAtRaw != null ? DateTime.tryParse(startsAtRaw.toString()) : null;
+
     final endsAtRaw = json['ends_at'];
     final parsedEndsAt = endsAtRaw != null ? DateTime.tryParse(endsAtRaw.toString()) : null;
 
@@ -206,6 +211,7 @@ class Post {
       title: titleStr,
       content: textContent,
       timestamp: parsedDate,
+      startsAt: parsedStartsAt ?? parsedDate,
       endsAt: parsedEndsAt,
       type: postType,
       imageUrl: json['image']?.toString() ?? json['image_url']?.toString(),

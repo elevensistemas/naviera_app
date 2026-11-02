@@ -9,6 +9,7 @@ import '../incidents/incident_list_view.dart';
 import '../stats/stats_view.dart';
 import '../bulletins/bulletins_view.dart';
 import '../crew/crew_home_view.dart';
+import '../crew/crew_novedades_view.dart';
 import '../assistant/crew_assistant_view.dart';
 import '../crew/crew_faq_search_view.dart';
 import '../incidents/report_incident_view.dart';
@@ -81,9 +82,17 @@ class _MainTabViewState extends State<MainTabView> {
     final bool isTripulante = session.isTripulanteMode;
     print(">>> MAIN_TAB_VIEW_BUILDING: isTripulante=$isTripulante, currentIndex=$_currentIndex, auth=${session.isAuthenticated} <<<");
 
-    // Vistas para el rol de TRIPULANTE (5 módulos: Inicio, Seguridad, Boletines, Cursos, FAQ)
+    // Vistas para el rol de TRIPULANTE (6 módulos: Inicio, Novedades, Seguridad, Boletines, Cursos, FAQ)
     final List<Widget> tripulanteViews = [
       CrewHomeView(
+        onNavigateTab: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+      ),
+      CrewNovedadesView(
+        isTabModule: true,
         onNavigateTab: (index) {
           setState(() {
             _currentIndex = index;
@@ -196,9 +205,10 @@ class _NavieraBottomBarState extends State<NavieraBottomBar> {
 
   @override
   Widget build(BuildContext context) {
-    // 5 módulos exclusivos para Tripulante: Inicio, Seguridad, Boletines, Cursos, FAQ
+    // 6 módulos exclusivos para Tripulante: Inicio, Novedades, Seguridad, Boletines, Cursos, FAQ
     final tripulanteItems = const [
       _NavItemData(label: "Inicio", icon: Icons.home_outlined, activeIcon: Icons.home_rounded),
+      _NavItemData(label: "Novedades", icon: Icons.campaign_outlined, activeIcon: Icons.campaign_rounded),
       _NavItemData(label: "Seguridad", icon: Icons.shield_outlined, activeIcon: Icons.shield_rounded),
       _NavItemData(label: "Boletines", icon: Icons.description_outlined, activeIcon: Icons.description_rounded),
       _NavItemData(label: "Cursos", icon: Icons.school_outlined, activeIcon: Icons.school_rounded),

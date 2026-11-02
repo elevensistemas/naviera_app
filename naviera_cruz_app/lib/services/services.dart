@@ -1391,9 +1391,6 @@ class MockHomeService implements HomeService {
 }
 
 class ProductionHomeService implements HomeService {
-  // Sin novedades viejas en caché: queda limpio esperando una nueva novedad
-  static final List<Map<String, dynamic>> _fallbackAnnouncements = [];
-
   @override
   Future<List<Post>> fetchPosts() async {
     List<Post> rawList = [];
@@ -1440,15 +1437,30 @@ class ProductionHomeService implements HomeService {
       throw lastError;
     }
 
-    // 4. Filtrar comunicados viejos/vencidos: solo conservar novedades activas y vigentes
+    // 4. Filtrar comunicados según vigencia oficial de la Intranet (starts_at y ends_at)
     final now = DateTime.now();
     final activeList = rawList.where((p) {
-      // Si la novedad tiene fecha de finalización (ends_at) y ya venció, se descarta
-      if (p.endsAt != null && p.endsAt!.isBefore(now)) {
-        return false;
+      // 1. Si la novedad tiene fecha de finalización (ends_at):
+      // Intranet define el día que se debe colocar y el día que se debe sacar.
+      // Se mantiene visible durante todo el día de finalización (hasta las 23:59:59).
+      if (p.endsAt != null) {
+        final endOfDay = DateTime(p.endsAt!.year, p.endsAt!.month, p.endsAt!.day, 23, 59, 59);
+        if (now.isAfter(endOfDay)) {
+          return false;
+        }
       }
-      // Si fue creada hace más de 30 días o es de un año anterior sin vigencia activa, se descarta
-      if (p.timestamp.isBefore(now.subtract(const Duration(days: 30)))) {
+
+      // 2. Si tiene fecha de inicio (starts_at):
+      // Solo se muestra a partir del inicio de ese día (00:00:00)
+      if (p.startsAt != null) {
+        final startOfDay = DateTime(p.startsAt!.year, p.startsAt!.month, p.startsAt!.day, 0, 0, 0);
+        if (now.isBefore(startOfDay)) {
+          return false;
+        }
+      }
+
+      // 3. Si no tiene fecha de vigencia explícita y es de hace más de 60 días, se descarta
+      if (p.endsAt == null && p.timestamp.isBefore(now.subtract(const Duration(days: 60)))) {
         return false;
       }
       return true;

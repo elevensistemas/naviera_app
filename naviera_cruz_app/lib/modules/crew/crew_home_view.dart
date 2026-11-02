@@ -32,7 +32,6 @@ class _CrewHomeViewState extends State<CrewHomeView> {
   Bulletin? _latestBulletin;
   List<Post> _crewPosts = [];
 
-  bool _isLoading = true;
   String? _errorMessage;
   String? _bulletinError;
   String? _crewPostsError;
@@ -55,7 +54,6 @@ class _CrewHomeViewState extends State<CrewHomeView> {
   Future<void> _loadAllData() async {
     if (!mounted) return;
     setState(() {
-      _isLoading = true;
       _errorMessage = null;
       _bulletinError = null;
       _crewPostsError = null;
@@ -104,16 +102,25 @@ class _CrewHomeViewState extends State<CrewHomeView> {
           _bulletinError = bulletinErr;
           _crewPosts = crewPosts;
           _crewPostsError = crewPostsErr;
-          _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _errorMessage = e.toString();
-          _isLoading = false;
         });
       }
+    }
+  }
+
+  void _openNovedadesTab() {
+    if (widget.onNavigateTab != null) {
+      widget.onNavigateTab!(1); // Pestaña Novedades (índice 1)
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const CrewNovedadesView()),
+      );
     }
   }
 
@@ -121,7 +128,7 @@ class _CrewHomeViewState extends State<CrewHomeView> {
     final query = initialQuery ?? _faqSearchController.text.trim();
     _faqSearchController.clear();
     if (widget.onNavigateTab != null && query.isEmpty) {
-      widget.onNavigateTab!(4); // Cambiar directamente a la pestaña FAQ
+      widget.onNavigateTab!(5); // Cambiar directamente a la pestaña FAQ (índice 5)
     } else {
       Navigator.push(
         context,
@@ -138,7 +145,7 @@ class _CrewHomeViewState extends State<CrewHomeView> {
 
   void _openBulletinsTab() {
     if (widget.onNavigateTab != null) {
-      widget.onNavigateTab!(2); // Pestaña Boletines (índice 2)
+      widget.onNavigateTab!(3); // Pestaña Boletines (índice 3)
     } else {
       Navigator.push(
         context,
@@ -149,13 +156,13 @@ class _CrewHomeViewState extends State<CrewHomeView> {
 
   void _openSeguridadTab() {
     if (widget.onNavigateTab != null) {
-      widget.onNavigateTab!(1); // Pestaña Seguridad (índice 1)
+      widget.onNavigateTab!(2); // Pestaña Seguridad (índice 2)
     }
   }
 
   void _openCursosTab() {
     if (widget.onNavigateTab != null) {
-      widget.onNavigateTab!(3); // Pestaña Cursos (índice 3)
+      widget.onNavigateTab!(4); // Pestaña Cursos (índice 4)
     }
   }
 
@@ -166,7 +173,7 @@ class _CrewHomeViewState extends State<CrewHomeView> {
         builder: (_) => ReportIncidentView(
           onIncidentReported: () {
             if (widget.onNavigateTab != null) {
-              widget.onNavigateTab!(1);
+              widget.onNavigateTab!(2);
             }
           },
         ),
@@ -682,6 +689,18 @@ class _CrewHomeViewState extends State<CrewHomeView> {
           children: [
             Expanded(
               child: _buildQuickActionButton(
+                title: "\nNovedades",
+                icon: Icons.campaign_outlined,
+                iconColor: const Color(0xFF007AFF),
+                bgColor: isDark ? const Color(0xFF003366).withValues(alpha: 0.3) : const Color(0xFFEFF6FF),
+                borderColor: isDark ? const Color(0xFF0057B8) : const Color(0xFFBFDBFE),
+                textColor: isDark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8),
+                onTap: _openNovedadesTab,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _buildQuickActionButton(
                 title: "Reportar\nincidente",
                 icon: Icons.shield_outlined,
                 iconColor: const Color(0xFF059669),
@@ -691,7 +710,7 @@ class _CrewHomeViewState extends State<CrewHomeView> {
                 onTap: _openReportIncident,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Expanded(
               child: _buildQuickActionButton(
                 title: "\nBoletines",
@@ -703,7 +722,7 @@ class _CrewHomeViewState extends State<CrewHomeView> {
                 onTap: _openBulletinsTab,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Expanded(
               child: _buildQuickActionButton(
                 title: "\nCursos",
@@ -715,7 +734,7 @@ class _CrewHomeViewState extends State<CrewHomeView> {
                 onTap: _openCursosTab,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Expanded(
               child: _buildQuickActionButton(
                 title: "Preguntas\nFrecuentes",
@@ -748,8 +767,8 @@ class _CrewHomeViewState extends State<CrewHomeView> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
         child: Container(
-          height: 86,
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          height: 84,
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(14),
@@ -758,19 +777,21 @@ class _CrewHomeViewState extends State<CrewHomeView> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: iconColor, size: 25),
-              const SizedBox(height: 5),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  height: 1.15,
-                  color: textColor,
+              Icon(icon, color: iconColor, size: 24),
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    height: 1.15,
+                    color: textColor,
+                  ),
+                  maxLines: 2,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -1104,10 +1125,14 @@ class _CrewHomeViewState extends State<CrewHomeView> {
   }
 
   void _openNovedadesScreen() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const CrewNovedadesView()),
-    );
+    if (widget.onNavigateTab != null) {
+      widget.onNavigateTab!(1);
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const CrewNovedadesView()),
+      );
+    }
   }
 
   Widget _buildNovedadesErrorCard(bool isDark) {
