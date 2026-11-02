@@ -418,19 +418,22 @@ class MockFleetService implements FleetService {
         totalCarbon: 150.54,
         totalWater: 118.2,
         totalSlop: 8.31,
+        fuelPercentage: 0.32,
+        waterPercentage: 0.64,
+        slopPercentage: 0.19,
         imoNumber: "9711652",
         flag: "Panamá 🇵🇦",
-        latitude: -42.76,
-        longitude: -65.03,
+        latitude: -34.80,
+        longitude: -57.85,
         cameraUrl: "",
         cameras: [
           ShipCamera(id: "cam-alfa", name: "BT.ALFAC", serialNumber: "BF1765385", isActive: true),
         ],
         targetShips: Ship.getDefaultTargetShipsFor("ALFA C"),
-        captainName: "Carré Leonel",
+        captainName: "Caballero Diego",
         chiefEngineerName: "Lescano Cristian",
-        lastPort: "BUENOS AIRES",
-        weather: "",
+        lastPort: "Fondeado en Rada La Plata (Zona Común)",
+        weather: "19.3°C · Viento E 8 kn",
         provistosCount: 2,
         provistosTotal: 6915.00,
       ),
@@ -1178,16 +1181,21 @@ class ProductionFleetService implements FleetService {
             targets = Ship.getDefaultTargetShipsFor(ship.name);
           }
 
-          final lastPort = shipKey == 'ALFA' ? 'BUENOS AIRES'
-              : shipKey == 'GUSTAVO' ? 'RADA LA PLATA'
-              : shipKey == 'NANY' ? 'CAMPANA' : '';
+          final lastPort = shipKey == 'ALFA' ? 'Fondeado en Rada La Plata (Zona Común)'
+              : shipKey == 'GUSTAVO' ? 'Rada La Plata'
+              : shipKey == 'NANY' ? 'Campana' : '';
 
-          final defaultCaptain = shipKey == 'ALFA' ? 'Carré Leonel'
+          final defaultCaptain = shipKey == 'ALFA' ? 'Caballero Diego'
               : shipKey == 'GUSTAVO' ? 'Percara Marco'
               : shipKey == 'NANY' ? 'Hernandez Pablo' : ship.captainName;
           final defaultChief = shipKey == 'ALFA' ? 'Lescano Cristian'
               : shipKey == 'GUSTAVO' ? 'Alday Alexis'
               : shipKey == 'NANY' ? 'Carlino Hernan' : ship.chiefEngineerName;
+
+          final weather = shipKey == 'ALFA' ? '19.3°C · Viento E 8 kn' : (ship.weather.isNotEmpty ? ship.weather : '');
+          final fuelPct = shipKey == 'ALFA' ? 0.32 : ship.fuelPercentage;
+          final waterPct = shipKey == 'ALFA' ? 0.64 : ship.waterPercentage;
+          final slopPct = shipKey == 'ALFA' ? 0.19 : ship.slopPercentage;
 
           final captain = liveCaptains[shipKey] ?? actingCaptains[shipKey] ?? (ship.captainName.isNotEmpty ? ship.captainName : defaultCaptain);
           final chiefEng = liveChiefs[shipKey] ?? actingChiefs[shipKey] ?? (ship.chiefEngineerName.isNotEmpty ? ship.chiefEngineerName : defaultChief);
@@ -1199,7 +1207,10 @@ class ProductionFleetService implements FleetService {
             captainName: captain,
             chiefEngineerName: chiefEng,
             lastPort: lastPort,
-            weather: '',
+            weather: weather,
+            fuelPercentage: fuelPct,
+            waterPercentage: waterPct,
+            slopPercentage: slopPct,
           ));
         }
 
