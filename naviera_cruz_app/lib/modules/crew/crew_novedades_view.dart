@@ -100,21 +100,40 @@ class _CrewNovedadesViewState extends State<CrewNovedadesView> with SingleTicker
                 if (post.imageUrl != null && post.imageUrl!.trim().isNotEmpty) ...[
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      post.imageUrl!,
-                      fit: BoxFit.cover,
+                    child: Container(
+                      constraints: const BoxConstraints(maxHeight: 400),
                       width: double.infinity,
-                      errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                      color: isDark ? Colors.black26 : const Color(0xFFEDF2F7),
+                      child: InteractiveViewer(
+                        child: Image.network(
+                          post.imageUrl!,
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return const SizedBox(
+                              height: 180,
+                              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            padding: const EdgeInsets.all(20),
+                            alignment: Alignment.center,
+                            child: const Text("No se pudo cargar la vista previa del archivo"),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
                 ],
-                const Divider(),
-                const SizedBox(height: 8),
-                Text(
-                  post.content,
-                  style: const TextStyle(fontSize: 14, height: 1.45),
-                ),
+                if (post.content.isNotEmpty && post.content != post.title) ...[
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  Text(
+                    post.content,
+                    style: const TextStyle(fontSize: 14, height: 1.45),
+                  ),
+                ],
               ],
             ),
           ),
@@ -305,28 +324,58 @@ class _CrewNovedadesViewState extends State<CrewNovedadesView> with SingleTicker
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        height: 140,
+                        constraints: const BoxConstraints(maxHeight: 200),
                         width: double.infinity,
                         color: isDark ? Colors.black26 : const Color(0xFFEDF2F7),
                         child: Image.network(
                           post.imageUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (ctx, err, st) => const SizedBox.shrink(),
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return SizedBox(
+                              height: 120,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  value: progress.expectedTotalBytes != null
+                                      ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
+                                      : null,
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (ctx, err, st) => Container(
+                            height: 80,
+                            alignment: Alignment.center,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.attachment_rounded, size: 18, color: Color(0xFF007AFF)),
+                                SizedBox(width: 6),
+                                Text(
+                                  "Archivo adjunto (Tocar para ver)",
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF007AFF)),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 10),
-                  Text(
-                    post.content,
-                    style: TextStyle(
-                      fontSize: 13,
-                      height: 1.4,
-                      color: isDark ? Colors.white70 : const Color(0xFF334155),
+                  if (post.content.isNotEmpty && post.content != post.title) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      post.content,
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: isDark ? Colors.white70 : const Color(0xFF334155),
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  ],
                   const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerRight,

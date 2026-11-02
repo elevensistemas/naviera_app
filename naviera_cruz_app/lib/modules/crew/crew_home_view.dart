@@ -1335,18 +1335,43 @@ class _CrewHomeViewState extends State<CrewHomeView> {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: Container(
-                              height: 120,
+                              constraints: const BoxConstraints(maxHeight: 200),
                               width: double.infinity,
                               color: isDark ? Colors.black26 : const Color(0xFFEDF2F7),
                               child: Image.network(
                                 post.imageUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (ctx, err, st) => const SizedBox.shrink(),
+                                fit: BoxFit.contain,
+                                loadingBuilder: (context, child, progress) {
+                                  if (progress == null) return child;
+                                  return SizedBox(
+                                    height: 120,
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        value: progress.expectedTotalBytes != null
+                                            ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
+                                            : null,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (ctx, err, st) => Container(
+                                  height: 80,
+                                  alignment: Alignment.center,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Icon(Icons.attachment_rounded, size: 18, color: Color(0xFF0066CC)),
+                                      SizedBox(width: 6),
+                                      Text("Archivo adjunto (Tocar para ver)", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0066CC))),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ],
-                        if (post.content.isNotEmpty) ...[
+                        if (post.content.isNotEmpty && post.content != post.title) ...[
                           const SizedBox(height: 8),
                           Text(
                             post.content,
@@ -1421,19 +1446,38 @@ class _CrewHomeViewState extends State<CrewHomeView> {
               if (post.imageUrl != null && post.imageUrl!.trim().isNotEmpty) ...[
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    post.imageUrl!,
-                    fit: BoxFit.cover,
+                  child: Container(
+                    constraints: const BoxConstraints(maxHeight: 400),
                     width: double.infinity,
-                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                    color: isDark ? Colors.black26 : const Color(0xFFEDF2F7),
+                    child: InteractiveViewer(
+                      child: Image.network(
+                        post.imageUrl!,
+                        fit: BoxFit.contain,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return const SizedBox(
+                            height: 180,
+                            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          padding: const EdgeInsets.all(20),
+                          alignment: Alignment.center,
+                          child: const Text("No se pudo cargar la vista previa del archivo"),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
               ],
-              Text(
-                post.content,
-                style: const TextStyle(fontSize: 14, height: 1.5),
-              ),
+              if (post.content.isNotEmpty && post.content != post.title) ...[
+                Text(
+                  post.content,
+                  style: const TextStyle(fontSize: 14, height: 1.5),
+                ),
+              ],
             ],
           ),
         ),

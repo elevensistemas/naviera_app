@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../app/config.dart';
 import 'intranet_crew_catalog.dart';
 import 'intranet_office_catalog.dart';
@@ -180,9 +181,28 @@ class Post {
 
     final titleStr = json['title']?.toString() ?? '';
     final descriptionStr = json['description']?.toString() ?? json['content']?.toString() ?? '';
-    
+
+    String? rawImageUrl = json['image']?.toString() ??
+        json['image_url']?.toString() ??
+        json['file']?.toString() ??
+        json['file_url']?.toString() ??
+        json['attachment']?.toString() ??
+        json['archivo']?.toString();
+
+    if (rawImageUrl != null && rawImageUrl.trim().isNotEmpty) {
+      rawImageUrl = rawImageUrl.trim();
+      if (rawImageUrl.startsWith('/')) {
+        rawImageUrl = "${AppConfig.apiBaseURL}$rawImageUrl";
+      } else if (kIsWeb && rawImageUrl.startsWith('https://navieracruzdelsur.dyndns.org:6570')) {
+        rawImageUrl = rawImageUrl.replaceFirst(
+          'https://navieracruzdelsur.dyndns.org:6570',
+          AppConfig.apiBaseURL,
+        );
+      }
+    }
+
     String textContent = descriptionStr;
-    if (textContent.isEmpty) {
+    if (textContent.isEmpty && (rawImageUrl == null || rawImageUrl.isEmpty)) {
       textContent = titleStr;
     }
 
@@ -214,7 +234,7 @@ class Post {
       startsAt: parsedStartsAt ?? parsedDate,
       endsAt: parsedEndsAt,
       type: postType,
-      imageUrl: json['image']?.toString() ?? json['image_url']?.toString(),
+      imageUrl: rawImageUrl,
       target: targetVal,
       targetDisplay: targetDisplayVal,
     );

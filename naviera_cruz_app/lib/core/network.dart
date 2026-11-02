@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../app/config.dart';
@@ -86,9 +85,13 @@ class APIClient {
   /// Descarga binaria autenticada (p. ej. PDF de boletines).
   /// [pathOrUrl] puede ser una URL absoluta o una ruta relativa a la API.
   Future<Uint8List> getBytes(String pathOrUrl) async {
-    final uri = pathOrUrl.startsWith('http')
-        ? Uri.parse(pathOrUrl)
-        : Uri.parse('$_baseURL${pathOrUrl.startsWith('/') ? '' : '/'}$pathOrUrl');
+    String resolved = pathOrUrl;
+    if (kIsWeb && resolved.startsWith('https://navieracruzdelsur.dyndns.org:6570')) {
+      resolved = resolved.replaceFirst('https://navieracruzdelsur.dyndns.org:6570', _baseURL);
+    }
+    final uri = resolved.startsWith('http')
+        ? Uri.parse(resolved)
+        : Uri.parse('$_baseURL${resolved.startsWith('/') ? '' : '/'}$resolved');
     // NOTA: NO enviar 'Accept': 'application/pdf' porque Django REST Framework (DRF)
     // evalúa negociación de contenido contra sus renderer_classes (JSON/BrowsableAPI)
     // y rechaza la petición con HTTP 406 Not Acceptable ("Could not satisfy the request Accept header.").

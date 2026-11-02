@@ -956,8 +956,26 @@ class _HomeViewState extends State<HomeView> {
                       color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
                       child: Image.network(
                         post.imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                        fit: BoxFit.contain,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return const SizedBox(
+                            height: 120,
+                            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          height: 80,
+                          alignment: Alignment.center,
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.attachment_rounded, size: 18, color: Color(0xFF007AFF)),
+                              SizedBox(width: 6),
+                              Text("Archivo adjunto (Tocar para ver)", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF007AFF))),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -965,7 +983,7 @@ class _HomeViewState extends State<HomeView> {
                 ],
 
                 // Contenido
-                if (post.content.isNotEmpty) ...[
+                if (post.content.isNotEmpty && post.content != post.title) ...[
                   Text(
                     post.content,
                     style: TextStyle(
@@ -1051,19 +1069,38 @@ class _HomeViewState extends State<HomeView> {
               if (post.imageUrl != null && post.imageUrl!.trim().isNotEmpty) ...[
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    post.imageUrl!,
-                    fit: BoxFit.cover,
+                  child: Container(
+                    constraints: const BoxConstraints(maxHeight: 400),
                     width: double.infinity,
-                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                    color: isDark ? Colors.black26 : const Color(0xFFEDF2F7),
+                    child: InteractiveViewer(
+                      child: Image.network(
+                        post.imageUrl!,
+                        fit: BoxFit.contain,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return const SizedBox(
+                            height: 180,
+                            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          padding: const EdgeInsets.all(20),
+                          alignment: Alignment.center,
+                          child: const Text("No se pudo cargar la vista previa del archivo"),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
               ],
-              Text(
-                post.content,
-                style: const TextStyle(fontSize: 14, height: 1.5),
-              ),
+              if (post.content.isNotEmpty && post.content != post.title) ...[
+                Text(
+                  post.content,
+                  style: const TextStyle(fontSize: 14, height: 1.5),
+                ),
+              ],
             ],
           ),
         ),
