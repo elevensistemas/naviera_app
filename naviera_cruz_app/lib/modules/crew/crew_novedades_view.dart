@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
 import '../../app/ncs_hero_header.dart';
-import '../bulletins/bulletins_view.dart';
 import '../home/welcome_novedades_card.dart';
 
 class CrewNovedadesView extends StatefulWidget {
@@ -19,8 +18,7 @@ class CrewNovedadesView extends StatefulWidget {
   State<CrewNovedadesView> createState() => _CrewNovedadesViewState();
 }
 
-class _CrewNovedadesViewState extends State<CrewNovedadesView> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _CrewNovedadesViewState extends State<CrewNovedadesView> {
   final HomeService _homeService = HomeService();
 
   List<Post> _posts = [];
@@ -30,14 +28,7 @@ class _CrewNovedadesViewState extends State<CrewNovedadesView> with SingleTicker
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     _loadAnnouncements();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadAnnouncements() async {
@@ -166,46 +157,14 @@ class _CrewNovedadesViewState extends State<CrewNovedadesView> with SingleTicker
       body: Column(
         children: [
           // Cabecera Hero Edge-to-Edge
-          NcsHeroHeader(
-            title: "Novedades y Boletines",
-            subtitle: "Comunicaciones oficiales para la tripulación",
+          const NcsHeroHeader(
+            title: "Novedades oficiales",
+            subtitle: "Comunicaciones y avisos para la tripulación",
           ),
 
-          // Pestañas Segmentadas
-          Container(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
-            child: TabBar(
-              controller: _tabController,
-              indicatorColor: const Color(0xFF007AFF),
-              indicatorWeight: 3,
-              labelColor: const Color(0xFF007AFF),
-              unselectedLabelColor: isDark ? Colors.white60 : const Color(0xFF64748B),
-              labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-              tabs: const [
-                Tab(
-                  icon: Icon(Icons.announcement_outlined, size: 20),
-                  text: "Avisos y RRHH",
-                ),
-                Tab(
-                  icon: Icon(Icons.article_outlined, size: 20),
-                  text: "Boletines de Intranet",
-                ),
-              ],
-            ),
-          ),
-
-          // Contenido de las pestañas
+          // Contenido de Novedades Oficiales
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // 1. Avisos y Comunicados Oficiales
-                _buildAnnouncementsTab(isDark),
-
-                // 2. Boletines con PDF
-                const BulletinsView(),
-              ],
-            ),
+            child: _buildAnnouncementsTab(isDark),
           ),
         ],
       ),
