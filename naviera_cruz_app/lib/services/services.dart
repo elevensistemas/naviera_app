@@ -6,6 +6,7 @@ import '../core/network.dart';
 import '../core/storage.dart';
 import '../models/models.dart';
 import '../models/intranet_crew_catalog.dart';
+import '../models/intranet_office_catalog.dart';
 
 // ==========================================
 // 1. AUTH SERVICE
@@ -28,16 +29,28 @@ class MockAuthService implements AuthService {
 
     const token = "3162f191267768f65841ff6d7585ae687542c8af";
 
-    // 1. Usuarios específicos de Oficina / Gerencia
-    if (u == 'a.lopresti' || u == 'alejandro' || u == 'admin') {
+    // 1. Usuarios específicos de Oficina (Catálogo oficial de los 10 miembros)
+    final officeMember = IntranetOfficeCatalog.findMember(u);
+    if (officeMember != null) {
       return {
-        'user': User(id: 'a.lopresti', name: 'Alejandro Lo Presti', role: 'Gerente General', sector: 'Gerencia'),
+        'user': User(
+          id: officeMember.username,
+          name: officeMember.name,
+          role: officeMember.role,
+          sector: officeMember.sector,
+        ),
         'token': token,
       };
     }
-    if (u == 'm.piccinini' || u.contains('piccinini')) {
+    if (u == 'admin' || u == 'oficina') {
+      final defaultOffice = IntranetOfficeCatalog.members.first; // Miguel Piccinini
       return {
-        'user': User(id: 'm.piccinini', name: 'Mauricio Piccinini', role: 'Jefe de Operaciones', sector: 'Operaciones'),
+        'user': User(
+          id: defaultOffice.username,
+          name: defaultOffice.name,
+          role: defaultOffice.role,
+          sector: defaultOffice.sector,
+        ),
         'token': token,
       };
     }
@@ -1589,7 +1602,7 @@ class MockIncidentService implements IncidentService {
       shipId: shipId,
       shipName: resolvedShipName,
       reporterId: "2",
-      reporterName: "Alejandro Lo Presti",
+      reporterName: "Miguel Piccinini",
       date: DateTime.now(),
       status: IncidentStatus.open,
       state: "process",

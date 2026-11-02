@@ -7,6 +7,8 @@
 /// Total de Dotación de Flota: 89 Tripulantes.
 /// Todos los demás usuarios de la compañía corresponden al rol "OFICINA".
 
+import 'intranet_office_catalog.dart';
+
 class IntranetCrewMember {
   final String id;
   final String name;
@@ -1009,14 +1011,10 @@ class IntranetCrewCatalog {
     final n = (name ?? '').toLowerCase();
     final u = (username ?? '').toLowerCase();
 
-    // 1. Usuarios específicos y comprobados de OFICINA / GERENCIA
-    if (u == 'a.lopresti' ||
-        u == 'alejandro' ||
+    // 1. Usuarios específicos y comprobados de OFICINA (Catálogo oficial de los 10 miembros)
+    if (IntranetOfficeCatalog.isOfficeMember(u) ||
+        IntranetOfficeCatalog.isOfficeMember(n) ||
         u == 'admin' ||
-        u == 'm.piccinini' ||
-        n.contains('lopresti') ||
-        n.contains('lo presti') ||
-        n.contains('piccinini') ||
         s.contains('gerencia') ||
         s.contains('directorio') ||
         r.contains('gerente') ||

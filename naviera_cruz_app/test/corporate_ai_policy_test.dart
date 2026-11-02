@@ -5,10 +5,10 @@ import 'package:naviera_cruz_app/services/ncs_chat_policy.dart';
 void main() {
   group('NCS Corporate AI Policy Test Suite', () {
     final officeUser = User(
-      id: "admin",
-      name: "Alejandro Lo Presti",
-      role: "Gerencia General",
-      sector: "Gerencia",
+      id: "m.piccinini",
+      name: "Miguel Piccinini",
+      role: "Jefe de Operaciones",
+      sector: "Operaciones",
     );
 
     final shipUserAlfa = User(

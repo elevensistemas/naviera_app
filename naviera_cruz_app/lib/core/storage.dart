@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 import '../models/intranet_crew_catalog.dart';
+import '../models/intranet_office_catalog.dart';
 import '../services/crew_profile_service.dart';
 import 'app_navigator.dart';
 import 'url_cleaner.dart';
@@ -529,13 +530,14 @@ class SessionManager with ChangeNotifier, WidgetsBindingObserver {
             notifyListeners();
             return;
           }
-          if (userParam.toLowerCase().contains('lopresti') || userParam.toLowerCase() == 'ale') {
+          final officeMember = IntranetOfficeCatalog.findMember(userParam);
+          if (officeMember != null) {
             _currentUser = User(
-              id: "1",
-              name: "Alejandro Lo Presti",
-              role: "Personal de Oficina",
-              sector: "Oficina Central",
-              avatarURL: "https://i.pravatar.cc/150?img=60",
+              id: officeMember.username,
+              name: officeMember.name,
+              role: officeMember.role,
+              sector: officeMember.sector,
+              avatarURL: "",
             );
             _isAuthenticated = true;
             _activeCrewShip = null;
@@ -559,12 +561,13 @@ class SessionManager with ChangeNotifier, WidgetsBindingObserver {
           notifyListeners();
           return;
         } else if (role == 'oficina') {
+          final defaultOffice = IntranetOfficeCatalog.members.first;
           _currentUser = User(
-            id: "1",
-            name: "Alejandro Lo Presti",
-            role: "Personal de Oficina",
-            sector: "Oficina Central",
-            avatarURL: "https://i.pravatar.cc/150?img=60",
+            id: defaultOffice.username,
+            name: defaultOffice.name,
+            role: defaultOffice.role,
+            sector: defaultOffice.sector,
+            avatarURL: "",
           );
           _isAuthenticated = true;
           _activeCrewShip = null;
@@ -580,12 +583,13 @@ class SessionManager with ChangeNotifier, WidgetsBindingObserver {
         if (userJson != null) {
           _currentUser = User.fromJson(jsonDecode(userJson));
         } else {
+          final defaultOffice = IntranetOfficeCatalog.members.first;
           _currentUser = User(
-            id: "1",
-            name: "Alejandro Lo Presti",
-            role: "Personal de Oficina",
-            sector: "Oficina Central",
-            avatarURL: "https://i.pravatar.cc/150?img=60",
+            id: defaultOffice.username,
+            name: defaultOffice.name,
+            role: defaultOffice.role,
+            sector: defaultOffice.sector,
+            avatarURL: "",
           );
         }
         _isAuthenticated = true;

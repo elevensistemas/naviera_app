@@ -5,6 +5,7 @@ import '../../core/storage.dart';
 import '../../services/services.dart';
 import '../../app/theme.dart';
 import '../../models/intranet_crew_catalog.dart';
+import '../../models/intranet_office_catalog.dart';
 import '../auth/login_view.dart';
 
 class ProfileView extends StatefulWidget {
@@ -144,17 +145,29 @@ class _ProfileViewState extends State<ProfileView> {
             IntranetCrewCatalog.findCrewMember('Marenco'))
         : null;
 
+    final officeMember = !isTripulante
+        ? (IntranetOfficeCatalog.findMember(user?.name) ??
+            IntranetOfficeCatalog.findMember(user?.id) ??
+            IntranetOfficeCatalog.members.first)
+        : null;
+
     final String displayName = (user?.name ?? '').trim().isNotEmpty
         ? user!.name.trim()
-        : (crewMember?.name ?? (isTripulante ? 'Marenco Rubén Darío' : 'Alejandro Lo Presti'));
+        : (isTripulante
+            ? (crewMember?.name ?? 'Marenco Rubén Darío')
+            : (officeMember?.name ?? 'Miguel Piccinini'));
     final String displayRole = (user?.role ?? '').trim().isNotEmpty
         ? user!.role.trim()
-        : (crewMember?.roleName ?? (isTripulante ? 'Capitán' : 'Gerencia General'));
+        : (isTripulante
+            ? (crewMember?.roleName ?? 'Capitán')
+            : (officeMember?.role ?? 'Personal de Oficina'));
     final String displaySector = (user?.sector ?? '').trim().isNotEmpty
         ? user!.sector.trim()
-        : (crewMember != null
-            ? (crewMember.isOnBoard ? 'Buque ${crewMember.shipName}' : 'En Tierra')
-            : (isTripulante ? 'Buque ALFA C' : 'Gerencia'));
+        : (isTripulante
+            ? (crewMember != null
+                ? (crewMember.isOnBoard ? 'Buque ${crewMember.shipName}' : 'En Tierra')
+                : 'Buque ALFA C')
+            : (officeMember?.sector ?? 'Oficina Central'));
 
     return Scaffold(
       backgroundColor: bgColor,

@@ -223,11 +223,11 @@ void main() {
       expect(incident.incidentNumber, equals('INC-2026-0042'));
     });
 
-    test('Separación estricta: usuarios de oficina (a.lopresti, m.piccinini) son rol oficina', () {
-      final lopresti = User(id: 'a.lopresti', name: 'Alejandro Lo Presti', role: 'Gerencia General', sector: 'Gerencia');
-      expect(lopresti.sector.toLowerCase().contains('gerencia'), isTrue);
+    test('Separación estricta: usuarios de oficina (m.piccinini, d.saffe) son rol oficina', () {
+      final saffe = User(id: 'd.saffe', name: 'Daniel Saffe', role: 'Personal de Oficina', sector: 'Oficina Central');
+      expect(saffe.sector.toLowerCase().contains('oficina'), isTrue);
 
-      final piccinini = User(id: 'm.piccinini', name: 'Mauricio Piccinini', role: '', sector: 'Operaciones');
+      final piccinini = User(id: 'm.piccinini', name: 'Miguel Piccinini', role: '', sector: 'Operaciones');
       expect(piccinini.sector.toLowerCase().contains('operaciones'), isTrue);
     });
 
@@ -484,10 +484,10 @@ void main() {
 
       // Configurar usuario de oficina
       final officeUser = User(
-        id: "1",
-        name: "Alejandro Lo Presti",
-        role: "Gerencia General",
-        sector: "Gerencia",
+        id: "m.piccinini",
+        name: "Miguel Piccinini",
+        role: "Jefe de Operaciones",
+        sector: "Operaciones",
         avatarURL: "",
       );
       session.setCurrentUserForTesting(officeUser);

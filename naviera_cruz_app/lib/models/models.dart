@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app/config.dart';
 import 'intranet_crew_catalog.dart';
+import 'intranet_office_catalog.dart';
 
 // User Model
 class User {
@@ -44,20 +45,32 @@ class User {
       );
     }
 
-    // 2. Personal de oficina / gerencia
+    // 2. Comprobar si corresponde a alguno de los 10 miembros oficiales de personal de oficina
+    final officeMember = (fullName.isNotEmpty ? IntranetOfficeCatalog.findMember(fullName) : null) ??
+        (rawUser.isNotEmpty ? IntranetOfficeCatalog.findMember(rawUser) : null) ??
+        (json['email'] != null ? IntranetOfficeCatalog.findMember(json['email'].toString()) : null);
+
+    if (officeMember != null) {
+      return User(
+        id: (json['id'] ?? json['user_id'] ?? officeMember.username).toString(),
+        name: officeMember.name,
+        role: json['role']?.toString().isNotEmpty == true ? json['role'].toString() : officeMember.role,
+        avatarURL: json['avatar_url']?.toString() ?? json['avatarURL']?.toString(),
+        sector: json['sector']?.toString().isNotEmpty == true ? json['sector'].toString() : officeMember.sector,
+        birthDate: json['birth_date'] != null ? DateTime.tryParse(json['birth_date'].toString()) : null,
+      );
+    }
+
+    // 3. Normalización sin inventar nombres ficticios
     final rawName = fullName.toLowerCase();
     if (fullName.isEmpty ||
-        rawUser.contains('lopresti') ||
-        rawUser == 'alo' ||
-        rawUser == 'ale' ||
-        rawUser == 'a.lopresti' ||
-        rawUser == 'alejandro' ||
-        rawName.contains('lopresti') ||
-        rawName == 'a. lo presti' ||
-        rawName == 'a.lopresti' ||
         rawName == 'usuario autenticado' ||
-        rawName == 'usuario naviera') {
-      fullName = "Alejandro Lo Presti";
+        rawName == 'usuario naviera' ||
+        rawName == 'oficina' ||
+        rawName == 'admin' ||
+        rawUser == 'admin') {
+      final defaultOffice = IntranetOfficeCatalog.members.first; // Miguel Piccinini
+      fullName = defaultOffice.name;
     }
 
     return User(
@@ -65,7 +78,7 @@ class User {
       name: fullName,
       role: json['role']?.toString() ?? 'Personal de Oficina',
       avatarURL: json['avatar_url']?.toString() ?? json['avatarURL']?.toString(),
-      sector: json['sector']?.toString() ?? (fullName == 'Alejandro Lo Presti' ? 'Gerencia' : 'Operaciones'),
+      sector: json['sector']?.toString() ?? 'Operaciones',
       birthDate: json['birth_date'] != null ? DateTime.tryParse(json['birth_date'].toString()) : null,
     );
   }
