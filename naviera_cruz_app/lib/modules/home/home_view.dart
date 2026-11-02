@@ -316,12 +316,20 @@ class _HomeViewState extends State<HomeView> {
                   isLoading: _isWeatherLoading,
                   onRetry: () => _loadWeather(force: true),
                 ),
-                const WelcomeNovedadesCard(
-                  margin: EdgeInsets.fromLTRB(16.0, 4.0, 16.0, 12.0),
-                ),
                 if (_postsError != null) ...[
                   _buildNovedadesError(context, isDark, cardBg, textColor, captionColor),
+                ] else if (_isLoading && _posts.isEmpty) ...[
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40.0),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ] else if (_posts.isEmpty) ...[
+                  // Si NO hay novedad: se muestra el cartel de bienvenida
+                  const WelcomeNovedadesCard(
+                    margin: EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 20.0),
+                  ),
                 ] else ...[
+                  // Si SÍ hay novedad: se muestra la novedad y se QUITA el cartel de bienvenida
                   ..._buildNovedadesList(context, isDark, cardBg, textColor, captionColor),
                 ],
               ]
@@ -538,83 +546,9 @@ class _HomeViewState extends State<HomeView> {
   ) {
     if (_posts.isEmpty) {
       return [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(18.0, 12.0, 18.0, 8.0),
-          child: Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF007AFF),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                "COMUNICADOS OFICIALES",
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
-                  color: Color(0xFF007AFF),
-                ),
-              ),
-            ],
-          ),
+        const WelcomeNovedadesCard(
+          margin: EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 20.0),
         ),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 8.0),
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 28.0),
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
-              width: 1,
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF0F2B48) : const Color(0xFFEFF6FF),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.campaign_outlined,
-                    color: Color(0xFF007AFF),
-                    size: 22,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Text(
-                "Sin novedades pendientes",
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                "Esperando nuevos comunicados oficiales de la compañía.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: captionColor,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
       ];
     }
 
