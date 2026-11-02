@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviera_cruz_app/models/crew_profile.dart';
 import 'package:naviera_cruz_app/models/models.dart';
+import 'package:naviera_cruz_app/models/intranet_crew_catalog.dart';
+import 'package:naviera_cruz_app/models/intranet_office_catalog.dart';
 import 'package:naviera_cruz_app/services/crew_faq_service.dart';
 import 'package:naviera_cruz_app/services/crew_profile_service.dart';
 import 'package:naviera_cruz_app/services/services.dart';
@@ -229,6 +231,24 @@ void main() {
 
       final piccinini = User(id: 'm.piccinini', name: 'Miguel Piccinini', role: '', sector: 'Operaciones');
       expect(piccinini.sector.toLowerCase().contains('operaciones'), isTrue);
+    });
+
+    test('Diferenciación estricta: l.duarte (Oficina) vs r.duarte (Tripulante embarcado)', () {
+      // 1. Catálogos no deben colisionar
+      expect(IntranetOfficeCatalog.isOfficeMember('l.duarte'), isTrue);
+      expect(IntranetCrewCatalog.findCrewMember('l.duarte'), isNull);
+      expect(IntranetCrewCatalog.isTripulanteUser(username: 'l.duarte'), isFalse);
+
+      final crewDuarte = IntranetCrewCatalog.findCrewMember('r.duarte');
+      expect(crewDuarte, isNotNull);
+      expect(crewDuarte!.name, equals('Duarte Rodrigo'));
+
+      // 2. User.fromJson debe resolver l.duarte como Ludia Duarte de Oficina
+      final officeUser = User.fromJson({'username': 'l.duarte', 'token': 'fake_token'});
+      expect(officeUser.name, equals('Ludia Duarte'));
+      expect(officeUser.role, equals('Personal de Oficina'));
+      expect(officeUser.sector, equals('Oficina Central'));
+      expect(IntranetCrewCatalog.isTripulanteUser(name: officeUser.name, username: officeUser.id), isFalse);
     });
 
     test('Separación estricta: tripulante r.marenco pertenece a buque/tripulación', () {

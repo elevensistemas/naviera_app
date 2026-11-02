@@ -106,7 +106,11 @@ class ProductionAuthService implements AuthService {
         body: body,
       );
       if (response is Map<String, dynamic> && response.containsKey('token')) {
-        final user = User.fromJson(response);
+        final Map<String, dynamic> userPayload = Map<String, dynamic>.from(response);
+        if (!userPayload.containsKey('username') || userPayload['username'] == null) {
+          userPayload['username'] = username;
+        }
+        final user = User.fromJson(userPayload);
         final token = response['token'].toString();
         return {'user': user, 'token': token};
       }

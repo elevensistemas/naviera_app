@@ -958,9 +958,26 @@ class IntranetCrewCatalog {
   /// Busca un miembro de la dotación por nombre, apellido, usuario o código
   static IntranetCrewMember? findCrewMember(String query) {
     if (query.trim().isEmpty) return null;
+
+    // 0. Si pertenece al personal oficial de oficina, NO es tripulante marítimo
+    if (IntranetOfficeCatalog.isOfficeMember(query)) {
+      return null;
+    }
+
+    // 1. Si contiene punto (ej: l.duarte, r.duarte), es un nombre de usuario de Intranet estricto
+    if (query.contains('.')) {
+      final clean = query.trim().toLowerCase();
+      for (final member in allCrew) {
+        if (member.username.toLowerCase() == clean) {
+          return member;
+        }
+      }
+      return null; // Si no coincide exactamente con el username del tripulante, no buscar por partes
+    }
+
     final qNorm = _normalize(query);
 
-    // 1. Coincidencia exacta o contenida normalizada
+    // 2. Coincidencia exacta o contenida normalizada
     for (final member in allCrew) {
       final nameNorm = _normalize(member.name);
       final userNorm = _normalize(member.username);

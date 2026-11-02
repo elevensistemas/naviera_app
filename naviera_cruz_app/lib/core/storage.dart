@@ -515,21 +515,6 @@ class SessionManager with ChangeNotifier, WidgetsBindingObserver {
           return;
         }
         if (userParam != null && userParam.isNotEmpty) {
-          final catalogMember = IntranetCrewCatalog.findCrewMember(userParam);
-          if (catalogMember != null) {
-            _currentUser = User(
-              id: catalogMember.id,
-              name: catalogMember.name,
-              role: catalogMember.roleName,
-              sector: catalogMember.isOnBoard ? "Buque ${catalogMember.shipName}" : "En Tierra",
-              avatarURL: "",
-            );
-            _isAuthenticated = true;
-            _activeCrewShip = catalogMember.shipName;
-            _isCrewOnBoard = catalogMember.isOnBoard;
-            notifyListeners();
-            return;
-          }
           final officeMember = IntranetOfficeCatalog.findMember(userParam);
           if (officeMember != null) {
             _currentUser = User(
@@ -542,6 +527,22 @@ class SessionManager with ChangeNotifier, WidgetsBindingObserver {
             _isAuthenticated = true;
             _activeCrewShip = null;
             _isCrewOnBoard = false;
+            notifyListeners();
+            return;
+          }
+
+          final catalogMember = IntranetCrewCatalog.findCrewMember(userParam);
+          if (catalogMember != null) {
+            _currentUser = User(
+              id: catalogMember.id,
+              name: catalogMember.name,
+              role: catalogMember.roleName,
+              sector: catalogMember.isOnBoard ? "Buque ${catalogMember.shipName}" : "En Tierra",
+              avatarURL: "",
+            );
+            _isAuthenticated = true;
+            _activeCrewShip = catalogMember.shipName;
+            _isCrewOnBoard = catalogMember.isOnBoard;
             notifyListeners();
             return;
           }

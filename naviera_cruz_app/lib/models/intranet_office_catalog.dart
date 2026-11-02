@@ -145,6 +145,11 @@ class IntranetOfficeCatalog {
       }
     }
 
+    // Soporte para variantes de tipeo o nombres en Intranet (ej: Ludia / Lidia)
+    if (normQuery.contains('duarte') && (normQuery.contains('ludia') || normQuery.contains('lidia') || normQuery.startsWith('lduarte'))) {
+      return members.firstWhere((m) => m.username == 'l.duarte');
+    }
+
     // Búsqueda por subcadena o coincidencia de apellido / nombre
     for (final member in members) {
       final normName = _normalize(member.name);
@@ -165,3 +170,4 @@ class IntranetOfficeCatalog {
     return findMember(query) != null;
   }
 }
+

@@ -28,7 +28,23 @@ class User {
     }
     final rawUser = (json['username'] ?? json['id'] ?? '').toString().toLowerCase().trim();
 
-    // 1. Comprobar prioritariamente si corresponde a un tripulante del catálogo oficial de 89 miembros
+    // 1. Comprobar prioritariamente si corresponde a alguno de los 10 miembros oficiales de personal de oficina
+    final officeMember = (rawUser.isNotEmpty ? IntranetOfficeCatalog.findMember(rawUser) : null) ??
+        (fullName.isNotEmpty ? IntranetOfficeCatalog.findMember(fullName) : null) ??
+        (json['email'] != null ? IntranetOfficeCatalog.findMember(json['email'].toString()) : null);
+
+    if (officeMember != null) {
+      return User(
+        id: (json['id'] ?? json['user_id'] ?? officeMember.username).toString(),
+        name: officeMember.name,
+        role: json['role']?.toString().isNotEmpty == true ? json['role'].toString() : officeMember.role,
+        avatarURL: json['avatar_url']?.toString() ?? json['avatarURL']?.toString(),
+        sector: json['sector']?.toString().isNotEmpty == true ? json['sector'].toString() : officeMember.sector,
+        birthDate: json['birth_date'] != null ? DateTime.tryParse(json['birth_date'].toString()) : null,
+      );
+    }
+
+    // 2. Si no es de oficina, comprobar si corresponde a un tripulante del catálogo oficial de 89 miembros
     final catalogMember = (fullName.isNotEmpty ? IntranetCrewCatalog.findCrewMember(fullName) : null) ??
         (rawUser.isNotEmpty ? IntranetCrewCatalog.findCrewMember(rawUser) : null);
 
@@ -41,22 +57,6 @@ class User {
         sector: json['sector']?.toString().isNotEmpty == true
             ? json['sector'].toString()
             : (catalogMember.isOnBoard ? "Buque ${catalogMember.shipName}" : "En Tierra"),
-        birthDate: json['birth_date'] != null ? DateTime.tryParse(json['birth_date'].toString()) : null,
-      );
-    }
-
-    // 2. Comprobar si corresponde a alguno de los 10 miembros oficiales de personal de oficina
-    final officeMember = (fullName.isNotEmpty ? IntranetOfficeCatalog.findMember(fullName) : null) ??
-        (rawUser.isNotEmpty ? IntranetOfficeCatalog.findMember(rawUser) : null) ??
-        (json['email'] != null ? IntranetOfficeCatalog.findMember(json['email'].toString()) : null);
-
-    if (officeMember != null) {
-      return User(
-        id: (json['id'] ?? json['user_id'] ?? officeMember.username).toString(),
-        name: officeMember.name,
-        role: json['role']?.toString().isNotEmpty == true ? json['role'].toString() : officeMember.role,
-        avatarURL: json['avatar_url']?.toString() ?? json['avatarURL']?.toString(),
-        sector: json['sector']?.toString().isNotEmpty == true ? json['sector'].toString() : officeMember.sector,
         birthDate: json['birth_date'] != null ? DateTime.tryParse(json['birth_date'].toString()) : null,
       );
     }
