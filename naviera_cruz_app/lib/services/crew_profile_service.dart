@@ -6,7 +6,7 @@ import '../core/network.dart';
 import '../core/storage.dart';
 
 abstract class CrewProfileService {
-  Future<CrewProfile> fetchCurrentCrewProfile({required User? currentUser});
+  Future<CrewProfile> fetchCurrentCrewProfile({required User? currentUser, bool forceRefresh = false});
 
   factory CrewProfileService() {
     return ProductionCrewProfileService.shared;
@@ -21,23 +21,40 @@ class ProductionCrewProfileService implements CrewProfileService {
 
   CrewProfile? _cachedProfile;
   String? _cachedUserId;
+  DateTime? _cachedTime;
+
+  void _saveCache(CrewProfile profile, String uid) {
+    _cachedProfile = profile;
+    _cachedUserId = uid;
+    _cachedTime = DateTime.now();
+    SessionManager.shared.updateCrewShipStatus(
+      shipName: profile.shipName,
+      isOnBoard: profile.isOnBoard,
+    );
+  }
 
   /// Limpia la memoria caché de datos personales al cerrar sesión o cambiar de cuenta
   static void clearCache() {
     shared._cachedProfile = null;
     shared._cachedUserId = null;
+    shared._cachedTime = null;
   }
 
   @override
-  Future<CrewProfile> fetchCurrentCrewProfile({required User? currentUser}) async {
+  Future<CrewProfile> fetchCurrentCrewProfile({required User? currentUser, bool forceRefresh = false}) async {
     final uid = currentUser?.id ?? '';
 
     if (currentUser == null || uid.isEmpty) {
       return CrewProfile.unlinked(name: "Usuario no autenticado", userId: "anon");
     }
 
-    // Si ya lo tenemos en memoria para el mismo usuario autenticado, retornarlo
-    if (_cachedProfile != null && _cachedUserId == uid) {
+    final isCacheValid = _cachedProfile != null &&
+        _cachedUserId == uid &&
+        _cachedTime != null &&
+        DateTime.now().difference(_cachedTime!).inMinutes < 2;
+
+    // Si ya lo tenemos en memoria reciente y no es forzado, retornarlo
+    if (!forceRefresh && isCacheValid) {
       return _cachedProfile!;
     }
 
@@ -49,22 +66,12 @@ class ProductionCrewProfileService implements CrewProfileService {
           if (profileRes['crew_member_detail'] is Map<String, dynamic>) {
             final crewData = profileRes['crew_member_detail'] as Map<String, dynamic>;
             final profile = CrewProfile.fromIntranet(json: crewData);
-            _cachedProfile = profile;
-            _cachedUserId = uid;
-            SessionManager.shared.updateCrewShipStatus(
-              shipName: profile.shipName,
-              isOnBoard: profile.isOnBoard,
-            );
+            _saveCache(profile, uid);
             return profile;
           } else if (profileRes['crew_member'] is Map<String, dynamic>) {
             final crewData = profileRes['crew_member'] as Map<String, dynamic>;
             final profile = CrewProfile.fromIntranet(json: crewData);
-            _cachedProfile = profile;
-            _cachedUserId = uid;
-            SessionManager.shared.updateCrewShipStatus(
-              shipName: profile.shipName,
-              isOnBoard: profile.isOnBoard,
-            );
+            _saveCache(profile, uid);
             return profile;
           } else if (profileRes['crew_member'] != null) {
             // El backend devuelve el ID entero de crew_member (ej: 108)
@@ -73,12 +80,7 @@ class ProductionCrewProfileService implements CrewProfileService {
               final cmRes = await APIClient.shared.request(endpoint: '/api/v1/crew-members/$cmId/');
               if (cmRes is Map<String, dynamic>) {
                 final profile = CrewProfile.fromIntranet(json: cmRes);
-                _cachedProfile = profile;
-                _cachedUserId = uid;
-                SessionManager.shared.updateCrewShipStatus(
-                  shipName: profile.shipName,
-                  isOnBoard: profile.isOnBoard,
-                );
+                _saveCache(profile, uid);
                 return profile;
               }
             } catch (e) {
@@ -163,12 +165,7 @@ class ProductionCrewProfileService implements CrewProfileService {
         }
 
         final profile = CrewProfile.fromIntranet(json: matchedCrewJson, situationJson: situationJson);
-        _cachedProfile = profile;
-        _cachedUserId = uid;
-        SessionManager.shared.updateCrewShipStatus(
-          shipName: profile.shipName,
-          isOnBoard: profile.isOnBoard,
-        );
+        _saveCache(profile, uid);
         return profile;
       }
 
@@ -177,12 +174,7 @@ class ProductionCrewProfileService implements CrewProfileService {
           IntranetCrewCatalog.findCrewMember(currentUser.id);
       if (catalogMember != null) {
         final profile = CrewProfile.fromCatalog(catalogMember);
-        _cachedProfile = profile;
-        _cachedUserId = uid;
-        SessionManager.shared.updateCrewShipStatus(
-          shipName: profile.shipName,
-          isOnBoard: profile.isOnBoard,
-        );
+        _saveCache(profile, uid);
         return profile;
       }
 
@@ -191,12 +183,7 @@ class ProductionCrewProfileService implements CrewProfileService {
         name: currentUser.name,
         userId: currentUser.id,
       );
-      _cachedProfile = unlinkedProfile;
-      _cachedUserId = uid;
-      SessionManager.shared.updateCrewShipStatus(
-        shipName: null,
-        isOnBoard: false,
-      );
+      _saveCache(unlinkedProfile, uid);
       return unlinkedProfile;
 
     } catch (e) {
@@ -206,12 +193,7 @@ class ProductionCrewProfileService implements CrewProfileService {
           IntranetCrewCatalog.findCrewMember(currentUser.id);
       if (catalogMember != null) {
         final profile = CrewProfile.fromCatalog(catalogMember);
-        _cachedProfile = profile;
-        _cachedUserId = uid;
-        SessionManager.shared.updateCrewShipStatus(
-          shipName: profile.shipName,
-          isOnBoard: profile.isOnBoard,
-        );
+        _saveCache(profile, uid);
         return profile;
       }
 

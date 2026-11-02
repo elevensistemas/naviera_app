@@ -64,8 +64,11 @@ class _CrewHomeViewState extends State<CrewHomeView> {
     final currentUser = SessionManager.shared.currentUser;
 
     try {
-      // 1. Cargar perfil de tripulante desde la API de la intranet
-      final profile = await _profileService.fetchCurrentCrewProfile(currentUser: currentUser);
+      // 1. Cargar perfil de tripulante desde la API de la intranet en tiempo real
+      final profile = await _profileService.fetchCurrentCrewProfile(
+        currentUser: currentUser,
+        forceRefresh: true,
+      );
 
       // 2. Cargar boletines de intranet (/api/v1/bulletins/)
       Bulletin? latestBulletin;
