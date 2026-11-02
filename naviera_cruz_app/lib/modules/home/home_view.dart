@@ -316,14 +316,13 @@ class _HomeViewState extends State<HomeView> {
                   isLoading: _isWeatherLoading,
                   onRetry: () => _loadWeather(force: true),
                 ),
+                const WelcomeNovedadesCard(
+                  margin: EdgeInsets.fromLTRB(16.0, 4.0, 16.0, 12.0),
+                ),
                 if (_postsError != null) ...[
                   _buildNovedadesError(context, isDark, cardBg, textColor, captionColor),
-                  const WelcomeNovedadesCard(),
-                ] else if (_posts.isEmpty) ...[
-                  const WelcomeNovedadesCard(),
                 ] else ...[
                   ..._buildNovedadesList(context, isDark, cardBg, textColor, captionColor),
-                  const WelcomeNovedadesCard(),
                 ],
               ]
 
@@ -464,157 +463,6 @@ class _HomeViewState extends State<HomeView> {
 ),
 );
 }
-
-  Widget _buildBulletinsList(
-    BuildContext context,
-    bool isDark,
-    Color cardBg,
-    Color textColor,
-    Color captionColor,
-  ) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 800),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
-            child: Row(
-              children: [
-                const Icon(Icons.article_outlined, color: ColorTheme.primary, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  "Boletines y Comunicados Oficiales (${_bulletins.length})",
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _bulletins.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (context, i) {
-              final b = _bulletins[i];
-              final isLatest = i == 0;
-              final meta = [
-                if (b.date != null) "${b.date!.day}/${b.date!.month}/${b.date!.year}",
-                if (b.category != null) b.category!,
-              ].join(' · ');
-
-              return Material(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(16),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(16),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => BulletinPdfView(bulletin: b)),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isLatest
-                            ? const Color(0xFF2EC4D6).withOpacity(0.6)
-                            : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                        width: isLatest ? 1.5 : 1.0,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF0A2342), Color(0xFF0E3A66)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.picture_as_pdf_rounded, color: Color(0xFF2EC4D6), size: 20),
-                              SizedBox(height: 2),
-                              Text('PDF', style: TextStyle(color: Colors.white70, fontSize: 8.5, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (isLatest)
-                                Container(
-                                  margin: const EdgeInsets.only(bottom: 4),
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF2EC4D6).withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Text(
-                                    'ÚLTIMO BOLETÍN',
-                                    style: TextStyle(
-                                      color: Color(0xFF0E7C8A),
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ),
-                              Text(
-                                b.title,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: textColor,
-                                ),
-                              ),
-                              if (meta.isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  meta,
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    color: captionColor,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          color: captionColor,
-                          size: 20,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
 
   // Tarjeta de error para Novedades si falla la conexión
   Widget _buildNovedadesError(
