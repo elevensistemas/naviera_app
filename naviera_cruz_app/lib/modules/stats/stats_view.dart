@@ -4,6 +4,7 @@ import 'package:chewie/chewie.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
+import '../../core/video_helper.dart';
 import '../../app/ncs_hero_header.dart';
 import '../../app/training_thumbnail_widget.dart';
 
@@ -1115,38 +1116,63 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
   ChewieController? _chewieController;
   bool _isInitialized = false;
   bool _hasError = false;
-  int _attemptIndex = 0;
-
-  late final List<String> _fallbackUrls;
+  bool _isDownloading = false;
+  double _downloadProgress = 0.0;
+  int _downloadedBytes = 0;
+  int _totalBytes = 0;
 
   @override
   void initState() {
     super.initState();
-    final rawUrl = widget.videoUrl.trim();
-    _fallbackUrls = [
-      if (rawUrl.isNotEmpty) rawUrl,
-      // Stream HLS estándar con soporte iOS AVPlayer en caso de indisponibilidad
-      "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8",
-      "https://media.w3.org/2010/05/sintel/trailer.mp4",
-    ];
-    _initController();
+    _prepareAndPlay();
   }
 
-  Future<void> _initController() async {
+  Future<void> _prepareAndPlay() async {
     setState(() {
       _hasError = false;
       _isInitialized = false;
+      _isDownloading = true;
+      _downloadProgress = 0.0;
+      _downloadedBytes = 0;
+      _totalBytes = 0;
     });
 
-    final targetUrl = _attemptIndex < _fallbackUrls.length ? _fallbackUrls[_attemptIndex] : _fallbackUrls.first;
+    final rawUrl = widget.videoUrl.trim();
+    if (rawUrl.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _isDownloading = false;
+        });
+      }
+      return;
+    }
 
     try {
-      final Uri uri = Uri.parse(targetUrl);
-      // En iOS es mandatorio configurar mixWithOthers para evitar que AVPlayer aborte por la sesión de audio
-      _controller = VideoPlayerController.networkUrl(
-        uri,
-        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+      final resolvedPath = await prepareVideoForPlayback(
+        rawUrl,
+        onProgress: (progress, received, total) {
+          if (mounted) {
+            setState(() {
+              _downloadProgress = progress;
+              _downloadedBytes = received;
+              _totalBytes = total;
+            });
+          }
+        },
       );
+
+      if (!mounted) return;
+
+      if (resolvedPath == null || resolvedPath.isEmpty) {
+        throw Exception("No se pudo obtener la ruta del video");
+      }
+
+      setState(() {
+        _isDownloading = false;
+      });
+
+      _controller = createControllerForVideo(resolvedPath);
       await _controller!.initialize();
 
       if (mounted) {
@@ -1176,15 +1202,12 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
         });
       }
     } catch (e) {
-      if (_attemptIndex + 1 < _fallbackUrls.length) {
-        _attemptIndex++;
-        await _initController();
-      } else {
-        if (mounted) {
-          setState(() {
-            _hasError = true;
-          });
-        }
+      debugPrint("[Error Reproductor Curso] Falló inicialización: $e");
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _isDownloading = false;
+        });
       }
     }
   }
@@ -1206,19 +1229,18 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
               const Icon(Icons.video_camera_back_rounded, color: Color(0xFF38BDF8), size: 42),
               const SizedBox(height: 8),
               const Text(
-                "Transmisión de Clase STCW",
+                "Clase de Capacitación NCS",
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
               ),
               const SizedBox(height: 4),
               const Text(
-                "No se pudo cargar la transmisión en vivo.",
+                "No se pudo cargar el video de la clase.",
                 style: TextStyle(color: Colors.white70, fontSize: 11),
               ),
               const SizedBox(height: 12),
               ElevatedButton.icon(
                 onPressed: () {
-                  _attemptIndex = (_attemptIndex + 1) % _fallbackUrls.length;
-                  _initController();
+                  _prepareAndPlay();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0088FF),
@@ -1227,7 +1249,7 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                 ),
                 icon: const Icon(Icons.refresh_rounded, size: 16),
-                label: const Text("Reintentar Video", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                label: const Text("Reintentar Clase", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -1249,6 +1271,59 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
       return _buildErrorStateWidget();
     }
 
+    if (_isDownloading) {
+      final pct = (_downloadProgress * 100).clamp(0, 100).toInt();
+      final hasSizes = _totalBytes > 0;
+      final mbRec = (_downloadedBytes / (1024 * 1024)).toStringAsFixed(1);
+      final mbTot = (_totalBytes / (1024 * 1024)).toStringAsFixed(1);
+
+      return Container(
+        height: 210,
+        decoration: BoxDecoration(
+          color: const Color(0xFF0B132B),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(
+                  width: 38,
+                  height: 38,
+                  child: CircularProgressIndicator(color: Color(0xFF0088FF), strokeWidth: 3),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  "Optimizando video para reproducción fluida ($pct%)...",
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+                if (hasSizes) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    "$mbRec MB de $mbTot MB descargados",
+                    style: const TextStyle(color: Colors.white60, fontSize: 11),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: _downloadProgress > 0 ? _downloadProgress : null,
+                    backgroundColor: Colors.white12,
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0088FF)),
+                    minHeight: 5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     if (!_isInitialized || _chewieController == null) {
       return Container(
         height: 210,
@@ -1263,7 +1338,7 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
               CircularProgressIndicator(color: Color(0xFF0088FF)),
               SizedBox(height: 12),
               Text(
-                "Cargando clase STCW...",
+                "Iniciando reproductor de clase...",
                 style: TextStyle(color: Colors.white70, fontSize: 12),
               ),
             ],

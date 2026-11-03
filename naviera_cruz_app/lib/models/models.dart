@@ -440,23 +440,9 @@ class Ship {
 
   String get resolvedEta => (eta != null && eta!.isNotEmpty) ? eta! : '';
 
-  int get resolvedProvistosCount {
-    if (provistosCount > 0) return provistosCount;
-    final u = name.toUpperCase();
-    if (u.contains('ALFA')) return 2;
-    if (u.contains('GUSTAVO')) return 3;
-    if (u.contains('NANY')) return 3;
-    return 3;
-  }
+  int get resolvedProvistosCount => provistosCount;
 
-  double get resolvedProvistosTotal {
-    if (provistosTotal > 0.0) return provistosTotal;
-    final u = name.toUpperCase();
-    if (u.contains('ALFA')) return 6915.0;
-    if (u.contains('GUSTAVO')) return 7390.0;
-    if (u.contains('NANY')) return 2100.0;
-    return 2100.0;
-  }
+  double get resolvedProvistosTotal => provistosTotal;
 
   Ship copyWith({
     String? id,

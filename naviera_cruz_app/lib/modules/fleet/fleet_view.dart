@@ -28,6 +28,13 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Cada día primero, purgar cachés en memoria para forzar consulta limpia de buques provistos a la Intranet
+    final now = DateTime.now();
+    if (now.day == 1) {
+      EzvizService.shared.invalidateCache('BF1765385');
+      EzvizService.shared.invalidateCache('BF1765344');
+      EzvizService.shared.invalidateCache('BF1767228');
+    }
     // Pre-poblar inmediatamente los buques para iniciar la conexión de Alfa C en el primer frame
     _ships.addAll(_getDefaultShipsList());
     _loadCameraForShip(_ships[0], forceRefresh: true);
@@ -113,7 +120,8 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
               ? alfa.targetShips
               : Ship.getDefaultTargetShipsFor("ALFA C"),
           lastPort: alfa.lastPort.isNotEmpty ? alfa.lastPort : 'BUENOS AIRES',
-          provistosCount: alfa.targetShips.isNotEmpty ? alfa.targetShips.length : 2,
+          provistosCount: alfa.provistosCount,
+          provistosTotal: alfa.provistosTotal,
           weather: '',
         );
         gustavo = gustavo.copyWith(
@@ -122,7 +130,8 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
               ? gustavo.targetShips
               : Ship.getDefaultTargetShipsFor("GUSTAVO U"),
           lastPort: gustavo.lastPort.isNotEmpty ? gustavo.lastPort : 'RADA LA PLATA',
-          provistosCount: gustavo.targetShips.isNotEmpty ? gustavo.targetShips.length : 3,
+          provistosCount: gustavo.provistosCount,
+          provistosTotal: gustavo.provistosTotal,
           weather: '',
         );
         nany = nany.copyWith(
@@ -131,8 +140,8 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
               ? (nany.targetShips.length > 3 ? nany.targetShips.take(3).toList() : nany.targetShips)
               : Ship.getDefaultTargetShipsFor("NANY"),
           lastPort: nany.lastPort.isNotEmpty ? nany.lastPort : 'CAMPANA',
-          provistosCount: 3,
-          provistosTotal: 2100.0,
+          provistosCount: nany.provistosCount > 0 ? nany.provistosCount : 3,
+          provistosTotal: nany.provistosTotal > 0 ? nany.provistosTotal : 2100.0,
           weather: '',
         );
 
@@ -449,8 +458,8 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         chiefEngineerName: "Lescano Cristian",
         lastPort: "Fondeado en Rada La Plata (Zona Común)",
         weather: "19.3°C · Viento E 8 kn",
-        provistosCount: 2,
-        provistosTotal: 6915.00,
+        provistosCount: 0,
+        provistosTotal: 0.00,
       ),
       Ship(
         id: "6",
@@ -476,8 +485,8 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         chiefEngineerName: "Alday Alexis",
         lastPort: "Rada La Plata",
         weather: "",
-        provistosCount: 3,
-        provistosTotal: 1300.00,
+        provistosCount: 0,
+        provistosTotal: 0.00,
       ),
       Ship(
         id: "5",
@@ -511,15 +520,15 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
 
   String _getCargoProgramInfo(Ship ship) {
     final upper = ship.name.toUpperCase();
-    final count = ship.targetShips.isNotEmpty ? ship.targetShips.length : (ship.provistosCount > 0 ? ship.provistosCount : 0);
+    final count = ship.provistosCount;
     if (upper.contains('ALFA')) {
-      final totalStr = ship.provistosTotal > 0 ? "${ship.provistosTotal.toStringAsFixed(0)} m³" : "6915 m³";
+      final totalStr = "${ship.provistosTotal.toStringAsFixed(0)} m³";
       return "Raizen ($totalStr • $count buques)";
     } else if (upper.contains('NANY')) {
-      final totalStr = ship.provistosTotal > 0 ? "${(ship.provistosTotal / 1000).toStringAsFixed(2)} k t" : "2.10 k t";
+      final totalStr = "${(ship.provistosTotal / 1000).toStringAsFixed(2)} k t";
       return "WFS ($totalStr • $count buques)";
     } else if (upper.contains('GUSTAVO')) {
-      final totalStr = ship.provistosTotal > 0 ? "${(ship.provistosTotal / 1000).toStringAsFixed(2)} k t" : "7.39 k t";
+      final totalStr = "${(ship.provistosTotal / 1000).toStringAsFixed(2)} k t";
       return "WFS ($totalStr • $count buques)";
     }
     return "Raizen";

@@ -35,6 +35,11 @@ class _ScheduleViewState extends State<ScheduleView> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      if (DateTime.now().day == 1) {
+        _summaryCharges.clear();
+        _detailedCharges.clear();
+        _schedules.clear();
+      }
     });
 
     try {

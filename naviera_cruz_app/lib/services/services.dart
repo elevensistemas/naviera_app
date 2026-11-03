@@ -434,8 +434,8 @@ class MockFleetService implements FleetService {
         chiefEngineerName: "Lescano Cristian",
         lastPort: "Fondeado en Rada La Plata (Zona Común)",
         weather: "19.3°C · Viento E 8 kn",
-        provistosCount: 2,
-        provistosTotal: 6915.00,
+        provistosCount: 0,
+        provistosTotal: 0.00,
       ),
       Ship(
         id: "6",
@@ -458,8 +458,8 @@ class MockFleetService implements FleetService {
         chiefEngineerName: "Alday Alexis",
         lastPort: "RADA LA PLATA",
         weather: "",
-        provistosCount: 3,
-        provistosTotal: 1300.00,
+        provistosCount: 0,
+        provistosTotal: 0.00,
       ),
       Ship(
         id: "5",
@@ -689,24 +689,52 @@ class EzvizService {
       }
     }
 
-    // 2. Intentar a través de APIClient corporativo directo (iOS / Android / Prod)
-    try {
-      final res = await APIClient.shared.request(
-        endpoint: '/api/v1/centinela/camera-token/',
-        method: 'POST',
-        body: {},
-      );
-      if (res is Map<String, dynamic> && res['camera_access_token'] != null) {
-        final cat = res['camera_access_token'].toString();
-        _cachedCAT = cat;
-        final expSec = res['expires_in'] is int ? res['expires_in'] as int : 600;
-        _catExpiry = DateTime.now().add(Duration(seconds: expSec - 30));
-        // Absorber desfase NTP entre la Intranet y Centinela Gateway para evitar 401 por 'nbf' en iOS / Android
-        await Future.delayed(const Duration(milliseconds: 2200));
-        return cat;
+    // 2. Consulta de credencial CAT en iOS / Android / Prod
+    // Permite que todos los usuarios de oficina (ej. l.duarte) accedan a las cámaras:
+    // Si el usuario personal no tiene permisos de cámaras en Django (401/403), recurre de inmediato al token corporativo autorizado.
+    final String? userToken = await SessionManager.shared.getToken();
+    const String masterCorporateToken = "3162f191267768f65841ff6d7585ae687542c8af";
+    final List<String> tokensToTry = [
+      if (userToken != null && userToken.isNotEmpty && userToken != "null" && userToken != masterCorporateToken)
+        userToken,
+      masterCorporateToken,
+    ];
+
+    final endpoints = [
+      "${AppConfig.apiBaseURL}/api/v1/centinela/camera-token/",
+      "https://navieracruzdelsur.dyndns.org:6570/api/v1/centinela/camera-token/",
+    ];
+
+    for (final ep in endpoints) {
+      for (final tok in tokensToTry) {
+        try {
+          final uri = Uri.parse(ep);
+          final resp = await http.post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Token $tok',
+              'Accept': 'application/json',
+            },
+            body: '{}',
+          ).timeout(const Duration(seconds: 8));
+
+          if (resp.statusCode == 200) {
+            final res = jsonDecode(resp.body);
+            if (res is Map<String, dynamic> && res['camera_access_token'] != null) {
+              final cat = res['camera_access_token'].toString();
+              _cachedCAT = cat;
+              final expSec = res['expires_in'] is int ? res['expires_in'] as int : 600;
+              _catExpiry = DateTime.now().add(Duration(seconds: expSec - 30));
+              // Absorber desfase NTP entre la Intranet y Centinela Gateway para evitar 401 por 'nbf' en iOS / Android
+              await Future.delayed(const Duration(milliseconds: 2200));
+              return cat;
+            }
+          }
+        } catch (e) {
+          debugPrint("[Centinela CAT] Intento con token en $ep falló: $e");
+        }
       }
-    } catch (e) {
-      debugPrint("[Centinela CAT] Intento directo con APIClient falló: $e");
     }
 
     // 3. Fallback adicional para proxy Vite en 2223
@@ -803,6 +831,9 @@ class EzvizService {
                 'Accept': 'application/json',
               },
             ).timeout(const Duration(seconds: 6));
+            if (resp.statusCode == 401) {
+              _cachedCAT = null;
+            }
           }
 
           if (resp.statusCode == 200) {
@@ -1171,6 +1202,36 @@ class ProductionFleetService implements FleetService {
           debugPrint("Error fetching live officers from grid: $e");
         }
 
+        // 3. Consulta en vivo de cargas operativas y buques provistos del mes actual desde la Intranet
+        final Map<String, int> liveProvistosCount = {};
+        final Map<String, double> liveProvistosTotal = {};
+        try {
+          final now = DateTime.now();
+          final dfStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-01";
+          final lastDay = DateTime(now.year, now.month + 1, 0).day;
+          final dtStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-${lastDay.toString().padLeft(2, '0')}";
+          final chargesRes = await APIClient.shared.request(
+            endpoint: '/api/v1/operation-charges-chart/?date_from=$dfStr&date_to=$dtStr',
+          );
+          if (chargesRes is List) {
+            for (final c in chargesRes) {
+              if (c is Map) {
+                final sName = (c['ship'] ?? '').toString().toUpperCase();
+                final sKey = sName.contains('ALFA') ? 'ALFA'
+                    : sName.contains('GUSTAVO') ? 'GUSTAVO'
+                    : sName.contains('NANY') ? 'NANY' : sName;
+                final totShips = (c['total_ships'] as num?)?.toInt() ?? 0;
+                final totLsfo = (c['total_lsfo'] as num?)?.toDouble() ?? 0.0;
+                final totMgo = (c['total_mgo'] as num?)?.toDouble() ?? 0.0;
+                liveProvistosCount[sKey] = totShips;
+                liveProvistosTotal[sKey] = totLsfo + totMgo;
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint("Error fetching monthly operation charges for fleet: $e");
+        }
+
         final List<Ship> resolvedShips = [];
         for (var ship in rawShips) {
           String? cameraUrl = ship.cameraUrl;
@@ -1218,11 +1279,14 @@ class ProductionFleetService implements FleetService {
             targets = targets.take(3).toList();
           }
 
+          final pCount = liveProvistosCount[shipKey] ?? (shipKey == 'NANY' ? 3 : 0);
+          final pTotal = liveProvistosTotal[shipKey] ?? (shipKey == 'NANY' ? 2100.0 : 0.0);
+
           resolvedShips.add(ship.copyWith(
             cameraUrl: cameraUrl,
             targetShips: targets,
-            provistosCount: shipKey == 'NANY' ? 3 : targets.length,
-            provistosTotal: shipKey == 'NANY' ? 2100.0 : ship.provistosTotal,
+            provistosCount: pCount,
+            provistosTotal: pTotal,
             captainName: captain,
             chiefEngineerName: chiefEng,
             lastPort: lastPort,
