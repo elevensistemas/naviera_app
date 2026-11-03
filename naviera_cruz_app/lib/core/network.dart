@@ -30,12 +30,14 @@ class APIClient {
       'Content-Type': 'application/json',
     };
 
-    // Load session token
-    String? token = await SessionManager.shared.getToken();
-    if (token == null || token.isEmpty) {
-      token = "3162f191267768f65841ff6d7585ae687542c8af";
+    // Load session token (no enviar en login para no invalidar la petición con tokens caducados)
+    final isLogin = endpoint.contains('/login/');
+    if (!isLogin) {
+      String? token = await SessionManager.shared.getToken();
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Token $token';
+      }
     }
-    headers['Authorization'] = 'Token $token';
 
     http.Response response;
     try {

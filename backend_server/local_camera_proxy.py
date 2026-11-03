@@ -148,8 +148,11 @@ class ProxyHandler(BaseHTTPRequestHandler):
         # Para cualquier otro POST a la Intranet
         target_url = INTRANET_BASE + self.path
         req = urllib.request.Request(target_url, data=body, method='POST')
+        is_login = 'login' in self.path
         for k, v in self.headers.items():
             if k.lower() in ('authorization', 'content-type', 'accept'):
+                if is_login and k.lower() == 'authorization':
+                    continue
                 req.add_header(k, v)
         try:
             with urllib.request.urlopen(req, context=ctx, timeout=8) as resp:
