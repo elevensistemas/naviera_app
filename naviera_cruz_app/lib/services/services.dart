@@ -701,6 +701,8 @@ class EzvizService {
         _cachedCAT = cat;
         final expSec = res['expires_in'] is int ? res['expires_in'] as int : 600;
         _catExpiry = DateTime.now().add(Duration(seconds: expSec - 30));
+        // Absorber desfase NTP entre la Intranet y Centinela Gateway para evitar 401 por 'nbf' en iOS / Android
+        await Future.delayed(const Duration(milliseconds: 2200));
         return cat;
       }
     } catch (e) {
@@ -783,13 +785,25 @@ class EzvizService {
       for (final host in hosts) {
         try {
           final uri = Uri.parse('$host/api/v1/external/cameras/$deviceSerial/stream');
-          final resp = await http.get(
+          var resp = await http.get(
             uri,
             headers: {
               'Authorization': 'Bearer $catToken',
               'Accept': 'application/json',
             },
           ).timeout(const Duration(seconds: 6));
+
+          // Si Centinela devuelve 401 por leve desfase de reloj, esperar y reintentar
+          if (resp.statusCode == 401) {
+            await Future.delayed(const Duration(milliseconds: 1500));
+            resp = await http.get(
+              uri,
+              headers: {
+                'Authorization': 'Bearer $catToken',
+                'Accept': 'application/json',
+              },
+            ).timeout(const Duration(seconds: 6));
+          }
 
           if (resp.statusCode == 200) {
             final data = jsonDecode(resp.body);

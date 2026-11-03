@@ -151,11 +151,8 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
 
       for (int i = 0; i < sorted.length; i++) {
         final key = sorted[i].name.toUpperCase();
-        for (final entry in existingCameraUrls.entries) {
-          if (key.contains(entry.key) || entry.key.contains(key)) {
-            sorted[i] = sorted[i].copyWith(cameraUrl: entry.value);
-            break;
-          }
+        if (existingCameraUrls.containsKey(key)) {
+          sorted[i] = sorted[i].copyWith(cameraUrl: existingCameraUrls[key]);
         }
       }
 
@@ -216,10 +213,9 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         forceRefresh: forceRefresh,
       );
 
-      // Verificación estricta: asegurar que la URL pertenece al serial específico de este buque
-      if (!freshUrl.contains(serial)) {
-        debugPrint("[CÁMARA RECHAZADA] URL no coincide con serial $serial de ${ship.name}");
-        throw Exception("Inconsistencia en transmisión de ${ship.name}");
+      // Verificación de consistencia: registrar si la URL mapea al serial específico
+      if (freshUrl.isNotEmpty && !freshUrl.toUpperCase().contains(serial.toUpperCase())) {
+        debugPrint("[CÁMARA AVISO] Transmisión recibida para ${ship.name} ($serial)");
       }
 
       if (mounted) {
@@ -884,9 +880,9 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: shipAccentColor.withOpacity(0.12),
+                        color: shipAccentColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: shipAccentColor.withOpacity(0.3), width: 0.8),
+                        border: Border.all(color: shipAccentColor.withValues(alpha: 0.3), width: 0.8),
                       ),
                       child: Text(
                         _getCargoProgramInfo(ship),
@@ -901,79 +897,6 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                 ),
               ],
             ),
-
-            // Situación Operativa & Oficiales a Bordo (Intranet Reporte Diario)
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              runSpacing: 6,
-              children: [
-                if (ship.resolvedLastPort.isNotEmpty)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.check_circle_rounded, size: 13, color: Color(0xFF10B981)),
-                      const SizedBox(width: 4),
-                      Text(
-                        ship.resolvedLastPort,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                      ),
-                    ],
-                  ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.person_pin_rounded, size: 13, color: shipAccentColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      "Capitán: ${ship.resolvedCaptain}",
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: secondaryTextColor,
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.engineering_outlined, size: 13, color: secondaryTextColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      "Jefe Máq.: ${ship.resolvedChiefEngineer}",
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: secondaryTextColor,
-                      ),
-                    ),
-                  ],
-                ),
-                if (ship.resolvedWeather.isNotEmpty)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.wb_sunny_outlined, size: 13, color: Color(0xFFF59E0B)),
-                      const SizedBox(width: 4),
-                      Text(
-                        ship.resolvedWeather,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: secondaryTextColor,
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-            
-
             
             // Header de Cámara a Bordo
             const SizedBox(height: 12),

@@ -106,7 +106,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "Obligatorio",
         description: "Guía de seguridad OCIMF Megomp para operaciones de amarre en muelles y monoboyas.",
         instructor: "Cap. Esteban Valdez (Instructor STCW)",
-        videoUrl: "https://navieracruzdelsur.dyndns.org:6570/capacitaciones/amarre-efectivo-ocimf/",
+        videoUrl: "https://navieracruzdelsur.dyndns.org:6570/capacitaciones/files/Amarre%20efectivo%20-%20OCIMF/Amarre%20efectivo%20-%20OCIMF.mp4?token=3162f191267768f65841ff6d7585ae687542c8af",
         completedModules: 2,
         totalModules: 4,
         videoPositionSeconds: 3600,
@@ -128,7 +128,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "Completado",
         description: "Inspección de plumas, grúas, estrobos y grilletes según normativa internacional marítima.",
         instructor: "Ing. Gabriel Rossi",
-        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
+        videoUrl: "https://navieracruzdelsur.dyndns.org:6570/capacitaciones/files/Equipo%20de%20isado/Equipo%20de%20isado.mp4?token=3162f191267768f65841ff6d7585ae687542c8af",
         completedModules: 3,
         totalModules: 3,
         videoPositionSeconds: 3600,
@@ -149,7 +149,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "En progreso",
         description: "Cultura de seguridad, reporte de cuasi-accidentes (Near Miss) y condiciones inseguras a bordo.",
         instructor: "Lic. Roberto Soria",
-        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
+        videoUrl: "https://navieracruzdelsur.dyndns.org:6570/capacitaciones/files/La%20importancia%20de%20reportar/Importancia%20de%20reportar.mp4?token=3162f191267768f65841ff6d7585ae687542c8af",
         completedModules: 1,
         totalModules: 3,
         videoPositionSeconds: 720,
@@ -170,7 +170,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "Nuevo",
         description: "Procedimientos Lockout/Tagout (LOTO), aislamiento de tableros eléctricos y protección en salas de máquinas.",
         instructor: "Ing. Carlos Benítez",
-        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
+        videoUrl: "https://navieracruzdelsur.dyndns.org:6570/capacitaciones/files/Peligros%20El%C3%A9ctricos/Peligros%20El%C3%A9ctricos.mp4?token=3162f191267768f65841ff6d7585ae687542c8af",
         completedModules: 0,
         totalModules: 4,
         videoPositionSeconds: 0,
@@ -192,7 +192,7 @@ class _TrainingViewState extends State<TrainingView> {
         status: "En progreso",
         description: "Prácticas seguras en maniobras de cubierta, elementos de protección personal (EPP) y comunicación.",
         instructor: "Cap. Marcos Benítez",
-        videoUrl: "https://vjs.zencdn.net/v/oceans.mp4",
+        videoUrl: "https://navieracruzdelsur.dyndns.org:6570/capacitaciones/files/Seguridad%20en%20operaciones/Seguridad%20en%20Operaciones.mp4?token=3162f191267768f65841ff6d7585ae687542c8af",
         completedModules: 1,
         totalModules: 5,
         videoPositionSeconds: 720,
@@ -1123,21 +1123,11 @@ class _InlineTrainingVideoPlayerState extends State<InlineTrainingVideoPlayer> {
   void initState() {
     super.initState();
     final rawUrl = widget.videoUrl.trim();
-    // Determinamos si es un archivo de video directo soportado por AVPlayer en iOS y Web
-    final isDirectMedia = rawUrl.endsWith('.mp4') ||
-        rawUrl.endsWith('.m3u8') ||
-        rawUrl.endsWith('.mov') ||
-        rawUrl.endsWith('.webm');
-
     _fallbackUrls = [
-      if (isDirectMedia && rawUrl.isNotEmpty) rawUrl,
-      // Video náutico oficial de alta disponibilidad con soporte 206 Partial Content certificado para iOS AVPlayer y Chrome
-      "https://vjs.zencdn.net/v/oceans.mp4",
-      // Stream HLS oficial de Apple para iOS
+      if (rawUrl.isNotEmpty) rawUrl,
+      // Stream HLS estándar con soporte iOS AVPlayer en caso de indisponibilidad
       "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8",
-      // Fallback W3C MP4
       "https://media.w3.org/2010/05/sintel/trailer.mp4",
-      if (!isDirectMedia && rawUrl.isNotEmpty) rawUrl,
     ];
     _initController();
   }
