@@ -139,10 +139,13 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
           targetShips: nany.targetShips.isNotEmpty
               ? (nany.targetShips.length > 3 ? nany.targetShips.take(3).toList() : nany.targetShips)
               : Ship.getDefaultTargetShipsFor("NANY"),
-          lastPort: nany.lastPort.isNotEmpty ? nany.lastPort : 'CAMPANA',
-          provistosCount: nany.provistosCount > 0 ? nany.provistosCount : 3,
-          provistosTotal: nany.provistosTotal > 0 ? nany.provistosTotal : 2100.0,
-          weather: '',
+          lastPort: nany.lastPort.isNotEmpty ? nany.lastPort : 'Operando STS con BORDEAUX',
+          provistosCount: nany.provistosCount,
+          provistosTotal: nany.provistosTotal,
+          weather: nany.weather.isNotEmpty ? nany.weather : '19.4°C · Viento E 11 kn',
+          fuelPercentage: nany.fuelPercentage ?? 0.23,
+          waterPercentage: nany.waterPercentage ?? 0.45,
+          slopPercentage: nany.slopPercentage ?? 0.00,
         );
 
         sorted.add(alfa);
@@ -492,13 +495,13 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         id: "5",
         name: "NANY",
         status: ShipStatus.active,
-        totalCargo: 115.52,
-        totalCarbon: 115.52,
-        totalWater: 125.36,
-        totalSlop: 86.39,
-        fuelPercentage: 0.58,
-        waterPercentage: 0.66,
-        slopPercentage: 0.72,
+        totalCargo: 0.0,
+        totalCarbon: 0.0,
+        totalWater: 0.0,
+        totalSlop: 0.0,
+        fuelPercentage: 0.23,
+        waterPercentage: 0.45,
+        slopPercentage: 0.00,
         imoNumber: "9018115",
         flag: "Argentina 🇦🇷",
         latitude: -54.80,
@@ -510,10 +513,10 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         targetShips: Ship.getDefaultTargetShipsFor("NANY"),
         captainName: "Hernandez Pablo",
         chiefEngineerName: "Carlino Hernan",
-        lastPort: "Campana",
-        weather: "",
-        provistosCount: 3,
-        provistosTotal: 2100.00,
+        lastPort: "Operando STS con BORDEAUX",
+        weather: "19.4°C · Viento E 11 kn",
+        provistosCount: 0,
+        provistosTotal: 0.00,
       ),
     ];
   }
@@ -547,33 +550,6 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
   double _getWaterPercentage(Ship ship) => ship.resolvedWaterPercentage;
 
   double _getSlopPercentage(Ship ship) => ship.resolvedSlopPercentage;
-
-  String _getFuelValue(Ship ship) {
-    final val = ship.totalCarbon > 0 ? ship.totalCarbon : ship.totalCargo;
-    if (val <= 0) {
-      if (ship.name.toUpperCase().contains('ALFA')) return "150.54 m³";
-      return "0.00 m³";
-    }
-    return "${val.toStringAsFixed(2)} m³";
-  }
-
-  String _getWaterValue(Ship ship) {
-    final val = ship.totalWater;
-    if (val <= 0) {
-      if (ship.name.toUpperCase().contains('ALFA')) return "118.2 m³";
-      return "0.0 m³";
-    }
-    return "${val.toStringAsFixed(1)} m³";
-  }
-
-  String _getSlopValue(Ship ship) {
-    final val = ship.totalSlop;
-    if (val <= 0) {
-      if (ship.name.toUpperCase().contains('ALFA')) return "8.31 m³";
-      return "0.00 m³";
-    }
-    return "${val.toStringAsFixed(2)} m³";
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1051,27 +1027,24 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                   _buildResourceMetric(
                     context: context,
                     icon: Icons.water_drop_rounded,
-                    color: const Color(0xFF00BCD4), // Cyan / Agua (64%)
+                    color: const Color(0xFF00BCD4), // Cyan / Agua
                     label: "Agua",
-                    value: _getWaterValue(ship),
                     progressPercentage: _getWaterPercentage(ship),
                   ),
                   Container(height: 58, width: 1, margin: const EdgeInsets.symmetric(horizontal: 6), color: dividerColor),
                   _buildResourceMetric(
                     context: context,
                     icon: Icons.local_gas_station_rounded,
-                    color: const Color(0xFFF59E0B), // Yellow-Amber / Combustible (32%)
+                    color: const Color(0xFFF59E0B), // Yellow-Amber / Combustible
                     label: "Comb.",
-                    value: _getFuelValue(ship),
                     progressPercentage: _getFuelPercentage(ship),
                   ),
                   Container(height: 58, width: 1, margin: const EdgeInsets.symmetric(horizontal: 6), color: dividerColor),
                   _buildResourceMetric(
                     context: context,
                     icon: Icons.opacity_rounded,
-                    color: const Color(0xFF64748B), // Slate-Grey / Slop (19%)
+                    color: const Color(0xFF64748B), // Slate-Grey / Slop
                     label: "Slop",
-                    value: _getSlopValue(ship),
                     progressPercentage: _getSlopPercentage(ship),
                   ),
                 ],
@@ -1166,89 +1139,6 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                         );
                       }).toList(),
                     ),
-                    
-                    // Intranet Cargo Progress Bar
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  "VLSFO: ${ship.resolvedProvistosTotal.toStringAsFixed(0)} m³ (100%)",
-                                  style: const TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0057B8),
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF0057B8).withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  "Buques Provistos: ${ship.resolvedProvistosCount}",
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0057B8),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: 1.0,
-                              minHeight: 7,
-                              backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-                              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0057B8)),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Total: ${ship.resolvedProvistosTotal.toStringAsFixed(2)} m³",
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: secondaryTextColor,
-                                ),
-                              ),
-                              Text(
-                                "LSFO: ${ship.resolvedProvistosTotal.toStringAsFixed(2)} m³",
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: secondaryTextColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -1316,7 +1206,6 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     required IconData icon,
     required Color color,
     required String label,
-    required String value,
     required double progressPercentage,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -1390,20 +1279,6 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 2),
-
-          // Dato métrico real del reporte diario del buque (sin inventar)
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 11.0,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white60 : const Color(0xFF64748B),
-              ),
-            ),
           ),
         ],
       ),

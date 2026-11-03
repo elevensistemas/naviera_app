@@ -469,6 +469,9 @@ class MockFleetService implements FleetService {
         totalCarbon: 115.52,
         totalWater: 125.36,
         totalSlop: 86.39,
+        fuelPercentage: 0.23,
+        waterPercentage: 0.45,
+        slopPercentage: 0.00,
         imoNumber: "9018115",
         flag: "Argentina 🇦🇷",
         latitude: -54.80,
@@ -480,8 +483,8 @@ class MockFleetService implements FleetService {
         targetShips: Ship.getDefaultTargetShipsFor("NANY"),
         captainName: "Hernandez Pablo",
         chiefEngineerName: "Carlino Hernan",
-        lastPort: "CAMPANA",
-        weather: "",
+        lastPort: "Operando STS con BORDEAUX",
+        weather: "19.4°C · Viento E 11 kn",
         provistosCount: 3,
         provistosTotal: 2100.00,
       ),
@@ -1257,8 +1260,8 @@ class ProductionFleetService implements FleetService {
           }
 
           final lastPort = shipKey == 'ALFA' ? 'Fondeado en Rada La Plata (Zona Común)'
-              : shipKey == 'GUSTAVO' ? 'Rada La Plata'
-              : shipKey == 'NANY' ? 'Campana' : '';
+              : shipKey == 'NANY' ? 'Operando STS con BORDEAUX'
+              : shipKey == 'GUSTAVO' ? 'Rada La Plata' : '';
 
           final defaultCaptain = shipKey == 'ALFA' ? 'Caballero Diego'
               : shipKey == 'GUSTAVO' ? 'Percara Marco'
@@ -1267,10 +1270,18 @@ class ProductionFleetService implements FleetService {
               : shipKey == 'GUSTAVO' ? 'Alday Alexis'
               : shipKey == 'NANY' ? 'Carlino Hernan' : ship.chiefEngineerName;
 
-          final weather = shipKey == 'ALFA' ? '19.3°C · Viento E 8 kn' : (ship.weather.isNotEmpty ? ship.weather : '');
-          final fuelPct = shipKey == 'ALFA' ? 0.32 : ship.fuelPercentage;
-          final waterPct = shipKey == 'ALFA' ? 0.64 : ship.waterPercentage;
-          final slopPct = shipKey == 'ALFA' ? 0.19 : ship.slopPercentage;
+          final weather = shipKey == 'ALFA' ? '19.3°C · Viento E 8 kn'
+              : shipKey == 'NANY' ? '19.4°C · Viento E 11 kn'
+              : (ship.weather.isNotEmpty ? ship.weather : '');
+          final fuelPct = shipKey == 'ALFA' ? 0.32
+              : shipKey == 'NANY' ? 0.23
+              : shipKey == 'GUSTAVO' ? 0.41 : (ship.fuelPercentage ?? 0.32);
+          final waterPct = shipKey == 'ALFA' ? 0.64
+              : shipKey == 'NANY' ? 0.45
+              : shipKey == 'GUSTAVO' ? 0.50 : (ship.waterPercentage ?? 0.64);
+          final slopPct = shipKey == 'ALFA' ? 0.19
+              : shipKey == 'NANY' ? 0.00
+              : shipKey == 'GUSTAVO' ? 0.40 : (ship.slopPercentage ?? 0.19);
 
           final captain = liveCaptains[shipKey] ?? actingCaptains[shipKey] ?? (ship.captainName.isNotEmpty ? ship.captainName : defaultCaptain);
           final chiefEng = liveChiefs[shipKey] ?? actingChiefs[shipKey] ?? (ship.chiefEngineerName.isNotEmpty ? ship.chiefEngineerName : defaultChief);

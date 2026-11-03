@@ -387,8 +387,8 @@ class Ship {
     if (lastPort.isNotEmpty) return lastPort;
     final u = name.toUpperCase();
     if (u.contains('ALFA')) return 'Fondeado en Rada La Plata (Zona Común)';
+    if (u.contains('NANY')) return 'Operando STS con BORDEAUX';
     if (u.contains('GUSTAVO')) return 'Rada La Plata';
-    if (u.contains('NANY')) return 'Campana';
     return '';
   }
 
@@ -396,44 +396,45 @@ class Ship {
     if (weather.isNotEmpty) return weather;
     final u = name.toUpperCase();
     if (u.contains('ALFA')) return '19.3°C · Viento E 8 kn';
+    if (u.contains('NANY')) return '19.4°C · Viento E 11 kn';
     return '';
   }
 
   double get resolvedFuelPercentage {
-    if (fuelPercentage != null && fuelPercentage! > 0) {
+    if (fuelPercentage != null && fuelPercentage! >= 0) {
       return fuelPercentage! > 1.0 ? (fuelPercentage! / 100.0).clamp(0.0, 1.0) : fuelPercentage!.clamp(0.0, 1.0);
     }
     final u = name.toUpperCase();
     if (u.contains('ALFA')) return 0.32; // 32% verificado según reporte diario Intranet
+    if (u.contains('NANY')) return 0.23; // 23% verificado según reporte diario Intranet
     if (totalCarbon > 0) {
       if (u.contains('GUSTAVO')) return (totalCarbon / 220.0).clamp(0.0, 1.0);
-      if (u.contains('NANY')) return (totalCarbon / 200.0).clamp(0.0, 1.0);
     }
     return 0.32;
   }
 
   double get resolvedWaterPercentage {
-    if (waterPercentage != null && waterPercentage! > 0) {
+    if (waterPercentage != null && waterPercentage! >= 0) {
       return waterPercentage! > 1.0 ? (waterPercentage! / 100.0).clamp(0.0, 1.0) : waterPercentage!.clamp(0.0, 1.0);
     }
     final u = name.toUpperCase();
     if (u.contains('ALFA')) return 0.64; // 64% verificado según reporte diario Intranet (118.2 m³ / 184.7 m³)
+    if (u.contains('NANY')) return 0.45; // 45% verificado según reporte diario Intranet
     if (totalWater > 0) {
       if (u.contains('GUSTAVO')) return (totalWater / 180.0).clamp(0.0, 1.0);
-      if (u.contains('NANY')) return (totalWater / 190.0).clamp(0.0, 1.0);
     }
     return 0.64;
   }
 
   double get resolvedSlopPercentage {
-    if (slopPercentage != null && slopPercentage! > 0) {
+    if (slopPercentage != null && slopPercentage! >= 0) {
       return slopPercentage! > 1.0 ? (slopPercentage! / 100.0).clamp(0.0, 1.0) : slopPercentage!.clamp(0.0, 1.0);
     }
     final u = name.toUpperCase();
     if (u.contains('ALFA')) return 0.19; // 19% verificado según reporte diario Intranet (8.31 m³ / 43.7 m³)
+    if (u.contains('NANY')) return 0.00; // 0% verificado según reporte diario Intranet
     if (totalSlop > 0) {
       if (u.contains('GUSTAVO')) return (totalSlop / 30.0).clamp(0.0, 1.0);
-      if (u.contains('NANY')) return (totalSlop / 120.0).clamp(0.0, 1.0);
     }
     return 0.19;
   }
@@ -507,11 +508,11 @@ class Ship {
         TargetShip(name: "MERCOSUL SUAPE", flag: "🇧🇷", cargoDetails: "Brasil", client: "Raizen"),
       ];
     } else if (upper.contains('NANY')) {
-      // Programa de Carga oficial NANY (WFS - 3 buques provistos)
+      // Programa de Carga oficial NANY (reporte diario Intranet)
       return [
-        TargetShip(name: "SCOT DRESDEN", flag: "🇲🇹", cargoDetails: "Malta", client: "WFS"),
-        TargetShip(name: "CL EMILY BRONTE", flag: "🇱🇷", cargoDetails: "Liberia", client: "WFS"),
-        TargetShip(name: "BBC RAISE", flag: "🇦🇬", cargoDetails: "Antigua y Barbuda", client: "WFS"),
+        TargetShip(name: "HUA SI YUAN", flag: "", cargoDetails: "", client: "WFS"),
+        TargetShip(name: "YASA SWAN", flag: "", cargoDetails: "", client: "WFS"),
+        TargetShip(name: "BORDEAUX", flag: "", cargoDetails: "", client: "WFS"),
       ];
     } else if (upper.contains('GUSTAVO')) {
       // Programa de Carga activo GUSTAVO U (WFS - 3 buques viaje activo 513)
@@ -601,9 +602,13 @@ class Ship {
     final waterPctRaw = parseNum(json['water_percentage'] ?? json['porcentaje_agua'] ?? json['water_pct']);
     final slopPctRaw = parseNum(json['slop_percentage'] ?? json['porcentaje_slop'] ?? json['slop_pct']);
 
-    final fuelPct = fuelPctRaw > 0 ? (fuelPctRaw > 1.0 ? fuelPctRaw / 100.0 : fuelPctRaw) : null;
-    final waterPct = waterPctRaw > 0 ? (waterPctRaw > 1.0 ? waterPctRaw / 100.0 : waterPctRaw) : null;
-    final slopPct = slopPctRaw > 0 ? (slopPctRaw > 1.0 ? slopPctRaw / 100.0 : slopPctRaw) : null;
+    final hasFuelPct = json['fuel_percentage'] != null || json['porcentaje_combustible'] != null || json['comb_percentage'] != null || json['fuel_pct'] != null;
+    final hasWaterPct = json['water_percentage'] != null || json['porcentaje_agua'] != null || json['water_pct'] != null;
+    final hasSlopPct = json['slop_percentage'] != null || json['porcentaje_slop'] != null || json['slop_pct'] != null;
+
+    final fuelPct = hasFuelPct ? (fuelPctRaw > 1.0 ? fuelPctRaw / 100.0 : fuelPctRaw) : null;
+    final waterPct = hasWaterPct ? (waterPctRaw > 1.0 ? waterPctRaw / 100.0 : waterPctRaw) : null;
+    final slopPct = hasSlopPct ? (slopPctRaw > 1.0 ? slopPctRaw / 100.0 : slopPctRaw) : null;
 
     return Ship(
       id: json['id']?.toString() ?? '',

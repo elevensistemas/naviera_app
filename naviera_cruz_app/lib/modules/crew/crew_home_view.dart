@@ -245,18 +245,21 @@ class _CrewHomeViewState extends State<CrewHomeView> {
                           const SizedBox(height: 14),
                         ],
 
-                        // 1. Tarjeta de Perfil Unificada con Anillo y 4 Columnas
+                        // 1. Bienvenido a la app de NCS (Primero en Inicio)
+                        const WelcomeNovedadesCard(margin: EdgeInsets.only(bottom: 16)),
+
+                        // 2. Tarjeta "Tu ayuda a bordo" con avatar 3D + buscador (Luego de bienvenida)
+                        _buildAyudaABordoCard(isDark),
+
+                        const SizedBox(height: 16),
+
+                        // 3. Tarjeta de Perfil Unificada con Anillo y 4 Columnas
                         _buildProfileCard(isDark),
 
                         const SizedBox(height: 16),
 
-                        // 2. Accesos rápidos (Reportar incidente, Boletines, Cursos, Preguntas Frecuentes)
+                        // 4. Accesos rápidos (Reportar incidente, Boletines, Cursos, Preguntas Frecuentes)
                         _buildAccesosRapidosSection(isDark),
-
-                        const SizedBox(height: 16),
-
-                        // 3. Tarjeta "Tu ayuda a bordo" con avatar 3D + buscador
-                        _buildAyudaABordoCard(isDark),
 
                         const SizedBox(height: 16),
 
@@ -1196,7 +1199,7 @@ class _CrewHomeViewState extends State<CrewHomeView> {
     }
 
     if (_crewPosts.isEmpty) {
-      return const WelcomeNovedadesCard(margin: EdgeInsets.zero);
+      return const SizedBox.shrink();
     }
 
     final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
