@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/crew_faq_service.dart';
 import '../../models/crew_profile.dart';
+import '../../app/ncs_hero_header.dart';
 
 class CrewFaqSearchView extends StatefulWidget {
   final String? initialQuery;
@@ -224,208 +225,195 @@ class _CrewFaqSearchViewState extends State<CrewFaqSearchView> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0057B8),
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        leading: widget.isTabModule
-            ? const Padding(
-                padding: EdgeInsets.all(12.0),
-                child: Icon(Icons.quiz_rounded, color: Colors.white, size: 24),
-              )
-            : IconButton(
-                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                onPressed: () => Navigator.of(context).pop(),
-                tooltip: "Volver",
-              ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Text(
-              "Preguntas Frecuentes",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-            Text(
-              "Respuestas oficiales y procedimientos predefinidos",
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 11,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          if (_isSyncing)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14),
-              child: Center(
-                child: SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
-                  ),
-                ),
-              ),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.sync_rounded, color: Colors.white),
-              tooltip: "Sincronizar con Intranet",
-              onPressed: () => _syncFaqs(force: true),
-            ),
-        ],
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 650),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 1. Barra de Búsqueda Superior
-              Container(
-                color: const Color(0xFF0057B8),
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F172A) : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.12),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (val) {
-                      setState(() {
-                        _searchQuery = val;
-                      });
-                    },
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                    decoration: InputDecoration(
-                      hintText: "¿Qué necesitás resolver? (ej: francos, incidente, buque)",
-                      hintStyle: TextStyle(
-                        fontSize: 13,
-                        color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.search_rounded,
-                        color: Color(0xFF0057B8),
-                      ),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear_rounded, size: 20),
-                              color: const Color(0xFF64748B),
-                              onPressed: _clearSearch,
-                              tooltip: "Limpiar búsqueda",
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                    ),
-                  ),
-                ),
-              ),
+      body: Column(
+        children: [
+          // Hero Header oficial de Naviera Cruz del Sur (restablecido en módulos de oficina y tripulación)
+          NcsHeroHeader(
+            title: "Preguntas Frecuentes",
+            subtitle: "Respuestas oficiales y procedimientos predefinidos",
+            showBackButton: !widget.isTabModule,
+            onBackTap: () => Navigator.of(context).pop(),
+          ),
 
-              // 2. Selector Desplegable de Categorías (estilo Intranet NCS)
-              _buildCategoryDropdown(isDark: isDark),
-
-              // 2b. Chips Rápidos de Categorías
-              Container(
-                color: isDark ? const Color(0xFF131C2E) : Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  child: Row(
-                    children: [
-                      _buildCategoryChip(
-                        label: "Todas (${CrewFAQService.shared.currentCatalog.length})",
-                        icon: Icons.all_inclusive_rounded,
-                        isSelected: _selectedCategory == null,
-                        onTap: () {
-                          setState(() {
-                            _selectedCategory = null;
-                          });
-                        },
-                        isDark: isDark,
-                      ),
-                      const SizedBox(width: 8),
-                      ...FAQCategory.values.map((cat) {
-                        final count = CrewFAQService.shared.currentCatalog.where((i) => i.category == cat).length;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: _buildCategoryChip(
-                            label: "${cat.displayName} ($count)",
-                            icon: _getCategoryIcon(cat),
-                            isSelected: _selectedCategory == cat,
-                            onTap: () {
-                              setState(() {
-                                _selectedCategory = (_selectedCategory == cat) ? null : cat;
-                              });
-                            },
-                            isDark: isDark,
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-              ),
-
-              // 3. Encabezado con Contador de Resultados y Agrupación
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-                child: Row(
+          // Contenido principal de FAQs posicionado con holgura debajo del Hero
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: Text(
-                        _searchQuery.isNotEmpty
-                            ? "RESULTADOS DE BÚSQUEDA (${filtered.length})"
-                            : (_selectedCategory != null
-                                ? "${_selectedCategory!.displayName.toUpperCase()} (${filtered.length})"
-                                : "PREGUNTAS FRECUENTES (${filtered.length}) • AGRUPADAS POR CATEGORÍA"),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                          color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                    // Espaciado vertical para ubicar el buscador y FAQs más abajo del Hero
+                    const SizedBox(height: 18),
+
+                    // 1. Barra de Búsqueda Elevada y Moderna con botón de Sincronización
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                            width: 1.2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                onChanged: (val) {
+                                  setState(() {
+                                    _searchQuery = val;
+                                  });
+                                },
+                                style: TextStyle(
+                                  fontSize: 14.5,
+                                  color: isDark ? Colors.white : const Color(0xFF0F172A),
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: "¿Qué necesitás resolver? (ej: francos, incidente, buque)",
+                                  hintStyle: TextStyle(
+                                    fontSize: 13,
+                                    color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.search_rounded,
+                                    color: Color(0xFF0057B8),
+                                  ),
+                                  suffixIcon: _searchQuery.isNotEmpty
+                                      ? IconButton(
+                                          icon: const Icon(Icons.clear_rounded, size: 20),
+                                          color: const Color(0xFF64748B),
+                                          onPressed: _clearSearch,
+                                          tooltip: "Limpiar búsqueda",
+                                        )
+                                      : null,
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                                ),
+                              ),
+                            ),
+                            if (_isSyncing)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 12),
+                                child: SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0057B8)),
+                                  ),
+                                ),
+                              )
+                            else
+                              IconButton(
+                                icon: const Icon(Icons.sync_rounded, color: Color(0xFF0057B8), size: 20),
+                                tooltip: "Sincronizar con Intranet",
+                                onPressed: () => _syncFaqs(force: true),
+                              ),
+                          ],
                         ),
                       ),
                     ),
-                    if (_searchQuery.isNotEmpty || _selectedCategory != null)
-                      GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedCategory = null;
-                            _clearSearch();
-                          });
-                        },
-                        child: const Text(
-                          "Restablecer filtros",
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0057B8),
-                          ),
+
+                    const SizedBox(height: 10),
+
+                    // 2. Selector Desplegable de Categorías (estilo Intranet NCS)
+                    _buildCategoryDropdown(isDark: isDark),
+
+                    const SizedBox(height: 6),
+
+                    // 2b. Chips Rápidos de Categorías
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Row(
+                          children: [
+                            _buildCategoryChip(
+                              label: "Todas (${CrewFAQService.shared.currentCatalog.length})",
+                              icon: Icons.all_inclusive_rounded,
+                              isSelected: _selectedCategory == null,
+                              onTap: () {
+                                setState(() {
+                                  _selectedCategory = null;
+                                });
+                              },
+                              isDark: isDark,
+                            ),
+                            const SizedBox(width: 8),
+                            ...FAQCategory.values.map((cat) {
+                              final count = CrewFAQService.shared.currentCatalog.where((i) => i.category == cat).length;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: _buildCategoryChip(
+                                  label: "${cat.displayName} ($count)",
+                                  icon: _getCategoryIcon(cat),
+                                  isSelected: _selectedCategory == cat,
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedCategory = (_selectedCategory == cat) ? null : cat;
+                                    });
+                                  },
+                                  isDark: isDark,
+                                ),
+                              );
+                            }),
+                          ],
                         ),
                       ),
-                  ],
-                ),
-              ),
+                    ),
+
+                    // 3. Encabezado con Contador de Resultados y Agrupación
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _searchQuery.isNotEmpty
+                                  ? "RESULTADOS DE BÚSQUEDA (${filtered.length})"
+                                  : (_selectedCategory != null
+                                      ? "${_selectedCategory!.displayName.toUpperCase()} (${filtered.length})"
+                                      : "PREGUNTAS FRECUENTES (${filtered.length}) • AGRUPADAS POR CATEGORÍA"),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
+                                color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
+                          if (_searchQuery.isNotEmpty || _selectedCategory != null)
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedCategory = null;
+                                  _clearSearch();
+                                });
+                              },
+                              child: const Text(
+                                "Restablecer filtros",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0057B8),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
 
               // 4. Lista de Preguntas Frecuentes Agrupadas
               Expanded(
@@ -467,23 +455,32 @@ class _CrewFaqSearchViewState extends State<CrewFaqSearchView> {
           ),
         ),
       ),
-    );
+    ),
+  ],
+),
+);
   }
 
   Widget _buildCategoryDropdown({required bool isDark}) {
     final catalog = CrewFAQService.shared.currentCatalog;
-    return Container(
-      color: isDark ? const Color(0xFF131C2E) : Colors.white,
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(10),
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
-            width: 1.2,
+            width: 1.0,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<FAQCategory?>(
@@ -491,7 +488,7 @@ class _CrewFaqSearchViewState extends State<CrewFaqSearchView> {
             isExpanded: true,
             icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF0057B8), size: 24),
             dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             items: [
               DropdownMenuItem<FAQCategory?>(
                 value: null,
@@ -575,7 +572,7 @@ class _CrewFaqSearchViewState extends State<CrewFaqSearchView> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0057B8).withOpacity(0.12),
+                    color: const Color(0xFF0057B8).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -710,7 +707,7 @@ class _CrewFaqSearchViewState extends State<CrewFaqSearchView> {
         border: Border.all(color: borderColor, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -738,7 +735,7 @@ class _CrewFaqSearchViewState extends State<CrewFaqSearchView> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
-                            color: iconColor.withOpacity(0.12),
+                            color: iconColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
