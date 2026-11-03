@@ -443,10 +443,10 @@ class Ship {
   int get resolvedProvistosCount {
     if (provistosCount > 0) return provistosCount;
     final u = name.toUpperCase();
-    if (u.contains('ALFA')) return 6;
-    if (u.contains('GUSTAVO')) return 16;
-    if (u.contains('NANY')) return 17;
-    return 6;
+    if (u.contains('ALFA')) return 2;
+    if (u.contains('GUSTAVO')) return 3;
+    if (u.contains('NANY')) return 3;
+    return 3;
   }
 
   double get resolvedProvistosTotal {
@@ -454,8 +454,8 @@ class Ship {
     final u = name.toUpperCase();
     if (u.contains('ALFA')) return 6915.0;
     if (u.contains('GUSTAVO')) return 7390.0;
-    if (u.contains('NANY')) return 4320.0;
-    return 6915.0;
+    if (u.contains('NANY')) return 2100.0;
+    return 2100.0;
   }
 
   Ship copyWith({
@@ -521,13 +521,11 @@ class Ship {
         TargetShip(name: "MERCOSUL SUAPE", flag: "🇧🇷", cargoDetails: "Brasil", client: "Raizen"),
       ];
     } else if (upper.contains('NANY')) {
-      // Programa de Carga oficial NANY (WFS)
+      // Programa de Carga oficial NANY (WFS - 3 buques provistos)
       return [
         TargetShip(name: "SCOT DRESDEN", flag: "🇲🇹", cargoDetails: "Malta", client: "WFS"),
         TargetShip(name: "CL EMILY BRONTE", flag: "🇱🇷", cargoDetails: "Liberia", client: "WFS"),
         TargetShip(name: "BBC RAISE", flag: "🇦🇬", cargoDetails: "Antigua y Barbuda", client: "WFS"),
-        TargetShip(name: "BC PISTI", flag: "🇵🇦", cargoDetails: "Panamá", client: "WFS"),
-        TargetShip(name: "STAR NAGA", flag: "🇲🇭", cargoDetails: "Islas Marshall", client: "WFS"),
       ];
     } else if (upper.contains('GUSTAVO')) {
       // Programa de Carga activo GUSTAVO U (WFS - 3 buques viaje activo 513)

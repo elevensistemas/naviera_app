@@ -128,10 +128,11 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         nany = nany.copyWith(
           name: "NANY",
           targetShips: nany.targetShips.isNotEmpty
-              ? nany.targetShips
+              ? (nany.targetShips.length > 3 ? nany.targetShips.take(3).toList() : nany.targetShips)
               : Ship.getDefaultTargetShipsFor("NANY"),
           lastPort: nany.lastPort.isNotEmpty ? nany.lastPort : 'CAMPANA',
-          provistosCount: nany.targetShips.isNotEmpty ? nany.targetShips.length : 5,
+          provistosCount: 3,
+          provistosTotal: 2100.0,
           weather: '',
         );
 
@@ -502,8 +503,8 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         chiefEngineerName: "Carlino Hernan",
         lastPort: "Campana",
         weather: "",
-        provistosCount: 5,
-        provistosTotal: 4320.00,
+        provistosCount: 3,
+        provistosTotal: 2100.00,
       ),
     ];
   }
@@ -515,7 +516,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
       final totalStr = ship.provistosTotal > 0 ? "${ship.provistosTotal.toStringAsFixed(0)} m³" : "6915 m³";
       return "Raizen ($totalStr • $count buques)";
     } else if (upper.contains('NANY')) {
-      final totalStr = ship.provistosTotal > 0 ? "${(ship.provistosTotal / 1000).toStringAsFixed(2)} k t" : "4.32 k t";
+      final totalStr = ship.provistosTotal > 0 ? "${(ship.provistosTotal / 1000).toStringAsFixed(2)} k t" : "2.10 k t";
       return "WFS ($totalStr • $count buques)";
     } else if (upper.contains('GUSTAVO')) {
       final totalStr = ship.provistosTotal > 0 ? "${(ship.provistosTotal / 1000).toStringAsFixed(2)} k t" : "7.39 k t";

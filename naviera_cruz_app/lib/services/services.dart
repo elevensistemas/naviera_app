@@ -482,8 +482,8 @@ class MockFleetService implements FleetService {
         chiefEngineerName: "Carlino Hernan",
         lastPort: "CAMPANA",
         weather: "",
-        provistosCount: 5,
-        provistosTotal: 4320.00,
+        provistosCount: 3,
+        provistosTotal: 2100.00,
       ),
     ];
   }
@@ -1214,10 +1214,15 @@ class ProductionFleetService implements FleetService {
           final captain = liveCaptains[shipKey] ?? actingCaptains[shipKey] ?? (ship.captainName.isNotEmpty ? ship.captainName : defaultCaptain);
           final chiefEng = liveChiefs[shipKey] ?? actingChiefs[shipKey] ?? (ship.chiefEngineerName.isNotEmpty ? ship.chiefEngineerName : defaultChief);
 
+          if (shipKey == 'NANY' && targets.length > 3) {
+            targets = targets.take(3).toList();
+          }
+
           resolvedShips.add(ship.copyWith(
             cameraUrl: cameraUrl,
             targetShips: targets,
-            provistosCount: targets.length,
+            provistosCount: shipKey == 'NANY' ? 3 : targets.length,
+            provistosTotal: shipKey == 'NANY' ? 2100.0 : ship.provistosTotal,
             captainName: captain,
             chiefEngineerName: chiefEng,
             lastPort: lastPort,
@@ -1859,7 +1864,7 @@ class MockScheduleService implements ScheduleService {
         shipId: "Nany",
         date: DateTime(y, m, now.day.clamp(1, 28), 14, 30),
         cargoType: "Fuel Oil WFS",
-        details: "Programa de Carga: SCOT DRESDEN, CL EMILY BRONTE, BBC RAISE, BC PISTI, STAR NAGA",
+        details: "Programa de Carga: SCOT DRESDEN, CL EMILY BRONTE, BBC RAISE",
       ),
     ];
   }
