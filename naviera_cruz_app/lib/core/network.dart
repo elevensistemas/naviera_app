@@ -71,6 +71,11 @@ class APIClient {
         } catch (e) {
           throw NetworkException("Error al procesar la respuesta del servidor.");
         }
+      case 400:
+        if (endpoint.contains('/login/')) {
+          throw NetworkException("Usuario o contraseña incorrectos. Verifica tus credenciales de la Intranet.", statusCode: 400);
+        }
+        throw NetworkException("Error en la solicitud. Código: 400", statusCode: 400);
       case 401:
         if (endpoint.contains('/login/')) {
           throw NetworkException("Usuario o contraseña incorrectos.", statusCode: 401);

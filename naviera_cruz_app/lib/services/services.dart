@@ -115,12 +115,15 @@ class ProductionAuthService implements AuthService {
         return {'user': user, 'token': token};
       }
     } catch (e) {
-      if (e is NetworkException && e.statusCode == 401) {
-        throw NetworkException("Usuario o contraseña incorrectos.", statusCode: 401);
+      if (e is NetworkException && (e.statusCode == 400 || e.statusCode == 401)) {
+        throw NetworkException(e.message, statusCode: e.statusCode);
       }
-      return MockAuthService().login(username, passcode);
+      if (AppConfig.isMockActive) {
+        return MockAuthService().login(username, passcode);
+      }
+      rethrow;
     }
-    return MockAuthService().login(username, passcode);
+    throw NetworkException("Respuesta inesperada del servidor de autenticación.");
   }
 
   @override
