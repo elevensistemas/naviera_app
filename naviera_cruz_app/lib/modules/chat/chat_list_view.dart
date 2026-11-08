@@ -18,7 +18,6 @@ class _ChatListViewState extends State<ChatListView> {
   List<ChatChannel> _filteredChannels = [];
   final _searchController = TextEditingController();
   bool _isLoading = false;
-  String? _errorMessage;
   int _activeSegment = 0; // 0 = Chats recientes, 1 = Todos los contactos
 
   @override
@@ -53,7 +52,6 @@ class _ChatListViewState extends State<ChatListView> {
   Future<void> _loadChannels() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
     });
 
     try {
@@ -319,237 +317,78 @@ class _ChatListViewState extends State<ChatListView> {
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
     final captionColor = isDark ? Colors.white60 : const Color(0xFF64748B);
-    final bodyBg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
-    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final inputBg = isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC);
-    final inputBorder = isDark ? Colors.white24 : const Color(0xFFE2E8F0);
+    final bgGradientColors = isDark
+        ? [const Color(0xFF0F172A), const Color(0xFF0A0F1D)]
+        : [const Color(0xFFE2EDFB), const Color(0xFFF1F6FC), const Color(0xFFF8FAFC)];
 
     return Container(
-      color: bodyBg,
+      color: isDark ? const Color(0xFF0A0F1D) : const Color(0xFFF1F6FC),
       child: Column(
         children: [
-          // Standard NcsHeroHeader with ship ALFA C - PINNED AT TOP
+          // Standard NcsHeroHeader con funciones interactivas completas
           const NcsHeroHeader(
             title: "Comunicaciones",
             subtitle: "Mensajería, contactos y asistente IA.",
           ),
           Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-
-            // Main White / Card Container with rounded top corners
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              padding: const EdgeInsets.all(18.0),
+            child: Container(
               decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: bgGradientColors,
+                  stops: const [0.0, 0.35, 1.0],
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Stack(
                 children: [
-                  // Row 1: Search Input Bar
-                  _buildSearchBar(inputBg, inputBorder, isDark, captionColor, textColor),
-                  const SizedBox(height: 16),
+                  // Sutil resplandor luminoso superior simulando el efecto frosted/vidrio
+                  Positioned(
+                    top: -50,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      height: 120,
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          center: Alignment.topCenter,
+                          radius: 1.3,
+                          colors: [
+                            Colors.white.withValues(alpha: isDark ? 0.05 : 0.75),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
 
-                  // Row 2: Top 2 Action Cards (Asistente IA NCS + Nuevo chat)
-                  IntrinsicHeight(
-                    child: Row(
+                  // Lista scrolleable con diseño flotante iOS Liquid Glass
+                  SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16.0, 14.0, 16.0, 36.0),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Card 1: Asistente IA NCS
-                        Expanded(
-                          child: _buildActionCard(
-                            context: context,
-                            title: "Asistente IA",
-                            subtitle: "Asistente de Voz y Texto",
-                            icon: Icons.auto_awesome_rounded,
-                            iconBgColor: isDark ? const Color(0xFF7C2D12) : const Color(0xFFFFEDD5),
-                            iconColor: isDark ? const Color(0xFFF97316) : const Color(0xFFEA580C),
-                            cardBgColor: isDark ? const Color(0xFF451A03).withOpacity(0.4) : const Color(0xFFFFF7ED),
-                            borderColor: isDark ? const Color(0xFF7C2D12) : const Color(0xFFFFEDD5),
-                            arrowColor: isDark ? const Color(0xFFF97316) : const Color(0xFFEA580C),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => const AIChatView()),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 10),
+                        // 1. Buscador con diseño pill frosted translúcido
+                        _buildSearchBar(isDark, textColor, captionColor),
+                        const SizedBox(height: 14),
 
-                        // Card 2: Nuevo chat
-                        Expanded(
-                          child: _buildActionCard(
-                            context: context,
-                            title: "Nuevo chat",
-                            subtitle: "Conversar con usuarios",
-                            icon: Icons.chat_bubble_rounded,
-                            iconBgColor: isDark ? const Color(0xFF1E3A8A) : const Color(0xFFDBEAFE),
-                            iconColor: isDark ? const Color(0xFF60A5FA) : const Color(0xFF0284C7),
-                            cardBgColor: isDark ? const Color(0xFF172554).withOpacity(0.4) : const Color(0xFFEFF6FF),
-                            borderColor: isDark ? const Color(0xFF1E3A8A) : const Color(0xFFBFDBFE),
-                            arrowColor: isDark ? const Color(0xFF60A5FA) : const Color(0xFF0284C7),
-                            onTap: () {
-                              _showNewChatModal(context);
-                            },
-                          ),
-                        ),
+                        // 2. Banner Asistente NCS con gradiente deep sapphire e icono estelar IA
+                        _buildAssistantBanner(context, isDark),
+                        const SizedBox(height: 14),
+
+                        // 3. Tarjetas de Acción directas (Nuevo Chat y Contactos - sin llamada ni archivos compartidos)
+                        _buildActionCards(context, isDark, textColor),
+                        const SizedBox(height: 16),
+
+                        // 4. Selector de Segmento (Chats recientes / Todos los contactos)
+                        _buildSegmentSwitcher(isDark),
+                        const SizedBox(height: 20),
+
+                        // 5. Contenido principal (Empty state o lista de chats / contactos)
+                        _buildContent(context, isDark, textColor, captionColor),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Row 3: Segmented Switcher (Chats recientes / Todos los contactos)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: isDark ? Colors.white24 : const Color(0xFFE2E8F0)),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() => _activeSegment = 0);
-                              _loadChannels();
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              alignment: Alignment.center,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: _activeSegment == 0 ? ColorTheme.primary : Colors.transparent,
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              child: Text(
-                                "Chats recientes",
-                                style: TextStyle(
-                                  color: _activeSegment == 0 ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() => _activeSegment = 1);
-                              _loadChannels();
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              alignment: Alignment.center,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              decoration: BoxDecoration(
-                                color: _activeSegment == 1 ? ColorTheme.primary : Colors.transparent,
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              child: Text(
-                                "Todos los contactos",
-                                style: TextStyle(
-                                  color: _activeSegment == 1 ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF475569)),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-
-                  // Row 4: Channels & Contacts List / Empty State
-                  if (_isLoading && _filteredChannels.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(40.0),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else if (_filteredChannels.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 36.0, horizontal: 16.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(18),
-                            decoration: BoxDecoration(
-                              color: isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F5F9),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.forum_outlined,
-                              size: 42,
-                              color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            _activeSegment == 0 ? "No hay chats recientes" : "No hay contactos disponibles",
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            _activeSegment == 0
-                                ? "Contacta con el chat haciendo clic en 'Nuevo chat' o buscando en la pestaña 'Todos los contactos'."
-                                : "No se encontraron contactos en la agenda.",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: captionColor,
-                              height: 1.4,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 18),
-                          ElevatedButton.icon(
-                            onPressed: () => _showNewChatModal(context),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: ColorTheme.primary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            icon: const Icon(Icons.add_comment_rounded, size: 18),
-                            label: const Text(
-                              "Nuevo Chat",
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _filteredChannels.length,
-                      itemBuilder: (context, index) {
-                        final channel = _filteredChannels[index];
-                        return _buildChannelTile(channel, isDark, textColor, captionColor);
-                      },
-                    ),
-                ],
-              ),
                   ),
                 ],
               ),
@@ -560,40 +399,52 @@ class _ChatListViewState extends State<ChatListView> {
     );
   }
 
-  Widget _buildSearchBar(Color inputBg, Color inputBorder, bool isDark, Color captionColor, Color textColor) {
+  Widget _buildSearchBar(bool isDark, Color textColor, Color captionColor) {
     return Container(
-      height: 46,
+      height: 48,
       decoration: BoxDecoration(
-        color: inputBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: inputBorder),
+        color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: isDark ? Colors.white24 : Colors.white,
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0057B8).withValues(alpha: isDark ? 0.15 : 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: TextField(
         controller: _searchController,
         style: TextStyle(
           fontSize: 14,
           color: textColor,
+          fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(vertical: 13),
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
           prefixIcon: Icon(
-            Icons.search,
-            color: isDark ? Colors.white54 : const Color(0xFF94A3B8),
+            Icons.search_rounded,
+            color: isDark ? Colors.white60 : const Color(0xFF334155),
             size: 22,
           ),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.close, size: 18),
+                  icon: const Icon(Icons.close_rounded, size: 18),
                   onPressed: () {
                     _searchController.clear();
                   },
                 )
               : null,
-          hintText: "Buscar conversaciones, contactos o mensajes...",
+          hintText: "Buscar conversaciones, contactos o mensajes",
           hintStyle: TextStyle(
-            fontSize: 13,
-            color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
+            fontSize: 13.5,
+            color: isDark ? Colors.white38 : const Color(0xFF64748B),
+            fontWeight: FontWeight.w400,
           ),
           border: InputBorder.none,
         ),
@@ -601,85 +452,550 @@ class _ChatListViewState extends State<ChatListView> {
     );
   }
 
-  Widget _buildActionCard({
-    required BuildContext context,
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color iconBgColor,
-    required Color iconColor,
-    required Color cardBgColor,
-    required Color borderColor,
-    required Color arrowColor,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
-
+  Widget _buildAssistantBanner(BuildContext context, bool isDark) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AIChatView()),
+        );
+      },
       child: Container(
-        height: 80, // Dimensiones de borde e iconos idénticas para ambas tarjetas
-        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+        height: 82,
         decoration: BoxDecoration(
-          color: cardBgColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: borderColor, width: 1.2),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: iconBgColor,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
+          borderRadius: BorderRadius.circular(22),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF1E293B), // Midnight slate
+              Color(0xFF1E3A8A), // Royal Navy
+              Color(0xFF2563EB), // Electric Cobalt Blue
+              Color(0xFF3B82F6), // Bright Azure
+            ],
+            stops: [0.0, 0.35, 0.72, 1.0],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF2563EB).withValues(alpha: 0.35),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isDark ? Colors.white60 : const Color(0xFF64748B),
-                      height: 1.15,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(Icons.chevron_right, size: 16, color: arrowColor),
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: Stack(
+            children: [
+              // Reflejo ondulado luminoso inferior
+              Positioned(
+                right: -25,
+                bottom: -35,
+                child: Container(
+                  width: 150,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFF93C5FD).withValues(alpha: 0.4),
+                        const Color(0xFF60A5FA).withValues(alpha: 0.15),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                child: Row(
+                  children: [
+                    // Icono de estrella IA con resplandor radial
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            const Color(0xFF818CF8).withValues(alpha: 0.45),
+                            const Color(0xFF3B82F6).withValues(alpha: 0.18),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                      child: Center(
+                        child: ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [
+                              Color(0xFFFFFFFF),
+                              Color(0xFFBAE6FD),
+                              Color(0xFFDDD6FE),
+                              Color(0xFFF472B6),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ).createShader(bounds),
+                          child: const Icon(
+                            Icons.auto_awesome,
+                            size: 34,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    // Títulos del asistente
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            "Asistente NCS",
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                          SizedBox(height: 3),
+                          Text(
+                            "Tu aliado operativo con IA",
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFFE2E8F0),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Botón circular chevron
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.chevron_right_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  Widget _buildActionCards(BuildContext context, bool isDark, Color textColor) {
+    final cardBg = isDark ? const Color(0xFF1E293B).withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.88);
+    final cardBorder = isDark ? Colors.white12 : Colors.white;
+    final cardShadow = [
+      BoxShadow(
+        color: const Color(0xFF0057B8).withValues(alpha: isDark ? 0.2 : 0.05),
+        blurRadius: 16,
+        offset: const Offset(0, 4),
+      ),
+    ];
+
+    return Row(
+      children: [
+        // Tarjeta 1: Nuevo Chat
+        Expanded(
+          child: GestureDetector(
+            onTap: () => _showNewChatModal(context),
+            child: Container(
+              height: 86,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: cardBorder, width: 1.5),
+                boxShadow: cardShadow,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF007AFF),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.add_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    "Nuevo Chat",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF007AFF),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 14),
+
+        // Tarjeta 2: Contactos
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              setState(() => _activeSegment = 1);
+              _loadChannels();
+            },
+            child: Container(
+              height: 86,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: cardBorder, width: 1.5),
+                boxShadow: cardShadow,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 38,
+                    height: 38,
+                    child: Icon(
+                      Icons.people_outline_rounded,
+                      size: 28,
+                      color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "Contactos",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white70 : const Color(0xFF334155),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSegmentSwitcher(bool isDark) {
+    return Container(
+      height: 46,
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(
+          color: isDark ? Colors.white12 : Colors.white.withValues(alpha: 0.8),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Tab 1: Chats recientes
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                if (_activeSegment != 0) {
+                  setState(() => _activeSegment = 0);
+                  _loadChannels();
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                alignment: Alignment.center,
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  color: _activeSegment == 0 ? const Color(0xFF007AFF) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(26),
+                  boxShadow: _activeSegment == 0
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFF007AFF).withValues(alpha: 0.35),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ]
+                      : [],
+                ),
+                child: Text(
+                  "Chats recientes",
+                  style: TextStyle(
+                    color: _activeSegment == 0
+                        ? Colors.white
+                        : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Tab 2: Todos los contactos
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                if (_activeSegment != 1) {
+                  setState(() => _activeSegment = 1);
+                  _loadChannels();
+                }
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                alignment: Alignment.center,
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  color: _activeSegment == 1 ? const Color(0xFF007AFF) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(26),
+                  boxShadow: _activeSegment == 1
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFF007AFF).withValues(alpha: 0.35),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ]
+                      : [],
+                ),
+                child: Text(
+                  "Todos los contactos",
+                  style: TextStyle(
+                    color: _activeSegment == 1
+                        ? Colors.white
+                        : (isDark ? Colors.white70 : const Color(0xFF475569)),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, bool isDark, Color textColor, Color captionColor) {
+    if (_isLoading && _filteredChannels.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 60.0),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_filteredChannels.isEmpty) {
+      return _buildEmptyState(context, isDark, textColor, captionColor);
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _filteredChannels.length,
+      itemBuilder: (context, index) {
+        final channel = _filteredChannels[index];
+        return _buildChannelTile(channel, isDark, textColor, captionColor);
+      },
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, bool isDark, Color textColor, Color captionColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 36.0, horizontal: 16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Halo con ilustración 3D de burbujas de diálogo
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  const Color(0xFF60A5FA).withValues(alpha: isDark ? 0.22 : 0.18),
+                  const Color(0xFF93C5FD).withValues(alpha: isDark ? 0.08 : 0.05),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Burbuja azul de fondo
+                Positioned(
+                  left: 30,
+                  top: 30,
+                  child: Container(
+                    width: 46,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF60A5FA),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                        bottomRight: Radius.circular(16),
+                        bottomLeft: Radius.circular(4),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF3B82F6).withValues(alpha: 0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Burbuja blanca en primer plano con tres puntos
+                Positioned(
+                  right: 28,
+                  bottom: 30,
+                  child: Container(
+                    width: 48,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFFE2E8F0) : Colors.white,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                        bottomLeft: Radius.circular(16),
+                        bottomRight: Radius.circular(4),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(width: 4.5, height: 4.5, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF94A3B8))),
+                        const SizedBox(width: 3.5),
+                        Container(width: 4.5, height: 4.5, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF94A3B8))),
+                        const SizedBox(width: 3.5),
+                        Container(width: 4.5, height: 4.5, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF94A3B8))),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Título
+          Text(
+            _activeSegment == 0 ? "No hay chats recientes" : "No hay contactos disponibles",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Subtítulo
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 320),
+            child: Text(
+              _activeSegment == 0
+                  ? "Inicia una conversación, contacta a un miembro de la flota o consulta al Asistente NCS."
+                  : "No se encontraron contactos en la agenda corporativa.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: captionColor,
+                height: 1.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: 22),
+
+          // Botón azul redondeado "+ Nuevo Chat"
+          GestureDetector(
+            onTap: () => _showNewChatModal(context),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF007AFF),
+                borderRadius: BorderRadius.circular(26),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF007AFF).withValues(alpha: 0.35),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.add_rounded, color: Colors.white, size: 16),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    "Nuevo Chat",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildChannelTile(ChatChannel channel, bool isDark, Color textColor, Color captionColor) {
-    final itemBg = isDark ? const Color(0xFF0F172A) : Colors.white;
-    final itemBorder = isDark ? Colors.white10 : const Color(0xFFF1F5F9);
+    final itemBg = isDark ? const Color(0xFF1E293B).withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.9);
+    final itemBorder = isDark ? Colors.white12 : Colors.white;
 
     final timeStr = channel.timeDisplay ?? _formatTime(channel.lastMessageTimestamp);
 
@@ -746,13 +1062,13 @@ class _ChatListViewState extends State<ChatListView> {
       margin: const EdgeInsets.only(bottom: 10.0),
       decoration: BoxDecoration(
         color: itemBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: itemBorder),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: itemBorder, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+            color: const Color(0xFF0057B8).withValues(alpha: isDark ? 0.15 : 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -819,7 +1135,7 @@ class _ChatListViewState extends State<ChatListView> {
             ),
             const SizedBox(width: 8),
             Icon(
-              Icons.chevron_right,
+              Icons.chevron_right_rounded,
               size: 20,
               color: isDark ? Colors.white38 : const Color(0xFF94A3B8),
             ),

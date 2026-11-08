@@ -948,6 +948,7 @@ class IntranetCrewCatalog {
         .replaceAll('ú', 'u')
         .replaceAll('ü', 'u')
         .replaceAll('ñ', 'n')
+        .replaceAll(',', '')
         .replaceAll('.', '')
         .replaceAll('-', '')
         .replaceAll('_', '')

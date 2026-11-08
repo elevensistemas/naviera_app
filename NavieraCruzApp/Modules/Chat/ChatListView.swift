@@ -19,11 +19,11 @@ struct ChatListView: View {
                                 )
                             
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("NCS-Bot Operativo")
+                                Text("Asistente NCS")
                                     .font(Typography.headline())
                                     .foregroundColor(ColorTheme.textPrimary)
                                 
-                                Text("Asistente IA (Voice & Text)")
+                                Text("Tu aliado operativo con IA")
                                     .font(Typography.caption())
                                     .foregroundColor(ColorTheme.fallbackAccent)
                             }

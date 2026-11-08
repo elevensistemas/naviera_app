@@ -302,13 +302,66 @@ class TargetShip {
     this.client,
   });
 
+  static String guessFlag(String targetName) {
+    final u = targetName.toUpperCase();
+    if (u.contains('SCRUB') || u.contains('CARAVOS') || u.contains('NAGA') || u.contains('JASMINE') || u.contains('GLBS')) return '🇲🇭';
+    if (u.contains('EDESSAIKOS') || u.contains('CASTOR') || u.contains('ASTRO') || u.contains('OTZIAS') || u.contains('ZANNIS') || u.contains('ERMOUPOLIS') || u.contains('CYTA')) return '🇬🇷';
+    if (u.contains('YAESU') || u.contains('PISTI') || u.contains('BONA')) return '🇵🇦';
+    if (u.contains('BRONTE') || u.contains('EMILY') || u.contains('MAPLE') || u.contains('CATHERINE') || u.contains('MANDARIN') || u.contains('LEADER') || u.contains('KINGSTON') || u.contains('OMARIA') || u.contains('MANDAL') || u.contains('APOGEE') || u.contains('THERESA')) return '🇱🇷';
+    if (u.contains('RAISE') || u.contains('BBC')) return '🇦🇬';
+    if (u.contains('TARAPACA')) return '🇨🇱';
+    if (u.contains('STAR') || u.contains('AMILLA') || u.contains('ANEMON') || u.contains('CHAMPION') || u.contains('PALLADA') || u.contains('THEBE') || u.contains('REVENGER') || u.contains('NIKITIS') || u.contains('BEATRICE') || u.contains('FLAME') || u.contains('EAGLE')) return '🇲🇭';
+    if (u.contains('FLORA') || u.contains('MALTEZA') || u.contains('SCOT') || u.contains('SOUTHERN') || u.contains('VERIGE') || u.contains('NAMA') || u.contains('BRIGHT')) return '🇲🇹';
+    if (u.contains('PAN') || u.contains('CRANE') || u.contains('TYANA') || u.contains('ARMONIA') || u.contains('ANTON') || u.contains('LIVERPOOL') || u.contains('BUFFLEHEAD') || u.contains('AZTECA') || u.contains('ERA') || u.contains('FOCUS') || u.contains('IMABARI') || u.contains('MADOROSU')) return '🇵🇦';
+    if (u.contains('HAI') || u.contains('FOSHAN') || u.contains('ZHANJIANG')) return '🇭🇰';
+    if (u.contains('DISCOVERY') || u.contains('CHEETAH') || u.contains('FORTITUDE') || u.contains('CORESHIP')) return '🇰🇾';
+    if (u.contains('PACIFIC') || u.contains('HOANH')) return '🇻🇳';
+    if (u.contains('DORIS')) return '🇸🇬';
+    if (u.contains('WATHBA')) return '🇦🇪';
+    if (u.contains('MERCOSUL') || u.contains('SANTOS') || u.contains('SUAPE') || u.contains('ITAJAI')) return '🇧🇷';
+    if (u.contains('OSSA')) return '🇧🇧';
+    if (u.contains('LARDOS') || u.contains('KYVELI')) return '🇸🇱';
+    if (u.contains('TRIGON')) return '🇰🇾';
+    return '';
+  }
+
   factory TargetShip.fromJson(Map<String, dynamic> json) {
+    final n = json['name']?.toString() ?? json['buque']?.toString() ?? json['ship_name']?.toString() ?? json['ship']?.toString() ?? '';
+    String f = json['flag']?.toString() ?? json['bandera']?.toString() ?? '';
+    if (f.isEmpty && n.isNotEmpty) {
+      f = guessFlag(n);
+    }
     return TargetShip(
-      name: json['name']?.toString() ?? json['buque']?.toString() ?? '',
-      flag: json['flag']?.toString() ?? json['bandera']?.toString() ?? '🇦🇷',
+      name: n,
+      flag: f,
       cargoDetails: json['cargo_details']?.toString() ?? json['detalles']?.toString(),
       client: json['client']?.toString() ?? json['cliente']?.toString(),
     );
+  }
+
+  factory TargetShip.fromAny(dynamic val, [String? defaultClient]) {
+    if (val is TargetShip) return val;
+    if (val is Map<String, dynamic>) {
+      final t = TargetShip.fromJson(val);
+      if ((t.client == null || t.client!.isEmpty) && defaultClient != null) {
+        return TargetShip(name: t.name, flag: t.flag, cargoDetails: t.cargoDetails, client: defaultClient);
+      }
+      return t;
+    } else if (val is Map) {
+      final t = TargetShip.fromJson(Map<String, dynamic>.from(val));
+      if ((t.client == null || t.client!.isEmpty) && defaultClient != null) {
+        return TargetShip(name: t.name, flag: t.flag, cargoDetails: t.cargoDetails, client: defaultClient);
+      }
+      return t;
+    } else if (val is String && val.trim().isNotEmpty) {
+      final n = val.trim();
+      return TargetShip(
+        name: n,
+        flag: guessFlag(n),
+        client: defaultClient,
+      );
+    }
+    return TargetShip(name: val?.toString() ?? '', flag: '', client: defaultClient);
   }
 }
 
@@ -405,12 +458,12 @@ class Ship {
       return fuelPercentage! > 1.0 ? (fuelPercentage! / 100.0).clamp(0.0, 1.0) : fuelPercentage!.clamp(0.0, 1.0);
     }
     final u = name.toUpperCase();
-    if (u.contains('ALFA')) return 0.32; // 32% verificado según reporte diario Intranet
+    if (u.contains('ALFA')) return 0.29; // 29% verificado según Intranet (43.36 m³)
     if (u.contains('NANY')) return 0.23; // 23% verificado según reporte diario Intranet
     if (totalCarbon > 0) {
       if (u.contains('GUSTAVO')) return (totalCarbon / 220.0).clamp(0.0, 1.0);
     }
-    return 0.32;
+    return 0.29;
   }
 
   double get resolvedWaterPercentage {
@@ -418,12 +471,12 @@ class Ship {
       return waterPercentage! > 1.0 ? (waterPercentage! / 100.0).clamp(0.0, 1.0) : waterPercentage!.clamp(0.0, 1.0);
     }
     final u = name.toUpperCase();
-    if (u.contains('ALFA')) return 0.64; // 64% verificado según reporte diario Intranet (118.2 m³ / 184.7 m³)
+    if (u.contains('ALFA')) return 0.57; // 57% verificado según Intranet (67.6 m³)
     if (u.contains('NANY')) return 0.45; // 45% verificado según reporte diario Intranet
     if (totalWater > 0) {
       if (u.contains('GUSTAVO')) return (totalWater / 180.0).clamp(0.0, 1.0);
     }
-    return 0.64;
+    return 0.57;
   }
 
   double get resolvedSlopPercentage {
@@ -431,7 +484,7 @@ class Ship {
       return slopPercentage! > 1.0 ? (slopPercentage! / 100.0).clamp(0.0, 1.0) : slopPercentage!.clamp(0.0, 1.0);
     }
     final u = name.toUpperCase();
-    if (u.contains('ALFA')) return 0.19; // 19% verificado según reporte diario Intranet (8.31 m³ / 43.7 m³)
+    if (u.contains('ALFA')) return 0.19; // 19% verificado según Intranet (1.6 m³)
     if (u.contains('NANY')) return 0.00; // 0% verificado según reporte diario Intranet
     if (totalSlop > 0) {
       if (u.contains('GUSTAVO')) return (totalSlop / 30.0).clamp(0.0, 1.0);
@@ -502,17 +555,20 @@ class Ship {
   static List<TargetShip> getDefaultTargetShipsFor(String shipName) {
     final upper = shipName.toUpperCase();
     if (upper.contains('ALFA')) {
-      // Programa de Carga oficial ALFA C (Raizen - 2 buques vigentes)
+      // Programa de Carga oficial ALFA C (Raizen - 4 buques vigentes según Intranet)
       return [
-        TargetShip(name: "MERCOSUL SANTOS", flag: "🇧🇷", cargoDetails: "Brasil", client: "Raizen"),
-        TargetShip(name: "MERCOSUL SUAPE", flag: "🇧🇷", cargoDetails: "Brasil", client: "Raizen"),
+        TargetShip(name: "CARAVOS TRIUMPH", flag: "🇲🇭", cargoDetails: "", client: "Raizen"),
+        TargetShip(name: "MERCOSUL ITAJAI", flag: "🇧🇷", cargoDetails: "", client: "Raizen"),
+        TargetShip(name: "GLBS MAGIC", flag: "🇲🇭", cargoDetails: "", client: "Raizen"),
+        TargetShip(name: "OSLO PACIFIC", flag: "", cargoDetails: "", client: "Raizen"),
       ];
     } else if (upper.contains('NANY')) {
-      // Programa de Carga oficial NANY (reporte diario Intranet)
+      // Programa de Carga oficial NANY (reporte diario Intranet - 4 buques vigentes)
       return [
-        TargetShip(name: "HUA SI YUAN", flag: "", cargoDetails: "", client: "WFS"),
-        TargetShip(name: "YASA SWAN", flag: "", cargoDetails: "", client: "WFS"),
-        TargetShip(name: "BORDEAUX", flag: "", cargoDetails: "", client: "WFS"),
+        TargetShip(name: "OSSA", flag: "🇧🇧", cargoDetails: "", client: "WFS"),
+        TargetShip(name: "LARDOS", flag: "🇸🇱", cargoDetails: "", client: "WFS"),
+        TargetShip(name: "KYVELI GS", flag: "🇸🇱", cargoDetails: "", client: "WFS"),
+        TargetShip(name: "TRIGON TRADER", flag: "🇰🇾", cargoDetails: "", client: "WFS"),
       ];
     } else if (upper.contains('GUSTAVO')) {
       // Programa de Carga activo GUSTAVO U (WFS - 3 buques viaje activo 513)
@@ -575,18 +631,27 @@ class Ship {
       }
     }
 
-    var targetShipsJson = json['target_ships'] ?? json['buques_a_cargar'];
+    var targetShipsJson = json['target_ships'] ??
+        json['buques_a_cargar'] ??
+        json['targetShips'] ??
+        json['buques'] ??
+        json['programa_carga'] ??
+        json['cargas_programadas'] ??
+        json['scheduled_cargo'] ??
+        json['scheduled_charges'];
     List<TargetShip> targetShipsList = [];
     if (targetShipsJson is List && targetShipsJson.isNotEmpty) {
-      targetShipsList = targetShipsJson.map((e) => TargetShip.fromJson(e)).toList();
-      final hasStale = targetShipsList.any((t) {
-        final n = t.name.toUpperCase();
-        return n.contains('KOCIE') || n.contains('ARTEM') || n.contains('DSM') || n.contains('PAN CERES') || n.contains('VERIGE') || n.contains('NICOLAUS') || n.contains('SCRUB ISLAND') || n.contains('CARAVOS');
-      });
-      if (hasStale || targetShipsList.isEmpty) {
-        targetShipsList = _getDefaultTargetShipsFor(nameStr);
+      final defaultClient = nameStr.toUpperCase().contains('ALFA') ? 'Raizen' : 'WFS';
+      for (final e in targetShipsJson) {
+        try {
+          final t = TargetShip.fromAny(e, defaultClient);
+          if (t.name.trim().isNotEmpty && !targetShipsList.any((x) => x.name.toUpperCase() == t.name.toUpperCase())) {
+            targetShipsList.add(t);
+          }
+        } catch (_) {}
       }
-    } else {
+    }
+    if (targetShipsList.isEmpty) {
       targetShipsList = _getDefaultTargetShipsFor(nameStr);
     }
 
@@ -773,6 +838,10 @@ class CrewMember {
         }
       }
     }
+    final catalog = IntranetCrewCatalog.findCrewMember(name);
+    if (catalog != null && catalog.days > 0) {
+      return catalog.days;
+    }
     if (daysOnBoard != null) {
       return daysOnBoard!;
     }
@@ -860,6 +929,12 @@ class CrewMember {
 
     if (daysOnBoardVal == null && json['days_on_board'] != null) {
       daysOnBoardVal = (json['days_on_board'] as num?)?.toInt() ?? int.tryParse(json['days_on_board'].toString());
+    }
+    if (daysOnBoardVal == null || daysOnBoardVal == 0) {
+      final catalog = IntranetCrewCatalog.findCrewMember(nameStr);
+      if (catalog != null && catalog.days > 0) {
+        daysOnBoardVal = catalog.days;
+      }
     }
 
     bool isOnBoardFinal;
@@ -1013,6 +1088,18 @@ class Schedule {
       final obs = records.map((r) => r['observations']?.toString() ?? '').where((o) => o.isNotEmpty).toSet().take(5).join(', ');
       if (obs.isNotEmpty) cargo = obs;
       if (stages.isNotEmpty) details = "Ruta: $stages";
+    }
+
+    final tShips = json['target_ships'] ?? json['buques_a_cargar'] ?? json['targetShips'] ?? json['buques'];
+    if (tShips is List && tShips.isNotEmpty) {
+      final names = tShips
+          .map((e) => (e is Map ? (e['name'] ?? e['buque'] ?? '') : e).toString().trim())
+          .where((s) => s.isNotEmpty)
+          .toSet()
+          .join(', ');
+      if (names.isNotEmpty) {
+        details = "Programa de Carga: $names";
+      }
     }
 
     // Check if sheet_name provides month and year (e.g. "AGOSTO 2026")

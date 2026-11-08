@@ -417,12 +417,12 @@ class MockFleetService implements FleetService {
         id: "4",
         name: "ALFA C",
         status: ShipStatus.active,
-        totalCargo: 150.54,
-        totalCarbon: 150.54,
-        totalWater: 118.2,
-        totalSlop: 8.31,
-        fuelPercentage: 0.32,
-        waterPercentage: 0.64,
+        totalCargo: 43.36,
+        totalCarbon: 43.36,
+        totalWater: 67.6,
+        totalSlop: 1.6,
+        fuelPercentage: 0.29,
+        waterPercentage: 0.57,
         slopPercentage: 0.19,
         imoNumber: "9711652",
         flag: "Panamá 🇵🇦",
@@ -435,10 +435,10 @@ class MockFleetService implements FleetService {
         targetShips: Ship.getDefaultTargetShipsFor("ALFA C"),
         captainName: "Caballero Diego",
         chiefEngineerName: "Lescano Cristian",
-        lastPort: "Fondeado en Rada La Plata (Zona Común)",
-        weather: "19.3°C · Viento E 8 kn",
-        provistosCount: 0,
-        provistosTotal: 0.00,
+        lastPort: "Operando STS con CARAVOS TRIUMPH",
+        weather: "22.6°C · Viento WNW 9 kn",
+        provistosCount: 4,
+        provistosTotal: 3040.00,
       ),
       Ship(
         id: "6",
@@ -498,61 +498,30 @@ class MockFleetService implements FleetService {
   Future<List<CrewMember>> fetchCrew(String shipId) async {
     await Future.delayed(const Duration(milliseconds: 200));
     final upper = shipId.toUpperCase().trim();
-    if (upper.contains('ALFA') || upper == '4' || upper == '1' || upper == '2071' || upper == 'S1') {
-      return [
-        CrewMember(id: "c101", shipId: shipId, shipName: "ALFA C", name: "Carré Leonel", role: "Capitán", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 0),
-        CrewMember(id: "c102", shipId: shipId, shipName: "ALFA C", name: "Caballero Diego", role: "Capitán / 1er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 0),
-        CrewMember(id: "c103", shipId: shipId, shipName: "ALFA C", name: "Lambertuchi Pablo", role: "3er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 29, orderIndex: 23),
-        CrewMember(id: "c104", shipId: shipId, shipName: "ALFA C", name: "Zapata Darío", role: "3er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 8, orderIndex: 23),
-        CrewMember(id: "c105", shipId: shipId, shipName: "ALFA C", name: "Lescano Cristian", role: "Jefe de Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 30),
-        CrewMember(id: "c106", shipId: shipId, shipName: "ALFA C", name: "Molero Jorge", role: "1er Oficial Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 25, orderIndex: 35),
-        CrewMember(id: "c107", shipId: shipId, shipName: "ALFA C", name: "Visgarra Javier", role: "1er Conductor", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 35),
-        CrewMember(id: "c108", shipId: shipId, shipName: "ALFA C", name: "Ledesma Gabriel", role: "2do Oficial Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 55, orderIndex: 41),
-        CrewMember(id: "c109", shipId: shipId, shipName: "ALFA C", name: "Quirolo Juan", role: "Contramaestre", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 8, orderIndex: 60),
-        CrewMember(id: "c110", shipId: shipId, shipName: "ALFA C", name: "Flores mariano gaston", role: "Marinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 70),
-        CrewMember(id: "c111", shipId: shipId, shipName: "ALFA C", name: "Jonatan Albornoz", role: "Marinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 12, orderIndex: 70),
-        CrewMember(id: "c112", shipId: shipId, shipName: "ALFA C", name: "Lucas Arias", role: "Marinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 70),
-        CrewMember(id: "c113", shipId: shipId, shipName: "ALFA C", name: "Romero José", role: "Marinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 29, orderIndex: 70),
-        CrewMember(id: "c114", shipId: shipId, shipName: "ALFA C", name: "Mosqueda Daniel", role: "1er Cabo Engrasador", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 20, orderIndex: 100),
-        CrewMember(id: "c115", shipId: shipId, shipName: "ALFA C", name: "Peralta Pablo", role: "Cocinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 110),
-        CrewMember(id: "c116", shipId: shipId, shipName: "ALFA C", name: "Mineo Julio", role: "Bomberos", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 29, orderIndex: 9999),
-        CrewMember(id: "c117", shipId: shipId, shipName: "ALFA C", name: "Rodriguez David", role: "Bomberos", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 12, orderIndex: 9999),
-      ];
-    } else if (upper.contains('GUSTAVO') || upper == '6' || upper == '3' || upper == '2073' || upper == 'S2') {
-      return [
-        CrewMember(id: "c201", shipId: shipId, shipName: "GUSTAVO U", name: "Percara Marco", role: "1er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 28, orderIndex: 10),
-        CrewMember(id: "c202", shipId: shipId, shipName: "GUSTAVO U", name: "Yedro Mariano", role: "2do Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 20),
-        CrewMember(id: "c203", shipId: shipId, shipName: "GUSTAVO U", name: "Tobias Joaquin", role: "Pilotín", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 127, orderIndex: 24),
-        CrewMember(id: "c204", shipId: shipId, shipName: "GUSTAVO U", name: "Alday Alexis", role: "1er Oficial Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 4, orderIndex: 35),
-        CrewMember(id: "c205", shipId: shipId, shipName: "GUSTAVO U", name: "Ramirez Diego", role: "2do Oficial Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 19, orderIndex: 41),
-        CrewMember(id: "c206", shipId: shipId, shipName: "GUSTAVO U", name: "Tomas Ribas Pintos", role: "2do Oficial Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 28, orderIndex: 41),
-        CrewMember(id: "c207", shipId: shipId, shipName: "GUSTAVO U", name: "Godoy Luis", role: "Contramaestre", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 60),
-        CrewMember(id: "c208", shipId: shipId, shipName: "GUSTAVO U", name: "Escalada Raul", role: "Marinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 4, orderIndex: 70),
-        CrewMember(id: "c209", shipId: shipId, shipName: "GUSTAVO U", name: "Nestor Carlevaris", role: "Marinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 4, orderIndex: 70),
-        CrewMember(id: "c210", shipId: shipId, shipName: "GUSTAVO U", name: "Dos Santos Lazaro", role: "2do Bombero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 30, orderIndex: 90),
-        CrewMember(id: "c211", shipId: shipId, shipName: "GUSTAVO U", name: "Escalante Eduardo", role: "2do Bombero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 28, orderIndex: 90),
-        CrewMember(id: "c212", shipId: shipId, shipName: "GUSTAVO U", name: "Maximiliano Eduardo Gaetan", role: "1er Cabo Engrasador", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 15, orderIndex: 100),
-        CrewMember(id: "c213", shipId: shipId, shipName: "GUSTAVO U", name: "Rodriguez Lucas", role: "Cocinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 36, orderIndex: 110),
-      ];
-    } else {
-      return [
-        CrewMember(id: "c301", shipId: shipId, shipName: "NANY", name: "Hernandez Pablo", role: "Capitán", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 15, orderIndex: 0),
-        CrewMember(id: "c302", shipId: shipId, shipName: "NANY", name: "Gallardo Juan", role: "1er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 11, orderIndex: 10),
-        CrewMember(id: "c303", shipId: shipId, shipName: "NANY", name: "Saucedo Nicolás", role: "2do Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 33, orderIndex: 20),
-        CrewMember(id: "c304", shipId: shipId, shipName: "NANY", name: "Valentin Rabassa", role: "3er Oficial Cubierta", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 5, orderIndex: 23),
-        CrewMember(id: "c305", shipId: shipId, shipName: "NANY", name: "Carlino Hernan", role: "Jefe de Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 18, orderIndex: 30),
-        CrewMember(id: "c306", shipId: shipId, shipName: "NANY", name: "Bequir Ramiro", role: "1er Oficial Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 23, orderIndex: 35),
-        CrewMember(id: "c307", shipId: shipId, shipName: "NANY", name: "Villar Maximiliano", role: "2do Oficial Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 8, orderIndex: 41),
-        CrewMember(id: "c308", shipId: shipId, shipName: "NANY", name: "Torres Ulises", role: "Contramaestre", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 28, orderIndex: 60),
-        CrewMember(id: "c309", shipId: shipId, shipName: "NANY", name: "Nehemias Bellomo", role: "Marinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 2, orderIndex: 70),
-        CrewMember(id: "c310", shipId: shipId, shipName: "NANY", name: "Santiago Vargas", role: "Marinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 5, orderIndex: 70),
-        CrewMember(id: "c311", shipId: shipId, shipName: "NANY", name: "Correa Motta Nicolas", role: "Auxiliar Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 28, orderIndex: 100),
-        CrewMember(id: "c312", shipId: shipId, shipName: "NANY", name: "Damian Maffioli", role: "Auxiliar Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 26, orderIndex: 100),
-        CrewMember(id: "c313", shipId: shipId, shipName: "NANY", name: "Mariano Vitale", role: "Auxiliar Máquinas", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 18, orderIndex: 100),
-        CrewMember(id: "c314", shipId: shipId, shipName: "NANY", name: "Cantore Alejandro", role: "Cocinero", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 23, orderIndex: 110),
-        CrewMember(id: "c315", shipId: shipId, shipName: "NANY", name: "Tula Leonardo", role: "Bomberos", situation: "Embarcado", situationCode: "EMB", isOnBoard: true, daysOnBoard: 11, orderIndex: 9999),
-      ];
+    String targetShip = "ALFA C";
+    if (upper.contains('GUSTAVO') || upper == '6' || upper == '3' || upper == '2073' || upper == 'S2' || upper == '2') {
+      targetShip = "GUSTAVO U";
+    } else if (upper.contains('NANY') || upper == '4' || upper == '5' || upper == 'S3') {
+      targetShip = "NANY";
     }
+
+    final catalogMembers = IntranetCrewCatalog.aBordo.where((m) => m.shipName == targetShip).toList();
+    int idx = 0;
+    return catalogMembers.map((m) {
+      idx++;
+      return CrewMember(
+        id: m.id,
+        shipId: shipId,
+        shipName: m.shipName,
+        name: m.name,
+        role: m.roleName,
+        situation: "Embarcado",
+        situationCode: "EMB",
+        isOnBoard: true,
+        daysOnBoard: m.days,
+        orderIndex: idx * 10,
+      );
+    }).toList();
   }
 }
 
@@ -1073,10 +1042,7 @@ class ProductionFleetService implements FleetService {
               final shipVoyages = entry.value;
               if (shipVoyages.isEmpty) continue;
 
-              if (shipKey == 'ALFA') {
-                liveTargetsByShip['ALFA'] = Ship.getDefaultTargetShipsFor('ALFA C');
-                continue;
-              }
+              // Si no tiene viajes, se mantendrá con sus buques por defecto de Ship.getDefaultTargetShipsFor
 
               shipVoyages.sort((a, b) => compareVoyagesDesc(a, b));
 
@@ -1109,8 +1075,19 @@ class ProductionFleetService implements FleetService {
 
               if (selectedVoyage == null) continue;
 
+              final vTargets = selectedVoyage['target_ships'] ?? selectedVoyage['buques_a_cargar'] ?? selectedVoyage['targetShips'] ?? selectedVoyage['buques'];
+              if (vTargets is List && vTargets.isNotEmpty) {
+                final defClient = shipKey == 'ALFA' ? 'Raizen' : 'WFS';
+                for (var vt in vTargets) {
+                  final t = TargetShip.fromAny(vt, defClient);
+                  if (t.name.trim().isNotEmpty && !liveTargetsByShip[shipKey]!.any((x) => x.name.toUpperCase() == t.name.toUpperCase())) {
+                    liveTargetsByShip[shipKey]!.add(t);
+                  }
+                }
+              }
+
               final recs = selectedVoyage['records_detail'];
-              if (recs is List) {
+              if (recs is List && liveTargetsByShip[shipKey]!.isEmpty) {
                 // Aislamos estrictamente el último viaje / trip activo (voyage_number más alto)
                 int maxVoyageNum = -1;
                 for (var r in recs) {
@@ -1255,16 +1232,23 @@ class ProductionFleetService implements FleetService {
               : ship.name.toUpperCase().contains('GUSTAVO') ? 'GUSTAVO'
               : ship.name.toUpperCase().contains('NANY') ? 'NANY' : ship.name.toUpperCase();
 
-          List<TargetShip> targets = (liveTargetsByShip[shipKey]?.isNotEmpty == true)
-              ? liveTargetsByShip[shipKey]!
-              : Ship.getDefaultTargetShipsFor(ship.name);
+          // Prioridad 1: Buques provistos directamente por la API (/api/v1/ships/ o /api/v1/fleet-combo/)
+          // Prioridad 2: Buques extraídos del último viaje activo de /api/v1/voyages/
+          // Prioridad 3: Buques por defecto del catálogo oficial
+          List<TargetShip> targets = ship.targetShips.isNotEmpty
+              ? ship.targetShips
+              : ((liveTargetsByShip[shipKey]?.isNotEmpty == true)
+                  ? liveTargetsByShip[shipKey]!
+                  : Ship.getDefaultTargetShipsFor(ship.name));
           if (targets.isEmpty) {
             targets = Ship.getDefaultTargetShipsFor(ship.name);
           }
 
-          final lastPort = shipKey == 'ALFA' ? 'Fondeado en Rada La Plata (Zona Común)'
-              : shipKey == 'NANY' ? 'Operando STS con BORDEAUX'
-              : shipKey == 'GUSTAVO' ? 'Rada La Plata' : '';
+          final lastPort = (ship.lastPort.isNotEmpty && !ship.lastPort.contains('—') && !ship.lastPort.toUpperCase().contains('FONDEADO'))
+              ? ship.lastPort
+              : (shipKey == 'ALFA' ? 'Operando STS con CARAVOS TRIUMPH'
+                  : shipKey == 'NANY' ? 'Operando STS con BORDEAUX'
+                  : shipKey == 'GUSTAVO' ? 'Rada La Plata' : '');
 
           final defaultCaptain = shipKey == 'ALFA' ? 'Caballero Diego'
               : shipKey == 'GUSTAVO' ? 'Percara Marco'
@@ -1273,28 +1257,31 @@ class ProductionFleetService implements FleetService {
               : shipKey == 'GUSTAVO' ? 'Alday Alexis'
               : shipKey == 'NANY' ? 'Carlino Hernan' : ship.chiefEngineerName;
 
-          final weather = shipKey == 'ALFA' ? '19.3°C · Viento E 8 kn'
-              : shipKey == 'NANY' ? '19.4°C · Viento E 11 kn'
-              : (ship.weather.isNotEmpty ? ship.weather : '');
-          final fuelPct = shipKey == 'ALFA' ? 0.32
-              : shipKey == 'NANY' ? 0.23
-              : shipKey == 'GUSTAVO' ? 0.41 : (ship.fuelPercentage ?? 0.32);
-          final waterPct = shipKey == 'ALFA' ? 0.64
-              : shipKey == 'NANY' ? 0.45
-              : shipKey == 'GUSTAVO' ? 0.50 : (ship.waterPercentage ?? 0.64);
-          final slopPct = shipKey == 'ALFA' ? 0.19
-              : shipKey == 'NANY' ? 0.00
-              : shipKey == 'GUSTAVO' ? 0.40 : (ship.slopPercentage ?? 0.19);
+          final weather = (ship.weather.isNotEmpty && !ship.weather.contains('19.3'))
+              ? ship.weather
+              : (shipKey == 'ALFA' ? '22.6°C · Viento WNW 9 kn'
+                  : shipKey == 'NANY' ? '19.4°C · Viento E 11 kn'
+                  : (ship.weather.isNotEmpty ? ship.weather : ''));
+
+          final fuelPct = (ship.fuelPercentage != null && ship.fuelPercentage! > 0)
+              ? ship.fuelPercentage!
+              : (shipKey == 'ALFA' ? 0.29 : (shipKey == 'NANY' ? 0.23 : 0.41));
+          final waterPct = (ship.waterPercentage != null && ship.waterPercentage! > 0)
+              ? ship.waterPercentage!
+              : (shipKey == 'ALFA' ? 0.57 : (shipKey == 'NANY' ? 0.45 : 0.50));
+          final slopPct = (ship.slopPercentage != null && ship.slopPercentage! >= 0)
+              ? ship.slopPercentage!
+              : (shipKey == 'ALFA' ? 0.19 : (shipKey == 'NANY' ? 0.00 : 0.40));
+
+          final carbonVal = ship.totalCarbon > 0 ? ship.totalCarbon : (shipKey == 'ALFA' ? 43.36 : (shipKey == 'NANY' ? 115.52 : 89.76));
+          final waterVal = ship.totalWater > 0 ? ship.totalWater : (shipKey == 'ALFA' ? 67.6 : (shipKey == 'NANY' ? 125.36 : 90.0));
+          final slopVal = ship.totalSlop > 0 ? ship.totalSlop : (shipKey == 'ALFA' ? 1.6 : (shipKey == 'NANY' ? 86.39 : 11.89));
 
           final captain = liveCaptains[shipKey] ?? actingCaptains[shipKey] ?? (ship.captainName.isNotEmpty ? ship.captainName : defaultCaptain);
           final chiefEng = liveChiefs[shipKey] ?? actingChiefs[shipKey] ?? (ship.chiefEngineerName.isNotEmpty ? ship.chiefEngineerName : defaultChief);
 
-          if (shipKey == 'NANY' && targets.length > 3) {
-            targets = targets.take(3).toList();
-          }
-
-          final pCount = liveProvistosCount[shipKey] ?? (shipKey == 'NANY' ? 3 : 0);
-          final pTotal = liveProvistosTotal[shipKey] ?? (shipKey == 'NANY' ? 2100.0 : 0.0);
+          final pCount = liveProvistosCount[shipKey] ?? (shipKey == 'ALFA' ? 4 : (shipKey == 'NANY' ? 3 : 0));
+          final pTotal = liveProvistosTotal[shipKey] ?? (shipKey == 'ALFA' ? 3040.0 : (shipKey == 'NANY' ? 2100.0 : 0.0));
 
           resolvedShips.add(ship.copyWith(
             cameraUrl: cameraUrl,
@@ -1308,6 +1295,10 @@ class ProductionFleetService implements FleetService {
             fuelPercentage: fuelPct,
             waterPercentage: waterPct,
             slopPercentage: slopPct,
+            totalCarbon: carbonVal,
+            totalCargo: carbonVal,
+            totalWater: waterVal,
+            totalSlop: slopVal,
           ));
         }
 
@@ -1928,7 +1919,7 @@ class MockScheduleService implements ScheduleService {
         shipId: "Alfa C",
         date: DateTime(y, m, now.day.clamp(1, 28), 9, 0),
         cargoType: "LSFO Raizen",
-        details: "Programa de Carga: SCRUB ISLAND, EDESSAIKOS, CARAVOS TRIUMPH, ASTRO CASTOR, YAESU",
+        details: "Programa de Carga: MERCOSUL SANTOS, MERCOSUL SUAPE",
       ),
       Schedule(
         id: "sch_gustavo",
@@ -1963,6 +1954,36 @@ class MockScheduleService implements ScheduleService {
     if (m == 11 && y == 2026) {
       if (detailed) {
         return [
+          // --- RAIZEN (ALFA C) ---
+          OperationCharge(
+            client: "Raizen",
+            ship: "ALFA C",
+            totalLsfo: 2910.0,
+            totalMgo: 0.0,
+            totalShips: 4,
+            limit: 17500,
+            dateApplied: DateTime(2026, 11, 2, 11, 10),
+          ),
+          OperationCharge(
+            client: "Raizen",
+            ship: "ALFA C",
+            totalLsfo: 4005.0,
+            totalMgo: 0.0,
+            totalShips: 8,
+            limit: 17500,
+            dateApplied: DateTime(2026, 11, 4, 1, 10),
+          ),
+          // --- WFS (GUSTAVO U) ---
+          OperationCharge(
+            client: "WFS",
+            ship: "GUSTAVO U",
+            totalLsfo: 2300.0,
+            totalMgo: 0.0,
+            totalShips: 4,
+            limit: 17000,
+            dateApplied: DateTime(2026, 11, 1, 0, 0),
+          ),
+          // --- WFS (NANY) ---
           OperationCharge(
             client: "WFS",
             ship: "NANY",
@@ -1975,6 +1996,22 @@ class MockScheduleService implements ScheduleService {
         ];
       }
       return [
+        OperationCharge(
+          client: "Raizen",
+          ship: "ALFA C",
+          totalLsfo: 6915.0,
+          totalMgo: 0.0,
+          totalShips: 12,
+          limit: 17500,
+        ),
+        OperationCharge(
+          client: "WFS",
+          ship: "GUSTAVO U",
+          totalLsfo: 2300.0,
+          totalMgo: 0.0,
+          totalShips: 4,
+          limit: 17000,
+        ),
         OperationCharge(
           client: "WFS",
           ship: "NANY",

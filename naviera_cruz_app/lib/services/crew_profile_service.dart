@@ -23,6 +23,9 @@ class ProductionCrewProfileService implements CrewProfileService {
   String? _cachedUserId;
   DateTime? _cachedTime;
 
+  /// Retorna el perfil en caché inmediata si ya fue consultado
+  CrewProfile? get cachedProfile => _cachedProfile;
+
   void _saveCache(CrewProfile profile, String uid) {
     _cachedProfile = profile;
     _cachedUserId = uid;

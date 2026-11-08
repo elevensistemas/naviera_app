@@ -1475,7 +1475,7 @@ class _ScheduleViewState extends State<ScheduleView> {
     final bool isCustomMultiMonth = _startDate.month != _endDate.month || _startDate.year != _endDate.year;
 
     for (var d in _detailedCharges) {
-      if ((d.ship == 'ALFA C' || d.client == 'Raizen') && d.dateApplied != null) {
+      if ((d.ship.toUpperCase().contains('ALFA') || d.client.toUpperCase().contains('RAIZEN')) && d.dateApplied != null) {
         final matchesMonth = d.dateApplied!.year == _startDate.year && d.dateApplied!.month == _startDate.month;
         final inRange = isCustomMultiMonth
             ? (!d.dateApplied!.isBefore(_startDate) && !d.dateApplied!.isAfter(_endDate))
@@ -1632,7 +1632,9 @@ class _ScheduleViewState extends State<ScheduleView> {
     final bool isCustomMultiMonth = _startDate.month != _endDate.month || _startDate.year != _endDate.year;
 
     for (var d in _detailedCharges) {
-      if ((d.client == 'WFS' || d.ship == 'GUSTAVO U' || d.ship == 'NANY') && d.dateApplied != null) {
+      final sUpper = d.ship.toUpperCase();
+      final cUpper = d.client.toUpperCase();
+      if ((cUpper.contains('WFS') || sUpper.contains('GUSTAVO') || sUpper.contains('NANY')) && d.dateApplied != null) {
         final matchesMonth = d.dateApplied!.year == _startDate.year && d.dateApplied!.month == _startDate.month;
         final inRange = isCustomMultiMonth
             ? (!d.dateApplied!.isBefore(_startDate) && !d.dateApplied!.isAfter(_endDate))

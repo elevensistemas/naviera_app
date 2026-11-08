@@ -4,8 +4,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/storage.dart';
 import '../../services/services.dart';
 import '../../app/theme.dart';
+import '../../models/crew_profile.dart';
 import '../../models/intranet_crew_catalog.dart';
 import '../../models/intranet_office_catalog.dart';
+import '../../services/crew_profile_service.dart';
 import '../auth/login_view.dart';
 
 class ProfileView extends StatefulWidget {
@@ -18,6 +20,28 @@ class ProfileView extends StatefulWidget {
 class _ProfileViewState extends State<ProfileView> {
   bool _isDeletingAccount = false;
   String? _deleteErrorMessage;
+  CrewProfile? _crewProfile;
+
+  @override
+  void initState() {
+    super.initState();
+    _crewProfile = ProductionCrewProfileService.shared.cachedProfile;
+    _loadCrewProfile();
+  }
+
+  Future<void> _loadCrewProfile() async {
+    final user = SessionManager.shared.currentUser;
+    if (user != null && SessionManager.shared.isTripulanteMode) {
+      try {
+        final p = await ProductionCrewProfileService.shared.fetchCurrentCrewProfile(currentUser: user);
+        if (mounted) {
+          setState(() {
+            _crewProfile = p;
+          });
+        }
+      } catch (_) {}
+    }
+  }
 
   void _openUrl(String urlString) async {
     final uri = Uri.parse(urlString);
@@ -139,6 +163,8 @@ class _ProfileViewState extends State<ProfileView> {
     final primaryTextColor = isDark ? Colors.white : const Color(0xFF0F172A);
     final secondaryTextColor = isDark ? Colors.white70 : const Color(0xFF64748B);
 
+    final p = _crewProfile ?? ProductionCrewProfileService.shared.cachedProfile;
+
     final crewMember = isTripulante
         ? (IntranetCrewCatalog.findCrewMember(user?.name ?? '') ??
             IntranetCrewCatalog.findCrewMember(user?.id ?? '') ??
@@ -151,23 +177,29 @@ class _ProfileViewState extends State<ProfileView> {
             IntranetOfficeCatalog.members.first)
         : null;
 
-    final String displayName = (user?.name ?? '').trim().isNotEmpty
-        ? user!.name.trim()
-        : (isTripulante
-            ? (crewMember?.name ?? 'Marenco Rubén Darío')
-            : (officeMember?.name ?? 'Miguel Piccinini'));
-    final String displayRole = (user?.role ?? '').trim().isNotEmpty
-        ? user!.role.trim()
-        : (isTripulante
-            ? (crewMember?.roleName ?? 'Capitán')
-            : (officeMember?.role ?? 'Personal de Oficina'));
-    final String displaySector = (user?.sector ?? '').trim().isNotEmpty
-        ? user!.sector.trim()
-        : (isTripulante
-            ? (crewMember != null
-                ? (crewMember.isOnBoard ? 'Buque ${crewMember.shipName}' : 'En Tierra')
-                : 'Buque ALFA C')
-            : (officeMember?.sector ?? 'Oficina Central'));
+    final String displayName = (p?.name != null && p!.name.trim().isNotEmpty)
+        ? p.name.trim()
+        : ((user?.name ?? '').trim().isNotEmpty
+            ? user!.name.trim()
+            : (isTripulante
+                ? (crewMember?.name ?? 'Marenco Rubén Darío')
+                : (officeMember?.name ?? 'Miguel Piccinini')));
+    final String displayRole = (p?.role != null && p!.role.trim().isNotEmpty)
+        ? p.role.trim()
+        : ((user?.role ?? '').trim().isNotEmpty
+            ? user!.role.trim()
+            : (isTripulante
+                ? (crewMember?.roleName ?? 'Capitán')
+                : (officeMember?.role ?? 'Personal de Oficina')));
+    final String displaySector = (p?.shipName != null && p!.shipName!.trim().isNotEmpty)
+        ? (p.isOnBoard ? 'Buque ${p.shipName}' : 'En Tierra')
+        : ((user?.sector ?? '').trim().isNotEmpty
+            ? user!.sector.trim()
+            : (isTripulante
+                ? (crewMember != null
+                    ? (crewMember.isOnBoard ? 'Buque ${crewMember.shipName}' : 'En Tierra')
+                    : 'Buque ALFA C')
+                : (officeMember?.sector ?? 'Oficina Central')));
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -326,19 +358,30 @@ class _ProfileViewState extends State<ProfileView> {
                       child: Column(
                         children: [
                           _buildDetailRow(
-                            icon: crewMember.isOnBoard ? Icons.directions_boat_rounded : Icons.home_work_rounded,
+                            icon: (p?.isOnBoard ?? crewMember.isOnBoard)
+                                ? Icons.directions_boat_rounded
+                                : Icons.home_work_rounded,
                             label: "Situación de Dotación",
-                            value: crewMember.isOnBoard
-                                ? "A BORDO • ${crewMember.shipName ?? 'Buque'}"
-                                : "EN TIERRA (Desembarcado)",
-                            valueColor: crewMember.isOnBoard ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                            value: (p != null)
+                                ? (p.isOnBoard
+                                    ? "A BORDO • ${p.shipName ?? 'Buque'}"
+                                    : "EN TIERRA (${p.situation.isNotEmpty ? p.situation : 'Desembarcado'})")
+                                : (crewMember.isOnBoard
+                                    ? "A BORDO • ${crewMember.shipName ?? 'Buque'}"
+                                    : "EN TIERRA (Desembarcado)"),
+                            valueColor: (p?.isOnBoard ?? crewMember.isOnBoard) ? const Color(0xFF16A34A) : const Color(0xFFD97706),
                             isDark: isDark,
                           ),
                           Divider(height: 20, color: borderColor),
                           _buildDetailRow(
                             icon: Icons.calendar_today_rounded,
-                            label: crewMember.isOnBoard ? "Días Embarcado (Intranet)" : "Días en Tierra (Intranet)",
-                            value: "${crewMember.days} ${crewMember.days == 1 ? 'día' : 'días'}",
+                            label: (p?.isOnBoard ?? crewMember.isOnBoard)
+                                ? "Días Embarcado (Intranet)"
+                                : "Días en Tierra (Intranet)",
+                            value: () {
+                              final int days = p?.displayDays ?? crewMember.days;
+                              return "$days ${days == 1 ? 'día' : 'días'}";
+                            }(),
                             valueColor: const Color(0xFF0066CC),
                             isDark: isDark,
                           ),

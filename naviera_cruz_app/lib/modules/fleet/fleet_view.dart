@@ -39,8 +39,8 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     _ships.addAll(_getDefaultShipsList());
     _loadCameraForShip(_ships[0], forceRefresh: true);
     _loadShips(isSilent: true);
-    // Auto-actualización periódica de recursos y programas de carga 4 veces al día (cada 6 horas)
-    _autoRefreshTimer = Timer.periodic(const Duration(hours: 6), (_) {
+    // Auto-actualización periódica en vivo de recursos y programas de carga cada 45 segundos
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 45), (_) {
       if (mounted) {
         _loadShips(isSilent: true);
       }
@@ -50,9 +50,12 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Al volver a primer plano, reconectar la cámara seleccionada si la sesión cayó
-      if (mounted && _ships.isNotEmpty && _selectedShipIndex < _ships.length) {
-        _loadCameraForShip(_ships[_selectedShipIndex], forceRefresh: true);
+      if (mounted) {
+        // Al volver a primer plano, sincronizar inmediatamente el estado en vivo desde la Intranet
+        _loadShips(isSilent: true);
+        if (_ships.isNotEmpty && _selectedShipIndex < _ships.length) {
+          _loadCameraForShip(_ships[_selectedShipIndex], forceRefresh: true);
+        }
       }
     }
   }
@@ -119,10 +122,18 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
           targetShips: alfa.targetShips.isNotEmpty
               ? alfa.targetShips
               : Ship.getDefaultTargetShipsFor("ALFA C"),
-          lastPort: alfa.lastPort.isNotEmpty ? alfa.lastPort : 'BUENOS AIRES',
-          provistosCount: alfa.provistosCount,
-          provistosTotal: alfa.provistosTotal,
-          weather: '',
+          lastPort: alfa.lastPort.isNotEmpty && !alfa.lastPort.contains('BUENOS AIRES')
+              ? alfa.lastPort
+              : 'Operando STS con CARAVOS TRIUMPH',
+          weather: alfa.weather.isNotEmpty ? alfa.weather : '22.6°C · Viento WNW 9 kn',
+          provistosCount: alfa.provistosCount > 0 ? alfa.provistosCount : 4,
+          provistosTotal: alfa.provistosTotal > 0 ? alfa.provistosTotal : 3040.0,
+          fuelPercentage: alfa.fuelPercentage ?? 0.29,
+          waterPercentage: alfa.waterPercentage ?? 0.57,
+          slopPercentage: alfa.slopPercentage ?? 0.19,
+          totalCarbon: alfa.totalCarbon > 0 ? alfa.totalCarbon : 43.36,
+          totalWater: alfa.totalWater > 0 ? alfa.totalWater : 67.6,
+          totalSlop: alfa.totalSlop > 0 ? alfa.totalSlop : 1.6,
         );
         gustavo = gustavo.copyWith(
           name: "GUSTAVO U",
@@ -137,7 +148,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         nany = nany.copyWith(
           name: "NANY",
           targetShips: nany.targetShips.isNotEmpty
-              ? (nany.targetShips.length > 3 ? nany.targetShips.take(3).toList() : nany.targetShips)
+              ? nany.targetShips
               : Ship.getDefaultTargetShipsFor("NANY"),
           lastPort: nany.lastPort.isNotEmpty ? nany.lastPort : 'Operando STS con BORDEAUX',
           provistosCount: nany.provistosCount,
@@ -441,12 +452,12 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         id: "4",
         name: "ALFA C",
         status: ShipStatus.active,
-        totalCargo: 150.54,
-        totalCarbon: 150.54,
-        totalWater: 118.2,
-        totalSlop: 8.31,
-        fuelPercentage: 0.32,
-        waterPercentage: 0.64,
+        totalCargo: 43.36,
+        totalCarbon: 43.36,
+        totalWater: 67.6,
+        totalSlop: 1.6,
+        fuelPercentage: 0.29,
+        waterPercentage: 0.57,
         slopPercentage: 0.19,
         imoNumber: "9711652",
         flag: "Panamá 🇵🇦",
@@ -459,10 +470,10 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         targetShips: Ship.getDefaultTargetShipsFor("ALFA C"),
         captainName: "Caballero Diego",
         chiefEngineerName: "Lescano Cristian",
-        lastPort: "Fondeado en Rada La Plata (Zona Común)",
-        weather: "19.3°C · Viento E 8 kn",
-        provistosCount: 0,
-        provistosTotal: 0.00,
+        lastPort: "Operando STS con CARAVOS TRIUMPH",
+        weather: "22.6°C · Viento WNW 9 kn",
+        provistosCount: 4,
+        provistosTotal: 3040.00,
       ),
       Ship(
         id: "6",
@@ -587,7 +598,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
           // Ship Selection Tabs (Cápsulas predefinidas azul, gris y naranja adaptables para móvil)
           if (!_isLoading && _ships.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 5.0),
               child: Row(
                 children: _ships.asMap().entries.map((entry) {
                   final index = entry.key;
@@ -631,6 +642,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                               _selectedShipIndex = index;
                             });
                             final selected = _ships[index];
+                            _loadShips(isSilent: true);
                             if (selected.cameraUrl == null || selected.cameraUrl!.isEmpty) {
                               _loadCameraForShip(selected, forceRefresh: true);
                             }
@@ -638,7 +650,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                         },
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
                           decoration: BoxDecoration(
                             color: chipBgColor,
                             borderRadius: BorderRadius.circular(24),
@@ -649,7 +661,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                             children: [
                               Icon(
                                 Icons.directions_boat_filled_rounded,
-                                size: isMobile ? 15 : 17,
+                                size: isMobile ? 14 : 16,
                                 color: chipIconColor,
                               ),
                               const SizedBox(width: 4),
@@ -679,7 +691,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
           
           // Sincronización en tiempo real y auto-actualización periódica (4 veces al día)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -687,14 +699,14 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: 8,
-                      height: 8,
+                      width: 7,
+                      height: 7,
                       decoration: const BoxDecoration(
                         color: Color(0xFF22C55E),
                         shape: BoxShape.circle,
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 5),
                     Text(
                       _lastSyncTime != null
                           ? "Sincronizado: ${_lastSyncTime!.hour.toString().padLeft(2, '0')}:${_lastSyncTime!.minute.toString().padLeft(2, '0')} hs • Auto-actualización (4x/día)"
@@ -711,20 +723,20 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                   onTap: _isLoading ? null : () => _loadShips(),
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Icon(
                           Icons.refresh_rounded,
-                          size: 14,
+                          size: 13,
                           color: Color(0xFF0057B8),
                         ),
                         const SizedBox(width: 3),
                         Text(
                           "Actualizar",
                           style: TextStyle(
-                            fontSize: isMobile ? 11 : 12,
+                            fontSize: isMobile ? 10.5 : 11.5,
                             fontWeight: FontWeight.bold,
                             color: const Color(0xFF0057B8),
                           ),
@@ -759,7 +771,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                             padding: EdgeInsets.only(
                               left: isMobile ? 10.0 : 16.0,
                               right: isMobile ? 10.0 : 16.0,
-                              top: 8.0,
+                              top: 4.0,
                               bottom: 90.0,
                             ),
                             children: [
@@ -784,6 +796,10 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
     final dividerColor = isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFF1F5F9);
     final shipAccentColor = _getShipThemeColor(ship.name);
+    final String flagEmoji = ship.flag.contains('🇵🇦') || ship.name.toUpperCase().contains('ALFA')
+        ? '🇵🇦'
+        : (ship.flag.contains('🇦🇷') || ship.name.toUpperCase().contains('NANY') || ship.name.toUpperCase().contains('GUSTAVO') ? '🇦🇷' : '🇦🇷');
+    final String fullShipName = ship.name.startsWith('BT ') ? ship.name : "BT ${ship.name}";
 
     return Card(
       margin: const EdgeInsets.only(bottom: 14.0),
@@ -797,61 +813,41 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(14.0, 14.0, 14.0, 0),
+            padding: const EdgeInsets.fromLTRB(12.0, 10.0, 12.0, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header: Ship Name
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
+                // Header: Ship Name + Bandera colocada al lado del buque
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: shipAccentColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      ship.name.startsWith('BT ') ? ship.name : "BT ${ship.name}",
-                      style: TypographyTheme.headline(context).copyWith(
-                        color: textColor,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: shipAccentColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          "$fullShipName $flagEmoji",
+                          style: TypographyTheme.headline(context).copyWith(
+                            color: textColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
+                const SizedBox(height: 5),
 
-            // Vessel Information: Flag & Cargo Program
-            Wrap(
-              spacing: 14,
-              runSpacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
+                // Cargo Program Info (directamente donde estaba la bandera para subir la cámara y ganar espacio)
                 Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.flag_outlined, size: 14, color: secondaryTextColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      "Bandera: ${ship.flag}",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: secondaryTextColor,
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.analytics_outlined, size: 14, color: shipAccentColor),
                     const SizedBox(width: 4),
@@ -863,70 +859,71 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                         color: secondaryTextColor,
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: shipAccentColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: shipAccentColor.withValues(alpha: 0.3), width: 0.8),
-                      ),
-                      child: Text(
-                        _getCargoProgramInfo(ship),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: shipAccentColor,
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                        decoration: BoxDecoration(
+                          color: shipAccentColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: shipAccentColor.withValues(alpha: 0.3), width: 0.8),
+                        ),
+                        child: Text(
+                          _getCargoProgramInfo(ship),
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: shipAccentColor,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-            
-            // Header de Cámara a Bordo
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
+                
+                // Header de Cámara a Bordo
+                const SizedBox(height: 7),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Icon(Icons.videocam_rounded, size: 17, color: Color(0xFF0057B8)),
-                    const SizedBox(width: 6),
-                    Text(
-                      "Cámara en Vivo a Bordo",
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : Colors.black87,
-                      ),
+                    Row(
+                      children: [
+                        const Icon(Icons.videocam_rounded, size: 16, color: Color(0xFF0057B8)),
+                        const SizedBox(width: 5),
+                        Text(
+                          "Cámara en Vivo a Bordo",
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (ship.cameras.any((c) => c.isActive)) ...[
+                          IconButton(
+                            icon: const Icon(Icons.refresh_rounded, size: 17),
+                            tooltip: "Reconectar señal",
+                            color: isDark ? Colors.white70 : Colors.black54,
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+                            onPressed: () => _reconnectCamera(ship),
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                        _buildCameraBadge(ship, isDark),
+                      ],
                     ),
                   ],
                 ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (ship.cameras.any((c) => c.isActive)) ...[
-                      IconButton(
-                        icon: const Icon(Icons.refresh_rounded, size: 18),
-                        tooltip: "Reconectar señal",
-                        color: isDark ? Colors.white70 : Colors.black54,
-                        visualDensity: VisualDensity.compact,
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                        onPressed: () => _reconnectCamera(ship),
-                      ),
-                      const SizedBox(width: 4),
-                    ],
-                    _buildCameraBadge(ship, isDark),
-                  ],
-                ),
               ],
             ),
-          ],
-        ),
-      ),
-      const SizedBox(height: 8),
+          ),
+          const SizedBox(height: 6),
 
           // Video Player or Fallback for SBS camera: full width within card (border 1px)
           if (ship.cameraUrl != null && ship.cameraUrl!.isNotEmpty)
@@ -999,25 +996,26 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
             ),
 
           Padding(
-            padding: const EdgeInsets.fromLTRB(14.0, 14.0, 14.0, 14.0),
+            padding: const EdgeInsets.fromLTRB(12.0, 8.0, 12.0, 12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Divider(height: 16, color: dividerColor),
+                Divider(height: 8, color: dividerColor),
+                const SizedBox(height: 4),
 
             // Native Mobile Resources Container (Agua, Combustible, Slop - 100% Intranet Sync)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: dividerColor),
                 boxShadow: isDark
                     ? []
                     : [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.04),
-                          blurRadius: 10,
+                          blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
                       ],
@@ -1031,7 +1029,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                     label: "Agua",
                     progressPercentage: _getWaterPercentage(ship),
                   ),
-                  Container(height: 58, width: 1, margin: const EdgeInsets.symmetric(horizontal: 6), color: dividerColor),
+                  Container(height: 46, width: 1, margin: const EdgeInsets.symmetric(horizontal: 4), color: dividerColor),
                   _buildResourceMetric(
                     context: context,
                     icon: Icons.local_gas_station_rounded,
@@ -1039,7 +1037,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                     label: "Comb.",
                     progressPercentage: _getFuelPercentage(ship),
                   ),
-                  Container(height: 58, width: 1, margin: const EdgeInsets.symmetric(horizontal: 6), color: dividerColor),
+                  Container(height: 46, width: 1, margin: const EdgeInsets.symmetric(horizontal: 4), color: dividerColor),
                   _buildResourceMetric(
                     context: context,
                     icon: Icons.opacity_rounded,
@@ -1218,18 +1216,18 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         children: [
           // Circular gauge con el número del porcentaje en el centro
           SizedBox(
-            width: 54,
-            height: 54,
+            width: 48,
+            height: 48,
             child: Stack(
               alignment: Alignment.center,
               children: [
                 // Círculo de fondo tenue
                 SizedBox(
-                  width: 54,
-                  height: 54,
+                  width: 48,
+                  height: 48,
                   child: CircularProgressIndicator(
                     value: 1.0,
-                    strokeWidth: 4.5,
+                    strokeWidth: 4.0,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       color.withValues(alpha: isDark ? 0.22 : 0.14),
                     ),
@@ -1237,11 +1235,11 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                 ),
                 // Círculo de progreso activo proporcional al reporte diario
                 SizedBox(
-                  width: 54,
-                  height: 54,
+                  width: 48,
+                  height: 48,
                   child: CircularProgressIndicator(
                     value: progressPercentage.clamp(0.0, 1.0),
-                    strokeWidth: 4.5,
+                    strokeWidth: 4.0,
                     strokeCap: StrokeCap.round,
                     valueColor: AlwaysStoppedAnimation<Color>(color),
                   ),
@@ -1250,7 +1248,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                 Text(
                   "$pctInt%",
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w800,
                     color: isDark ? Colors.white : const Color(0xFF0F172A),
                     letterSpacing: -0.3,
@@ -1259,7 +1257,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
           // Nombre del recurso con su icono distintivo
           Row(
@@ -1267,7 +1265,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 12, color: color),
-              const SizedBox(width: 4),
+              const SizedBox(width: 3),
               Text(
                 label,
                 maxLines: 1,

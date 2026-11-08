@@ -245,16 +245,17 @@ class _CrewHomeViewState extends State<CrewHomeView> {
                           const SizedBox(height: 14),
                         ],
 
-                        // 1. Bienvenido a la app de NCS (Primero en Inicio)
-                        const WelcomeNovedadesCard(margin: EdgeInsets.only(bottom: 16)),
+                        // 1. Bienvenido a la app de NCS (solo se muestra cuando NO hay novedades)
+                        if (_crewPosts.isEmpty)
+                          const WelcomeNovedadesCard(margin: EdgeInsets.only(bottom: 16)),
 
-                        // 2. Tarjeta "Tu ayuda a bordo" con avatar 3D + buscador (Luego de bienvenida)
-                        _buildAyudaABordoCard(isDark),
+                        // 2. Tarjeta de Perfil Unificada con Anillo y 4 Columnas (Días embarcado/en tierra)
+                        _buildProfileCard(isDark),
 
                         const SizedBox(height: 16),
 
-                        // 3. Tarjeta de Perfil Unificada con Anillo y 4 Columnas
-                        _buildProfileCard(isDark),
+                        // 3. Tarjeta "Tu ayuda a bordo" con avatar 3D + buscador
+                        _buildAyudaABordoCard(isDark),
 
                         const SizedBox(height: 16),
 
