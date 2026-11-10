@@ -27,7 +27,7 @@ class MockAuthService implements AuthService {
     await Future.delayed(const Duration(milliseconds: 400));
     final u = username.trim().toLowerCase();
 
-    const token = "3162f191267768f65841ff6d7585ae687542c8af";
+    const token = "f910e860cb94c3ebeccc0e1a4b16cb1ae641d69b";
 
     // 1. Usuarios específicos de Oficina (Catálogo oficial de los 10 miembros)
     final officeMember = IntranetOfficeCatalog.findMember(u);
@@ -190,17 +190,8 @@ class MockChatService implements ChatService {
 
   @override
   Future<List<ChatChannel>> fetchContacts() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return [
-      ChatChannel(id: "c1", name: "Marenco Rubén Darío", isGroup: false, type: "direct"),
-      ChatChannel(id: "c2", name: "Ramirez Pedro", isGroup: false, type: "direct"),
-      ChatChannel(id: "c3", name: "Maciel Jonathan", isGroup: false, type: "direct"),
-      ChatChannel(id: "c4", name: "Sosa Armando", isGroup: false, type: "direct"),
-      ChatChannel(id: "c5", name: "Agüero Leandro", isGroup: false, type: "direct"),
-      ChatChannel(id: "c6", name: "Porto Guillermo", isGroup: false, type: "direct"),
-      ChatChannel(id: "c7", name: "Maldonado Juan", isGroup: false, type: "direct"),
-      ChatChannel(id: "c8", name: "Carattoli Pablo", isGroup: false, type: "direct"),
-    ];
+    await Future.delayed(const Duration(milliseconds: 100));
+    return ProductionChatService.buildDirectoryContacts();
   }
 
   @override
@@ -278,27 +269,94 @@ class ProductionChatService implements ChatService {
     }
   }
 
+  static List<ChatChannel> buildDirectoryContacts() {
+    final List<ChatChannel> list = [];
+    final seen = <String>{};
+
+    for (final m in IntranetCrewCatalog.aBordo) {
+      if (seen.add(m.name.toLowerCase())) {
+        list.add(ChatChannel(
+          id: "crew_${m.id}",
+          name: m.name,
+          isGroup: false,
+          type: "direct",
+          lastMessage: "${m.roleName} · ${m.shipName ?? 'A Bordo'}",
+        ));
+      }
+    }
+
+    for (final o in IntranetOfficeCatalog.members) {
+      if (seen.add(o.name.toLowerCase())) {
+        list.add(ChatChannel(
+          id: "office_${o.id}",
+          name: o.name,
+          isGroup: false,
+          type: "direct",
+          lastMessage: "${o.role} · ${o.sector}",
+        ));
+      }
+    }
+
+    for (final m in IntranetCrewCatalog.enTierra) {
+      if (seen.add(m.name.toLowerCase())) {
+        list.add(ChatChannel(
+          id: "crew_${m.id}",
+          name: m.name,
+          isGroup: false,
+          type: "direct",
+          lastMessage: "${m.roleName} · En Tierra",
+        ));
+      }
+    }
+
+    list.sort((a, b) => a.name.compareTo(b.name));
+    return list;
+  }
+
   @override
   Future<List<ChatChannel>> fetchContacts() async {
-    final Map<String, dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/chat/users/');
-    final List<dynamic> results = response['results'] ?? [];
-    return results.where((json) {
-      final name = (json['name'] ?? json['username'] ?? '').toString().toLowerCase();
-      final username = (json['username'] ?? '').toString().toLowerCase();
-      if (username == 'admin' || username == 'test admin' || username == 'test_admin' || username.contains('admin') ||
-          name == 'admin' || name == 'test admin' || name == 'test_admin' || name.contains('admin')) {
-        return false;
+    try {
+      final response = await APIClient.shared.request(endpoint: '/api/v1/chat/users/');
+      List<dynamic> results = [];
+      if (response is Map<String, dynamic> && response['results'] is List) {
+        results = response['results'] as List;
+      } else if (response is List) {
+        results = response;
       }
-      return true;
-    }).map((json) {
-      return ChatChannel(
-        id: json['id']?.toString() ?? '',
-        name: json['name'] ?? json['username'] ?? '',
-        isGroup: false,
-        lastMessage: null,
-        lastMessageTimestamp: null,
-      );
-    }).toList();
+
+      if (results.isNotEmpty) {
+        final apiContacts = results.where((json) {
+          final name = (json['name'] ?? json['username'] ?? '').toString().toLowerCase();
+          final username = (json['username'] ?? '').toString().toLowerCase();
+          if (username == 'admin' || username == 'test admin' || username == 'test_admin' || username.contains('admin') ||
+              name == 'admin' || name == 'test admin' || name == 'test_admin' || name.contains('admin')) {
+            return false;
+          }
+          return true;
+        }).map((json) {
+          final name = (json['name'] != null && json['name'].toString().trim().isNotEmpty)
+              ? json['name'].toString().trim()
+              : (json['username'] ?? '').toString().trim();
+          final email = (json['email'] ?? '').toString().trim();
+          return ChatChannel(
+            id: json['id']?.toString() ?? '',
+            name: name,
+            isGroup: false,
+            type: 'direct',
+            lastMessage: email.isNotEmpty ? email : null,
+            lastMessageTimestamp: null,
+          );
+        }).toList();
+
+        if (apiContacts.isNotEmpty) {
+          return apiContacts;
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching contacts from API /api/v1/chat/users/: $e");
+    }
+
+    return buildDirectoryContacts();
   }
 
   @override
@@ -597,7 +655,7 @@ class EzvizService {
         final uri = Uri.parse("http://127.0.0.1:8086/api/v1/centinela/camera-token/");
         String? token = await SessionManager.shared.getToken();
         if (token == null || token.isEmpty || token == "null") {
-          token = "3162f191267768f65841ff6d7585ae687542c8af";
+          token = "f910e860cb94c3ebeccc0e1a4b16cb1ae641d69b";
         }
 
         var resp = await http.post(
@@ -609,12 +667,12 @@ class EzvizService {
           body: '{}',
         ).timeout(const Duration(seconds: 10));
 
-        if (resp.statusCode == 401 && token != "3162f191267768f65841ff6d7585ae687542c8af") {
+        if (resp.statusCode == 401 && token != "f910e860cb94c3ebeccc0e1a4b16cb1ae641d69b") {
           resp = await http.post(
             uri,
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': 'Token 3162f191267768f65841ff6d7585ae687542c8af',
+              'Authorization': 'Token f910e860cb94c3ebeccc0e1a4b16cb1ae641d69b',
             },
             body: '{}',
           ).timeout(const Duration(seconds: 10));
@@ -639,7 +697,7 @@ class EzvizService {
     // Permite que todos los usuarios de oficina (ej. l.duarte) accedan a las cámaras:
     // Si el usuario personal no tiene permisos de cámaras en Django (401/403), recurre de inmediato al token corporativo autorizado.
     final String? userToken = await SessionManager.shared.getToken();
-    const String masterCorporateToken = "3162f191267768f65841ff6d7585ae687542c8af";
+    const String masterCorporateToken = "f910e860cb94c3ebeccc0e1a4b16cb1ae641d69b";
     final List<String> tokensToTry = [
       if (userToken != null && userToken.isNotEmpty && userToken != "null" && userToken != masterCorporateToken)
         userToken,
@@ -687,7 +745,7 @@ class EzvizService {
     if (kIsWeb) {
       try {
         final uri = Uri.parse("https://127.0.0.1:2223/api/v1/centinela/camera-token/");
-        final token = await SessionManager.shared.getToken() ?? "3162f191267768f65841ff6d7585ae687542c8af";
+        final token = await SessionManager.shared.getToken() ?? "f910e860cb94c3ebeccc0e1a4b16cb1ae641d69b";
         final resp = await http.post(
           uri,
           headers: {

@@ -15,6 +15,7 @@ class ChatListView extends StatefulWidget {
 
 class _ChatListViewState extends State<ChatListView> {
   final List<ChatChannel> _channels = [];
+  final List<ChatChannel> _contacts = [];
   List<ChatChannel> _filteredChannels = [];
   final _searchController = TextEditingController();
   bool _isLoading = false;
@@ -23,6 +24,8 @@ class _ChatListViewState extends State<ChatListView> {
   @override
   void initState() {
     super.initState();
+    _contacts.addAll(ProductionChatService.buildDirectoryContacts());
+    _onSearchChanged();
     _loadChannels();
     _searchController.addListener(_onSearchChanged);
   }
@@ -38,95 +41,98 @@ class _ChatListViewState extends State<ChatListView> {
     final query = _searchController.text.toLowerCase().trim();
     setState(() {
       if (query.isEmpty) {
-        _filteredChannels = List.from(_channels);
+        _filteredChannels = _activeSegment == 0 ? List.from(_channels) : List.from(_contacts);
       } else {
-        _filteredChannels = _channels.where((channel) {
-          final nameMatch = channel.name.toLowerCase().contains(query);
-          final msgMatch = channel.lastMessage != null && channel.lastMessage!.toLowerCase().contains(query);
-          return nameMatch || msgMatch;
-        }).toList();
+        final matches = <ChatChannel>[];
+        final seen = <String>{};
+
+        // 1. Buscar en canales recientes
+        for (final c in _channels) {
+          final nMatch = c.name.toLowerCase().contains(query);
+          final mMatch = c.lastMessage != null && c.lastMessage!.toLowerCase().contains(query);
+          if (nMatch || mMatch) {
+            seen.add(c.name.toLowerCase());
+            matches.add(c);
+          }
+        }
+
+        // 2. Buscar en todos los contactos de la empresa (a bordo, en tierra y oficina)
+        for (final c in _contacts) {
+          if (!seen.contains(c.name.toLowerCase())) {
+            final nMatch = c.name.toLowerCase().contains(query);
+            final mMatch = c.lastMessage != null && c.lastMessage!.toLowerCase().contains(query);
+            if (nMatch || mMatch) {
+              seen.add(c.name.toLowerCase());
+              matches.add(c);
+            }
+          }
+        }
+
+        _filteredChannels = matches;
       }
     });
   }
 
   Future<void> _loadChannels() async {
     setState(() {
-      _isLoading = true;
+      _isLoading = _channels.isEmpty && _contacts.isEmpty;
     });
 
     try {
       final chatService = ChatService();
-      final rawChannels = _activeSegment == 0 
-          ? await chatService.fetchChannels() 
-          : await chatService.fetchContacts();
-      
-      final channels = rawChannels.where((c) {
+      final futureChannels = chatService.fetchChannels();
+      final futureContacts = chatService.fetchContacts();
+
+      final results = await Future.wait([futureChannels, futureContacts]);
+      final channelsRes = results[0];
+      final contactsRes = results[1];
+
+      final cleanChannels = channelsRes.where((c) {
         final n = c.name.toLowerCase();
         return !n.contains('admin') && !n.contains('test admin') && !n.contains('test_admin');
       }).toList();
 
-      setState(() {
-        _channels.clear();
-        _channels.addAll(channels);
-        _filteredChannels = List.from(_channels);
-      });
-    } catch (e) {
-      if (_activeSegment == 1) {
-        _loadFallbackContacts();
-      } else {
+      final cleanContacts = contactsRes.where((c) {
+        final n = c.name.toLowerCase();
+        return !n.contains('admin') && !n.contains('test admin') && !n.contains('test_admin');
+      }).toList();
+
+      if (mounted) {
         setState(() {
           _channels.clear();
-          _filteredChannels.clear();
+          _channels.addAll(cleanChannels);
+
+          if (cleanContacts.isNotEmpty) {
+            _contacts.clear();
+            _contacts.addAll(cleanContacts);
+          }
+
+          _onSearchChanged();
         });
       }
+    } catch (e) {
+      if (mounted) {
+        if (_contacts.isEmpty) {
+          _contacts.addAll(ProductionChatService.buildDirectoryContacts());
+        }
+        _onSearchChanged();
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
-  }
-
-  void _loadFallbackContacts() {
-    setState(() {
-      _channels.clear();
-      _channels.addAll([
-        ChatChannel(id: "c1", name: "Marenco Rubén Darío", isGroup: false, type: "direct", lastMessage: "Capitán - ALFA C"),
-        ChatChannel(id: "c2", name: "Ramirez Pedro", isGroup: false, type: "direct", lastMessage: "Capitán - GUSTAVO U"),
-        ChatChannel(id: "c3", name: "Maciel Jonathan", isGroup: false, type: "direct", lastMessage: "Capitán - NANY"),
-        ChatChannel(id: "c4", name: "Sosa Armando", isGroup: false, type: "direct", lastMessage: "Jefe de Máquinas - ALFA C"),
-        ChatChannel(id: "c5", name: "Agüero Leandro", isGroup: false, type: "direct", lastMessage: "Jefe de Máquinas - GUSTAVO U"),
-        ChatChannel(id: "c6", name: "Porto Guillermo", isGroup: false, type: "direct", lastMessage: "Jefe de Máquinas - NANY"),
-        ChatChannel(id: "c7", name: "Maldonado Juan", isGroup: false, type: "direct", lastMessage: "1er Oficial Cubierta - ALFA C"),
-        ChatChannel(id: "c8", name: "Carattoli Pablo", isGroup: false, type: "direct", lastMessage: "2do Oficial Cubierta - ALFA C"),
-      ]);
-      _filteredChannels = List.from(_channels);
-    });
   }
 
   void _showNewChatModal(BuildContext context) async {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    List<ChatChannel> contacts = [];
-    try {
-      final rawContacts = await ChatService().fetchContacts();
-      contacts = rawContacts.where((c) {
-        final n = c.name.toLowerCase();
-        return !n.contains('admin') && !n.contains('test admin') && !n.contains('test_admin');
-      }).toList();
-    } catch (_) {}
-
+    List<ChatChannel> contacts = List.from(_contacts);
     if (contacts.isEmpty) {
-      contacts = [
-        ChatChannel(id: "c1", name: "Marenco Rubén Darío", isGroup: false, type: "direct", lastMessage: "Capitán - ALFA C"),
-        ChatChannel(id: "c2", name: "Ramirez Pedro", isGroup: false, type: "direct", lastMessage: "Capitán - GUSTAVO U"),
-        ChatChannel(id: "c3", name: "Maciel Jonathan", isGroup: false, type: "direct", lastMessage: "Capitán - NANY"),
-        ChatChannel(id: "c4", name: "Sosa Armando", isGroup: false, type: "direct", lastMessage: "Jefe de Máquinas - ALFA C"),
-        ChatChannel(id: "c5", name: "Agüero Leandro", isGroup: false, type: "direct", lastMessage: "Jefe de Máquinas - GUSTAVO U"),
-        ChatChannel(id: "c6", name: "Porto Guillermo", isGroup: false, type: "direct", lastMessage: "Jefe de Máquinas - NANY"),
-        ChatChannel(id: "c7", name: "Maldonado Juan", isGroup: false, type: "direct", lastMessage: "1er Oficial Cubierta - ALFA C"),
-        ChatChannel(id: "c8", name: "Carattoli Pablo", isGroup: false, type: "direct", lastMessage: "2do Oficial Cubierta - ALFA C"),
-      ];
+      contacts = ProductionChatService.buildDirectoryContacts();
     }
 
     if (!mounted) return;
@@ -644,7 +650,7 @@ class _ChatListViewState extends State<ChatListView> {
           child: GestureDetector(
             onTap: () {
               setState(() => _activeSegment = 1);
-              _loadChannels();
+              _onSearchChanged();
             },
             child: Container(
               height: 86,
@@ -714,7 +720,7 @@ class _ChatListViewState extends State<ChatListView> {
               onTap: () {
                 if (_activeSegment != 0) {
                   setState(() => _activeSegment = 0);
-                  _loadChannels();
+                  _onSearchChanged();
                 }
               },
               child: AnimatedContainer(
@@ -752,7 +758,7 @@ class _ChatListViewState extends State<ChatListView> {
               onTap: () {
                 if (_activeSegment != 1) {
                   setState(() => _activeSegment = 1);
-                  _loadChannels();
+                  _onSearchChanged();
                 }
               },
               child: AnimatedContainer(

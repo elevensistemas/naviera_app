@@ -48,7 +48,7 @@ class CentinelaWeatherService {
         final uri = Uri.parse("http://127.0.0.1:8086/api/v1/external/weather");
         String? token = await SessionManager.shared.getToken();
         if (token == null || token.isEmpty || token == "null") {
-          token = "3162f191267768f65841ff6d7585ae687542c8af";
+          token = "f910e860cb94c3ebeccc0e1a4b16cb1ae641d69b";
         }
 
         final resp = await http.get(

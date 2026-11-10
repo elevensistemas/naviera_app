@@ -12,7 +12,7 @@ import sys
 
 INTRANET_BASE = "https://navieracruzdelsur.dyndns.org:6570"
 CENTINELA_BASE = "https://centinela.dyndns.org:5073"
-MASTER_TOKEN = "Token 3162f191267768f65841ff6d7585ae687542c8af"
+MASTER_TOKEN = "Token f910e860cb94c3ebeccc0e1a4b16cb1ae641d69b"
 
 ctx = ssl.create_default_context()
 ctx.check_hostname = False
