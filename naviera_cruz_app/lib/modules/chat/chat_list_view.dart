@@ -337,10 +337,10 @@ class _ChatListViewState extends State<ChatListView> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: bgGradientColors,
-                  stops: const [0.0, 0.35, 1.0],
                 ),
               ),
               child: Stack(
+                fit: StackFit.expand,
                 children: [
                   // Sutil resplandor luminoso superior simulando el efecto frosted/vidrio
                   Positioned(
@@ -363,31 +363,33 @@ class _ChatListViewState extends State<ChatListView> {
                   ),
 
                   // Lista scrolleable con diseño flotante iOS Liquid Glass
-                  SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16.0, 14.0, 16.0, 36.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // 1. Buscador con diseño pill frosted translúcido
-                        _buildSearchBar(isDark, textColor, captionColor),
-                        const SizedBox(height: 14),
+                  Positioned.fill(
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16.0, 14.0, 16.0, 36.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // 1. Buscador con diseño pill frosted translúcido
+                          _buildSearchBar(isDark, textColor, captionColor),
+                          const SizedBox(height: 14),
 
-                        // 2. Banner Asistente NCS con gradiente deep sapphire e icono estelar IA
-                        _buildAssistantBanner(context, isDark),
-                        const SizedBox(height: 14),
+                          // 2. Banner Asistente NCS con gradiente deep sapphire e icono estelar IA
+                          _buildAssistantBanner(context, isDark),
+                          const SizedBox(height: 14),
 
-                        // 3. Tarjetas de Acción directas (Nuevo Chat y Contactos - sin llamada ni archivos compartidos)
-                        _buildActionCards(context, isDark, textColor),
-                        const SizedBox(height: 16),
+                          // 3. Tarjetas de Acción directas (Nuevo Chat y Contactos - sin llamada ni archivos compartidos)
+                          _buildActionCards(context, isDark, textColor),
+                          const SizedBox(height: 16),
 
-                        // 4. Selector de Segmento (Chats recientes / Todos los contactos)
-                        _buildSegmentSwitcher(isDark),
-                        const SizedBox(height: 20),
+                          // 4. Selector de Segmento (Chats recientes / Todos los contactos)
+                          _buildSegmentSwitcher(isDark),
+                          const SizedBox(height: 20),
 
-                        // 5. Contenido principal (Empty state o lista de chats / contactos)
-                        _buildContent(context, isDark, textColor, captionColor),
-                      ],
+                          // 5. Contenido principal (Empty state o lista de chats / contactos)
+                          _buildContent(context, isDark, textColor, captionColor),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -473,7 +475,6 @@ class _ChatListViewState extends State<ChatListView> {
               Color(0xFF2563EB), // Electric Cobalt Blue
               Color(0xFF3B82F6), // Bright Azure
             ],
-            stops: [0.0, 0.35, 0.72, 1.0],
           ),
           boxShadow: [
             BoxShadow(
@@ -510,37 +511,34 @@ class _ChatListViewState extends State<ChatListView> {
                 padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                 child: Row(
                   children: [
-                    // Icono de estrella IA con resplandor radial
+                    // Icono de estrella IA con resplandor radial seguro
                     Container(
-                      width: 52,
-                      height: 52,
+                      width: 50,
+                      height: 50,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: RadialGradient(
+                        gradient: const LinearGradient(
                           colors: [
-                            const Color(0xFF818CF8).withValues(alpha: 0.45),
-                            const Color(0xFF3B82F6).withValues(alpha: 0.18),
-                            Colors.transparent,
+                            Color(0xFF818CF8),
+                            Color(0xFF60A5FA),
+                            Color(0xFFC084FC),
                           ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      ),
-                      child: Center(
-                        child: ShaderMask(
-                          shaderCallback: (bounds) => const LinearGradient(
-                            colors: [
-                              Color(0xFFFFFFFF),
-                              Color(0xFFBAE6FD),
-                              Color(0xFFDDD6FE),
-                              Color(0xFFF472B6),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ).createShader(bounds),
-                          child: const Icon(
-                            Icons.auto_awesome,
-                            size: 34,
-                            color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF818CF8).withValues(alpha: 0.4),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
                           ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.auto_awesome,
+                          size: 28,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -723,6 +721,7 @@ class _ChatListViewState extends State<ChatListView> {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Tab 1: Chats recientes
           Expanded(
@@ -736,7 +735,6 @@ class _ChatListViewState extends State<ChatListView> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 alignment: Alignment.center,
-                height: double.infinity,
                 decoration: BoxDecoration(
                   color: _activeSegment == 0 ? const Color(0xFF007AFF) : Colors.transparent,
                   borderRadius: BorderRadius.circular(26),
@@ -775,7 +773,6 @@ class _ChatListViewState extends State<ChatListView> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 alignment: Alignment.center,
-                height: double.infinity,
                 decoration: BoxDecoration(
                   color: _activeSegment == 1 ? const Color(0xFF007AFF) : Colors.transparent,
                   borderRadius: BorderRadius.circular(26),
