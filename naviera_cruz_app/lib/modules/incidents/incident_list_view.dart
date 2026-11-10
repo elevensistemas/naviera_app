@@ -71,10 +71,10 @@ class _IncidentListViewState extends State<IncidentListView> {
     if (idUpper.contains('NANY')) return 'NANY';
     if (idUpper.contains('GUSTAVO')) return 'GUSTAVO U';
 
-    // Django DB vessel IDs
-    if (idUpper == '4' || idUpper == '1' || idUpper == '2071') return 'ALFA C';
-    if (idUpper == '5' || idUpper == '2' || idUpper == '2072') return 'NANY';
-    if (idUpper == '6' || idUpper == '3' || idUpper == '2073') return 'GUSTAVO U';
+    // Django DB vessel IDs (1: ALFA C, 2: GUSTAVO U, 4: NANY)
+    if (idUpper == '1' || idUpper == '2071') return 'ALFA C';
+    if (idUpper == '2' || idUpper == '6' || idUpper == '2073') return 'GUSTAVO U';
+    if (idUpper == '4' || idUpper == '5' || idUpper == '2072') return 'NANY';
 
     if (nameUpper.isNotEmpty && !RegExp(r'^\d+$').hasMatch(nameUpper)) {
       return nameUpper;

@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../app/config.dart';
 import '../core/storage.dart';
 import '../models/ncs_chat_models.dart';
+import '../models/intranet_crew_catalog.dart';
 import 'ncs_chat_policy.dart';
 
 class NCSChatService {
@@ -223,81 +224,66 @@ class NCSChatService {
         lower.contains("dotacion") ||
         lower.contains("dotación") ||
         lower.contains("personal")) {
+      String? shipFilter;
       if (lower.contains("alfa")) {
-        responseText = """
-### 👨‍✈️ Dotación y Tripulación - BT ALFA C
-
-Tripulación embarcada activa en regla STCW (17 tripulantes):
-
-- **Capitán:** Carré Leonel ➔ 🟢 2 días embarcado (Relevo reciente)
-- **Capitán / 1er Oficial Cubierta:** Caballero Diego ➔ 🟢 2 días embarcado
-- **3er Oficial Cubierta:** Lambertuchi Pablo ➔ 🟢 29 días embarcado
-- **3er Oficial Cubierta:** Zapata Darío ➔ 🟢 8 días embarcado
-- **Jefe de Máquinas:** Lescano Cristian ➔ 🟢 2 días embarcado (Relevo reciente)
-- **1er Oficial Máquinas:** Molero Jorge ➔ 🟢 25 días embarcado
-- **1er Conductor:** Visgarra Javier ➔ 🟢 2 días embarcado
-- **2do Oficial Máquinas:** Ledesma Gabriel ➔ 🟢 55 días embarcado
-- **Contramaestre:** Quirolo Juan ➔ 🟢 8 días embarcado
-- **Marineros:** Flores mariano gaston (2d), Jonatan Albornoz (12d), Lucas Arias (2d), Romero José (29d)
-- **1er Cabo Engrasador:** Mosqueda Daniel ➔ 🟢 20 días embarcado
-- **Cocinero:** Peralta Pablo ➔ 🟢 2 días embarcado
-- **Bomberos:** Mineo Julio (29d), Rodriguez David (12d)
-
-> **Semáforo de Relevos:** 🟢 17 OK (<60d) | 🟡 0 Próx. Relevo | 🔴 0 Excedidos
-> **Status Dotación:** Dotación completa a bordo (17 tripulantes).
-""";
+        shipFilter = "ALFA C";
       } else if (lower.contains("gustavo")) {
-        responseText = """
-### 👨‍✈️ Dotación y Tripulación - BT GUSTAVO U
-
-Tripulación embarcada activa (13 tripulantes):
-
-- **1er Oficial Cubierta (al mando):** Percara Marco ➔ 🟢 28 días embarcado
-- **2do Oficial Cubierta:** Yedro Mariano ➔ 🟢 2 días embarcado
-- **Pilotín:** Tobias Joaquin ➔ 🔴 127 días embarcado (Alerta Relevo)
-- **1er Oficial Máquinas (a cargo de máquinas):** Alday Alexis ➔ 🟢 4 días embarcado
-- **2do Oficial Máquinas:** Ramirez Diego ➔ 🟢 19 días embarcado
-- **2do Oficial Máquinas:** Tomas Ribas Pintos ➔ 🟢 28 días embarcado
-- **Contramaestre:** Godoy Luis ➔ 🟢 2 días embarcado
-- **Marineros:** Escalada Raul (4d), Nestor Carlevaris (4d)
-- **2do Bombero:** Dos Santos Lazaro (30d), Escalante Eduardo (28d)
-- **1er Cabo Engrasador:** Maximiliano Eduardo Gaetan ➔ 🟢 15 días embarcado
-- **Cocinero:** Rodriguez Lucas ➔ 🟢 36 días embarcado
-
-> **Semáforo de Relevos:** 🟢 12 OK (<60d) | 🔴 1 Excedido STCW (Tobias Joaquin: 127d)
-> **Status Dotación:** Oficiales a cargo cubriendo puente y máquinas.
-""";
+        shipFilter = "GUSTAVO U";
       } else if (lower.contains("nany")) {
-        responseText = """
-### 👨‍✈️ Dotación y Tripulación - BT NANY
+        shipFilter = "NANY";
+      }
 
-Tripulación embarcada activa (15 tripulantes):
-
-- **Capitán:** Hernandez Pablo ➔ 🟢 15 días embarcado
-- **1er Oficial Cubierta:** Gallardo Juan ➔ 🟢 11 días embarcado
-- **2do Oficial Cubierta:** Saucedo Nicolás ➔ 🟢 33 días embarcado
-- **3er Oficial Cubierta:** Valentin Rabassa ➔ 🟢 5 días embarcado
-- **Jefe de Máquinas:** Carlino Hernan ➔ 🟢 18 días embarcado
-- **1er Oficial Máquinas:** Bequir Ramiro ➔ 🟢 23 días embarcado
-- **2do Oficial Máquinas:** Villar Maximiliano ➔ 🟢 8 días embarcado
-- **Contramaestre:** Torres Ulises ➔ 🟢 28 días embarcado
-- **Marineros:** Nehemias Bellomo (2d), Santiago Vargas (5d)
-- **Auxiliares Máquinas:** Correa Motta Nicolas (28d), Damian Maffioli (26d), Mariano Vitale (18d)
-- **Cocinero:** Cantore Alejandro ➔ 🟢 23 días embarcado
-- **Bomberos:** Tula Leonardo ➔ 🟢 11 días embarcado
-
-> **Semáforo de Relevos:** 🟢 15 OK (<60d) | 🟡 0 Próx. Relevo | 🔴 0 Excedidos
-> **Status Dotación:** Dotación reglamentaria completa a bordo (15/15).
-""";
+      if (shipFilter != null) {
+        final list = IntranetCrewCatalog.aBordo
+            .where((m) => m.shipName != null && m.shipName!.toUpperCase() == shipFilter!.toUpperCase())
+            .toList();
+        final buffer = StringBuffer();
+        buffer.writeln("### 👨‍✈️ Dotación y Tripulación - BT $shipFilter\n");
+        buffer.writeln("Tripulación embarcada activa en regla STCW (${list.length} tripulantes):\n");
+        int okCount = 0;
+        int warnCount = 0;
+        int excCount = 0;
+        for (final m in list) {
+          final isExceeded = m.days >= 90;
+          final isWarn = m.days >= 60 && m.days < 90;
+          final sem = isExceeded ? "🔴" : (isWarn ? "🟡" : "🟢");
+          if (isExceeded) {
+            excCount++;
+          } else if (isWarn) {
+            warnCount++;
+          } else {
+            okCount++;
+          }
+          final note = isExceeded
+              ? " (Alerta Relevo STCW)"
+              : (isWarn ? " (Próximo Relevo)" : "");
+          final roleLabel = m.roleName.isNotEmpty ? m.roleName : m.roleCode;
+          buffer.writeln("- **$roleLabel:** ${m.name} ➔ $sem ${m.days} días embarcado$note");
+        }
+        buffer.writeln("\n> **Semáforo de Relevos:** 🟢 $okCount OK (<60d) | 🟡 $warnCount Próx. Relevo | 🔴 $excCount Excedidos");
+        buffer.writeln("> **Status Dotación:** Dotación mínima completa a bordo (${list.length} tripulantes).");
+        responseText = buffer.toString();
       } else {
+        final alfa = IntranetCrewCatalog.aBordo.where((m) => m.shipName == "ALFA C").toList();
+        final gustavo = IntranetCrewCatalog.aBordo.where((m) => m.shipName == "GUSTAVO U").toList();
+        final nany = IntranetCrewCatalog.aBordo.where((m) => m.shipName == "NANY").toList();
+        final total = IntranetCrewCatalog.aBordo.length;
+        final exc = IntranetCrewCatalog.aBordo.where((m) => m.days >= 90).length;
+        final warn = IntranetCrewCatalog.aBordo.where((m) => m.days >= 60 && m.days < 90).length;
+        final ok = total - exc - warn;
+
+        final capAlfa = alfa.firstWhere((m) => m.roleCode == 'CAP', orElse: () => alfa.first).name;
+        final capGus = gustavo.firstWhere((m) => m.roleCode == 'CAP' || m.roleCode == '1ER OF CUB', orElse: () => gustavo.first).name;
+        final capNany = nany.firstWhere((m) => m.roleCode == 'CAP', orElse: () => nany.first).name;
+
         responseText = """
 ### 👨‍✈️ Resumen de Tripulación y Semáforo de Relevos - NCS Control Center
 
-- 🚢 **BT ALFA C:** 17 tripulantes ➔ Capitán Carré Leonel | Jefe Máq. Lescano Cristian (🟢 17 OK)
-- 🚢 **BT GUSTAVO U:** 13 tripulantes ➔ 1er Oficial Cub. Percara Marco | 1er Of. Máq. Alday Alexis (🔴 1 Excedido: Tobias J. 127d)
-- 🚢 **BT NANY:** 15 tripulantes ➔ Capitán Hernandez Pablo | Jefe Máq. Carlino Hernan (🟢 15 OK)
+- 🚢 **BT ALFA C:** ${alfa.length} tripulantes ➔ Al mando: $capAlfa (🟢 ${alfa.where((m) => m.days < 60).length} OK)
+- 🚢 **BT GUSTAVO U:** ${gustavo.length} tripulantes ➔ Al mando: $capGus (🔴 1 Excedido STCW: Tobias J. 137d)
+- 🚢 **BT NANY:** ${nany.length} tripulantes ➔ Capitán: $capNany | 2do Of: Fleitas Emmanuel (6d) (🟢 ${nany.where((m) => m.days < 60).length} OK)
 
-> **Semáforo Total Flota:** 🟢 44 en norma (<60d) | 🔴 1 vencido STCW (>=90d) | Dotación mínima completa en los 3 buques (45 tripulantes a bordo).
+> **Semáforo Total Flota:** 🟢 $ok en norma (<60d) | 🟡 $warn próx. relevo | 🔴 $exc excedido STCW | Dotación mínima completa en los 3 buques ($total tripulantes a bordo).
 """;
       }
     }
