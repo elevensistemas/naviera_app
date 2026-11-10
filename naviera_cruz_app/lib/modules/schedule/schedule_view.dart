@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/models.dart';
 import '../../services/services.dart';
@@ -11,7 +12,7 @@ class ScheduleView extends StatefulWidget {
   State<ScheduleView> createState() => _ScheduleViewState();
 }
 
-class _ScheduleViewState extends State<ScheduleView> {
+class _ScheduleViewState extends State<ScheduleView> with WidgetsBindingObserver {
   int _activeTabIndex = 0; // 0: Main Cards Dashboard, 1: Detalle Lista
   final List<Schedule> _schedules = [];
   final List<OperationCharge> _summaryCharges = [];
@@ -23,11 +24,50 @@ class _ScheduleViewState extends State<ScheduleView> {
   DateTime _endDate = DateTime(DateTime.now().year, DateTime.now().month + 1, 0);
 
   int _loadRequestId = 0;
+  Timer? _autoRefreshTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadData();
+    // Auto-actualización periódica de programa y detección de cambio de mes cada 60s
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 60), (_) {
+      if (mounted) {
+        final now = DateTime.now();
+        if (_startDate.month != now.month || _startDate.year != now.year) {
+          setState(() {
+            _startDate = DateTime(now.year, now.month, 1);
+            _endDate = DateTime(now.year, now.month + 1, 0);
+          });
+        }
+        _loadData();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoRefreshTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      final now = DateTime.now();
+      // Si el reloj del dispositivo avanzó a un nuevo mes mientras la app estaba en segundo plano
+      if (_startDate.month != now.month || _startDate.year != now.year) {
+        if (mounted) {
+          setState(() {
+            _startDate = DateTime(now.year, now.month, 1);
+            _endDate = DateTime(now.year, now.month + 1, 0);
+          });
+        }
+      }
+      _loadData();
+    }
   }
 
   Future<void> _loadData() async {
