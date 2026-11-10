@@ -126,8 +126,8 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
               ? alfa.lastPort
               : 'Operando STS con CARAVOS TRIUMPH',
           weather: alfa.weather.isNotEmpty ? alfa.weather : '22.6°C · Viento WNW 9 kn',
-          provistosCount: alfa.provistosCount > 0 ? alfa.provistosCount : 4,
-          provistosTotal: alfa.provistosTotal > 0 ? alfa.provistosTotal : 3040.0,
+          provistosCount: alfa.provistosCount,
+          provistosTotal: alfa.provistosTotal,
           fuelPercentage: alfa.fuelPercentage ?? 0.29,
           waterPercentage: alfa.waterPercentage ?? 0.57,
           slopPercentage: alfa.slopPercentage ?? 0.19,
@@ -472,8 +472,8 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         chiefEngineerName: "Lescano Cristian",
         lastPort: "Operando STS con CARAVOS TRIUMPH",
         weather: "22.6°C · Viento WNW 9 kn",
-        provistosCount: 4,
-        provistosTotal: 3040.00,
+        provistosCount: 0,
+        provistosTotal: 0.00,
       ),
       Ship(
         id: "6",

@@ -1022,7 +1022,8 @@ class ProductionFleetService implements FleetService {
                     if (dt != null) voyageYear = dt.year;
                   }
                 }
-                if (voyageYear < 2026) continue;
+                final currentYear = DateTime.now().year;
+                if (voyageYear < currentYear - 1) continue;
 
                 final recs = v['records_detail'];
                 if (recs is List && recs.any((r) => (r is Map && (r['observations'] ?? '').toString().trim().isNotEmpty))) {
@@ -1146,6 +1147,7 @@ class ProductionFleetService implements FleetService {
         // 3. Consulta en vivo de cargas operativas y buques provistos del mes actual desde la Intranet
         final Map<String, int> liveProvistosCount = {};
         final Map<String, double> liveProvistosTotal = {};
+        bool chargesApiSucceeded = false;
         try {
           final now = DateTime.now();
           final dfStr = "${now.year}-${now.month.toString().padLeft(2, '0')}-01";
@@ -1155,6 +1157,7 @@ class ProductionFleetService implements FleetService {
             endpoint: '/api/v1/operation-charges-chart/?date_from=$dfStr&date_to=$dtStr',
           );
           if (chargesRes is List) {
+            chargesApiSucceeded = true;
             for (final c in chargesRes) {
               if (c is Map) {
                 final sName = (c['ship'] ?? '').toString().toUpperCase();
@@ -1238,8 +1241,12 @@ class ProductionFleetService implements FleetService {
           final captain = liveCaptains[shipKey] ?? actingCaptains[shipKey] ?? (ship.captainName.isNotEmpty ? ship.captainName : defaultCaptain);
           final chiefEng = liveChiefs[shipKey] ?? actingChiefs[shipKey] ?? (ship.chiefEngineerName.isNotEmpty ? ship.chiefEngineerName : defaultChief);
 
-          final pCount = liveProvistosCount[shipKey] ?? (shipKey == 'ALFA' ? 4 : (shipKey == 'NANY' ? 3 : 0));
-          final pTotal = liveProvistosTotal[shipKey] ?? (shipKey == 'ALFA' ? 3040.0 : (shipKey == 'NANY' ? 2100.0 : 0.0));
+          final pCount = chargesApiSucceeded
+              ? (liveProvistosCount[shipKey] ?? 0)
+              : (liveProvistosCount[shipKey] ?? (AppConfig.isMockActive ? (shipKey == 'ALFA' ? 4 : (shipKey == 'NANY' ? 3 : 0)) : 0));
+          final pTotal = chargesApiSucceeded
+              ? (liveProvistosTotal[shipKey] ?? 0.0)
+              : (liveProvistosTotal[shipKey] ?? (AppConfig.isMockActive ? (shipKey == 'ALFA' ? 3040.0 : (shipKey == 'NANY' ? 2100.0 : 0.0)) : 0.0));
 
           resolvedShips.add(ship.copyWith(
             cameraUrl: cameraUrl,
