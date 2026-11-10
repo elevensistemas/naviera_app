@@ -131,6 +131,9 @@ class _LoginViewState extends State<LoginView> {
                         TextField(
                           controller: _usernameController,
                           style: const TextStyle(color: Colors.black87),
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          textCapitalization: TextCapitalization.none,
                           decoration: InputDecoration(
                             hintText: "Usuario (Ej. admin)",
                             hintStyle: const TextStyle(color: Colors.black38),
@@ -149,6 +152,9 @@ class _LoginViewState extends State<LoginView> {
                         TextField(
                           controller: _passwordController,
                           style: const TextStyle(color: Colors.black87),
+                          autocorrect: false,
+                          enableSuggestions: false,
+                          textCapitalization: TextCapitalization.none,
                           decoration: InputDecoration(
                             hintText: "Contraseña",
                             hintStyle: const TextStyle(color: Colors.black38),
