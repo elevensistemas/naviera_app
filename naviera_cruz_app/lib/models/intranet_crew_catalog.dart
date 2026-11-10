@@ -59,13 +59,13 @@ class IntranetCrewCatalog {
     ),
     IntranetCrewMember(
       id: "ET_03",
-      name: "Fleitas Emmanuel",
+      name: "Gallardo Juan",
       roleCode: "1ER OF CUB",
       roleName: "1er Oficial de Cubierta",
       isOnBoard: false,
       shipName: null,
-      days: 206,
-      username: "e.fleitas",
+      days: 5,
+      username: "j.gallardo",
     ),
     IntranetCrewMember(
       id: "ET_04",
@@ -794,13 +794,13 @@ class IntranetCrewCatalog {
     ),
     IntranetCrewMember(
       id: "NA_02",
-      name: "Gallardo Juan",
+      name: "Fleitas Emanuel",
       roleCode: "1ER OF CUB",
       roleName: "1er Oficial de Cubierta",
       isOnBoard: true,
       shipName: "NANY",
-      days: 5,
-      username: "j.gallardo",
+      days: 6,
+      username: "e.fleitas",
     ),
     IntranetCrewMember(
       id: "NA_03",

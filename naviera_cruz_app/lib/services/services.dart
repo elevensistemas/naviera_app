@@ -1299,32 +1299,38 @@ class ProductionFleetService implements FleetService {
           'NANY': [],
         };
 
-        final nowUtc = DateTime.now().toUtc().subtract(const Duration(hours: 3));
-        final todayIdx = nowUtc.day - 1;
-
         for (final row in rows) {
           if (row is! Map<String, dynamic>) continue;
           final rowShip = (row['ship_name'] ?? '').toString();
           final rowShipKey = _normalizeShipKey(rowShip);
 
           final sit = (row['current_situation'] ?? '').toString();
-          // Solo tripulantes actualmente embarcados (A BORDO)
-          if (!sit.toUpperCase().contains('EMBARC')) continue;
+          final sitUpper = sit.toUpperCase();
 
-          // Si la grilla tiene los días del mes calendario, verificar si hoy está efectivamente a bordo
-          final daysList = row['days'] as List?;
-          if (daysList != null && daysList.length > todayIdx && todayIdx >= 0) {
-            final todayInfo = daysList[todayIdx];
-            if (todayInfo is Map<String, dynamic>) {
-              final isOnBoardToday = todayInfo['is_on_board'] == true ||
-                  (todayInfo['situation']?.toString().toLowerCase().contains('embarc') ?? false);
-              if (!isOnBoardToday) continue;
-            }
-          }
+          // Excluir personal franco, con licencia, desembarcado, en tierra o de baja
+          final bool isExcluded = sitUpper.contains('FRANCO') ||
+              sitUpper.contains('LICENC') ||
+              sitUpper.contains('DESEMBARC') ||
+              sitUpper.contains('TIERRA') ||
+              sitUpper.contains('BAJA') ||
+              sitUpper.contains('VACACION') ||
+              sitUpper.contains('SIN EMBARCAR');
 
-          final days = int.tryParse(row['current_situation_days']?.toString() ?? '') ?? 0;
-          // Ignorar registros históricos inactivos o licencias de largo tratamiento (> 200 días)
-          if (days > 200) continue;
+          if (isExcluded) continue;
+
+          // Personal a bordo (Embarcado, A Bordo, EMB, o flag is_on_board)
+          final bool isExplicitlyOnBoard = sitUpper.contains('EMBARC') ||
+              sitUpper.contains('BORDO') ||
+              sitUpper.contains('EMB') ||
+              row['is_on_board'] == true;
+
+          if (!isExplicitlyOnBoard) continue;
+
+          final days = int.tryParse(row['current_situation_days']?.toString() ?? '') ??
+              int.tryParse(row['days_on_board']?.toString() ?? '') ??
+              0;
+          // Ignorar únicamente registros de más de un año (> 365 días)
+          if (days > 365) continue;
 
           final order = int.tryParse(row['position_order']?.toString() ?? '') ?? 999;
           final memberId = (row['member_id'] ?? '').toString();
@@ -1388,7 +1394,21 @@ class ProductionFleetService implements FleetService {
         };
 
         for (final m in allCrew) {
-          if (!m.isOnBoard) continue;
+          final mSit = m.situation.toUpperCase();
+          final bool isExcluded = mSit.contains('FRANCO') ||
+              mSit.contains('LICENC') ||
+              mSit.contains('DESEMBARC') ||
+              mSit.contains('TIERRA') ||
+              mSit.contains('BAJA') ||
+              mSit.contains('VACACION') ||
+              mSit.contains('SIN EMBARCAR');
+          if (isExcluded) continue;
+
+          final bool isOnBoard = m.isOnBoard ||
+              mSit.contains('EMBARC') ||
+              mSit.contains('BORDO') ||
+              mSit.contains('EMB');
+          if (!isOnBoard) continue;
           final sName = (m.shipName ?? m.shipId).toString();
           final sKey = _normalizeShipKey(sName);
           if (parsedByShip.containsKey(sKey)) {

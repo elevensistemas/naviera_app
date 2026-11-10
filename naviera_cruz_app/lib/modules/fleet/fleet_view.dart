@@ -534,16 +534,18 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
 
   String _getCargoProgramInfo(Ship ship) {
     final upper = ship.name.toUpperCase();
-    final count = ship.provistosCount;
     if (upper.contains('ALFA')) {
-      final totalStr = "${ship.provistosTotal.toStringAsFixed(0)} m³";
-      return "Raizen ($totalStr • $count buques)";
-    } else if (upper.contains('NANY')) {
-      final totalStr = "${(ship.provistosTotal / 1000).toStringAsFixed(2)} k t";
-      return "WFS ($totalStr • $count buques)";
-    } else if (upper.contains('GUSTAVO')) {
-      final totalStr = "${(ship.provistosTotal / 1000).toStringAsFixed(2)} k t";
-      return "WFS ($totalStr • $count buques)";
+      if (ship.provistosTotal > 0) {
+        final totalStr = "${ship.provistosTotal.toStringAsFixed(0)} m³";
+        return "Raizen ($totalStr)";
+      }
+      return "Raizen";
+    } else if (upper.contains('NANY') || upper.contains('GUSTAVO')) {
+      if (ship.provistosTotal > 0) {
+        final totalStr = "${(ship.provistosTotal / 1000).toStringAsFixed(2)} k t";
+        return "WFS ($totalStr)";
+      }
+      return "WFS";
     }
     return "Raizen";
   }
