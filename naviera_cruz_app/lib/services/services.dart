@@ -1312,7 +1312,77 @@ class ProductionFleetService implements FleetService {
       }
     }
 
-    // 1. Direct Intranet Dynamic Crew & Situations Grid: /api/v1/crew-month-grid/
+    // 1. Direct Intranet Dynamic Crew Endpoint: /api/v1/crew-status-ships/ (and /crew-status-ships)
+    // Provee el estado actual en tiempo real de toda la flota en una sola petición instantánea (<200ms)
+    try {
+      dynamic statusResponse;
+      try {
+        statusResponse = await APIClient.shared.request(endpoint: '/api/v1/crew-status-ships/');
+      } catch (_) {
+        statusResponse = await APIClient.shared.request(endpoint: '/crew-status-ships');
+      }
+
+      if (statusResponse is Map<String, dynamic> && statusResponse['on_board'] is List) {
+        final List onBoardList = statusResponse['on_board'] as List;
+        final Map<String, List<CrewMember>> parsedByShip = {
+          'ALFA': [],
+          'GUSTAVO': [],
+          'NANY': [],
+        };
+
+        for (final raw in onBoardList) {
+          if (raw is! Map<String, dynamic>) continue;
+          final rowShip = (raw['ship_name'] ?? '').toString();
+          final rowShipKey = _normalizeShipKey(rowShip);
+          final name = (raw['name'] ?? '').toString().trim();
+          if (name.isEmpty) continue;
+
+          final posShort = (raw['position_short'] ?? '').toString().trim();
+          final posFull = (raw['position'] ?? '').toString().trim();
+          final roleDisplay = posShort.isNotEmpty ? posShort : posFull;
+          final days = int.tryParse(raw['days_on_board']?.toString() ?? '') ?? 0;
+          final order = int.tryParse(raw['position_index']?.toString() ?? '') ?? 999;
+          final memberId = (raw['crew_member_id'] ?? raw['situation_id'] ?? '').toString();
+          final startDate = raw['start_date']?.toString();
+
+          final member = CrewMember(
+            id: memberId.isNotEmpty ? memberId : 'c_$name',
+            shipId: shipId,
+            shipName: rowShip,
+            name: name,
+            role: roleDisplay,
+            situation: 'Embarcado',
+            situationCode: 'EMB',
+            isOnBoard: true,
+            startDate: startDate,
+            daysOnBoard: days,
+            orderIndex: order,
+          );
+
+          if (parsedByShip.containsKey(rowShipKey)) {
+            parsedByShip[rowShipKey]!.add(member);
+          } else {
+            parsedByShip[rowShipKey] = [member];
+          }
+        }
+
+        parsedByShip.forEach((k, list) {
+          list.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+          if (list.isNotEmpty) {
+            _cachedCrewByShip[k] = list;
+          }
+        });
+        _lastCrewCacheTime = DateTime.now();
+
+        if (_cachedCrewByShip.containsKey(normKey) && _cachedCrewByShip[normKey]!.isNotEmpty) {
+          return List<CrewMember>.from(_cachedCrewByShip[normKey]!);
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching dynamic crew from /api/v1/crew-status-ships/: $e");
+    }
+
+    // 2. Direct Intranet Dynamic Crew & Situations Grid: /api/v1/crew-month-grid/
     // Provee el estado actual en tiempo real de toda la flota en una sola petición
     try {
       final gridResponse = await APIClient.shared.request(endpoint: '/api/v1/crew-month-grid/');
