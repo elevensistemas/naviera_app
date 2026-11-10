@@ -544,30 +544,15 @@ class _ChatListViewState extends State<ChatListView> {
                     ),
                     const SizedBox(width: 14),
                     // Títulos del asistente
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            "Asistente NCS",
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                          SizedBox(height: 3),
-                          Text(
-                            "Tu aliado operativo con IA",
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFFE2E8F0),
-                            ),
-                          ),
-                        ],
+                    const Expanded(
+                      child: Text(
+                        "Asistente NCS",
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 0.2,
+                        ),
                       ),
                     ),
                     // Botón circular chevron

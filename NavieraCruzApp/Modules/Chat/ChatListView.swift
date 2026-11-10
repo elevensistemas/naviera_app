@@ -22,10 +22,6 @@ struct ChatListView: View {
                                 Text("Asistente NCS")
                                     .font(Typography.headline())
                                     .foregroundColor(ColorTheme.textPrimary)
-                                
-                                Text("Tu aliado operativo con IA")
-                                    .font(Typography.caption())
-                                    .foregroundColor(ColorTheme.fallbackAccent)
                             }
                         }
                         .padding(.vertical, 4)
