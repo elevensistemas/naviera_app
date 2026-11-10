@@ -532,24 +532,6 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     ];
   }
 
-  String _getCargoProgramInfo(Ship ship) {
-    final upper = ship.name.toUpperCase();
-    if (upper.contains('ALFA')) {
-      if (ship.provistosTotal > 0) {
-        final totalStr = "${ship.provistosTotal.toStringAsFixed(0)} m³";
-        return "Raizen ($totalStr)";
-      }
-      return "Raizen";
-    } else if (upper.contains('NANY') || upper.contains('GUSTAVO')) {
-      if (ship.provistosTotal > 0) {
-        final totalStr = "${(ship.provistosTotal / 1000).toStringAsFixed(2)} k t";
-        return "WFS ($totalStr)";
-      }
-      return "WFS";
-    }
-    return "Raizen";
-  }
-
   Color _getShipThemeColor(String name) {
     final upper = name.toUpperCase();
     if (upper.contains('ALFA')) return const Color(0xFF0057B8); // Azul
@@ -795,7 +777,6 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
   Widget _buildShipCard(BuildContext context, Ship ship, ThemeData theme) {
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
-    final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
     final dividerColor = isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFF1F5F9);
     final shipAccentColor = _getShipThemeColor(ship.name);
     final String flagEmoji = ship.flag.contains('🇵🇦') || ship.name.toUpperCase().contains('ALFA')
@@ -843,42 +824,6 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                           ),
                         ),
                       ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-
-                // Cargo Program Info (directamente donde estaba la bandera para subir la cámara y ganar espacio)
-                Row(
-                  children: [
-                    Icon(Icons.analytics_outlined, size: 14, color: shipAccentColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      "Programa: ",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: secondaryTextColor,
-                      ),
-                    ),
-                    Flexible(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                        decoration: BoxDecoration(
-                          color: shipAccentColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: shipAccentColor.withValues(alpha: 0.3), width: 0.8),
-                        ),
-                        child: Text(
-                          _getCargoProgramInfo(ship),
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: shipAccentColor,
-                          ),
-                        ),
-                      ),
                     ),
                   ],
                 ),

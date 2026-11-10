@@ -440,8 +440,6 @@ class _ScheduleViewState extends State<ScheduleView> with WidgetsBindingObserver
   // ---------------------------------------------------------
   Widget _buildRaizenCard(BuildContext context, double raizenTotal, int raizenTrips, double raizenTarget) {
     final double safeTarget = raizenTarget > 0 ? raizenTarget : 17.50;
-    final double raizenProgress = (raizenTotal / safeTarget).clamp(0.0, 1.0);
-    final int raizenProgressPct = (raizenProgress * 100).round();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
     final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
@@ -747,61 +745,6 @@ class _ScheduleViewState extends State<ScheduleView> with WidgetsBindingObserver
                               Text(
                                 "k tons/buque",
                                 style: TextStyle(fontSize: 10, color: secondaryTextColor),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF0F6FF),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF0066FF).withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Icon(Icons.show_chart_rounded, size: 16, color: Color(0xFF0066FF)),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                      "Progreso",
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(fontSize: 11, color: secondaryTextColor),
-                                    ),
-                                  ),
-                                ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                "$raizenProgressPct%",
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
-                              ),
-                              const SizedBox(height: 6),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  value: raizenProgress,
-                                  minHeight: 5,
-                                  backgroundColor: const Color(0xFFCBD5E1),
-                                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0066FF)),
-                                ),
                               ),
                             ],
                           ),
