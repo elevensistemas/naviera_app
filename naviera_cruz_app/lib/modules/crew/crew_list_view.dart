@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/models.dart';
+import '../../models/intranet_crew_catalog.dart';
 import '../../services/services.dart';
 import '../../app/theme.dart';
 import '../../app/ncs_hero_header.dart';
@@ -15,7 +16,11 @@ class CrewListView extends StatefulWidget {
 
 class _CrewListViewState extends State<CrewListView> {
   final List<CrewMember> _crewMembers = [];
-  final List<Ship> _ships = [];
+  final List<Ship> _ships = [
+    Ship(id: "1", name: "ALFA C", status: ShipStatus.active),
+    Ship(id: "2", name: "GUSTAVO U", status: ShipStatus.active),
+    Ship(id: "4", name: "NANY", status: ShipStatus.active),
+  ];
   String? _selectedShipId;
   String? _selectedShipName;
   bool _isLoading = false;
@@ -38,7 +43,34 @@ class _CrewListViewState extends State<CrewListView> {
       }
     }
     _selectedShipName ??= 'ALFA C';
-    _initData();
+
+    // 1. Mostrar de inmediato la dotación en memoria (0 ms de espera visual)
+    _prefillFromCatalog(_selectedShipName!);
+
+    // 2. Cargar en paralelo desde /api/v1/crew-status-ships/ sin bloquear con fetchShips()
+    _loadCrew();
+  }
+
+  void _prefillFromCatalog(String shipName) {
+    final catalogList = IntranetCrewCatalog.aBordo
+        .where((m) => m.shipName != null && m.shipName!.toUpperCase().contains(shipName.toUpperCase()))
+        .map((m) => CrewMember(
+              id: m.id,
+              shipId: _selectedShipId ?? '1',
+              shipName: m.shipName,
+              name: m.name,
+              role: m.roleCode,
+              situation: 'Embarcado',
+              situationCode: 'EMB',
+              isOnBoard: true,
+              daysOnBoard: m.days,
+            ))
+        .toList();
+    if (catalogList.isNotEmpty) {
+      _crewMembers.clear();
+      _crewMembers.addAll(catalogList);
+      _isLoading = false;
+    }
   }
 
   @override
@@ -47,53 +79,16 @@ class _CrewListViewState extends State<CrewListView> {
     super.dispose();
   }
 
-  Future<void> _initData() async {
-    setState(() => _isLoading = true);
-    try {
-      final fleetService = FleetService();
-      
-      // Load ships for filters
-      final ships = await fleetService.fetchShips();
-      setState(() {
-        _ships.clear();
-        if (ships.isNotEmpty) {
-          _ships.addAll(ships);
-        } else {
-          // Fallback ships matching database IDs and design
-          _ships.addAll([
-            Ship(id: "1", name: "ALFA C", status: ShipStatus.active, totalCargo: 1500, latitude: -42.76, longitude: -65.03),
-            Ship(id: "2", name: "GUSTAVO U", status: ShipStatus.active, totalCargo: 1200, latitude: -38.00, longitude: -57.55),
-            Ship(id: "4", name: "NANY", status: ShipStatus.docked, totalCargo: 800, latitude: -54.80, longitude: -68.30),
-          ]);
-        }
-        
-        if (_selectedShipName != null) {
-          final matched = _ships.where((s) => s.name.toUpperCase().contains(_selectedShipName!.toUpperCase()));
-          if (matched.isNotEmpty) {
-            _selectedShipId = matched.first.id;
-          }
-        }
-      });
-
-      await _loadCrew();
-    } catch (_) {
-      _loadFallbackCrew();
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
   Future<void> _loadCrew() async {
     final targetQuery = _selectedShipName ?? 'ALFA C';
-    
-    setState(() {
-      _isLoading = true;
-      _crewMembers.clear();
-    });
+
+    if (_crewMembers.isEmpty) {
+      setState(() => _isLoading = true);
+    }
     try {
       final fleetService = FleetService();
       final crew = await fleetService.fetchCrew(targetQuery);
-      
+
       final seenIds = <String>{};
       final uniqueCrew = <CrewMember>[];
       for (var member in crew) {
@@ -112,16 +107,16 @@ class _CrewListViewState extends State<CrewListView> {
         }
       }
 
-      if (uniqueCrew.isEmpty) {
-        _loadFallbackCrew();
-      } else {
+      if (mounted && uniqueCrew.isNotEmpty) {
         setState(() {
           _crewMembers.clear();
           _crewMembers.addAll(uniqueCrew);
         });
       }
     } catch (_) {
-      _loadFallbackCrew();
+      if (_crewMembers.isEmpty) {
+        _loadFallbackCrew();
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -425,8 +420,7 @@ class _CrewListViewState extends State<CrewListView> {
                   setState(() {
                     _selectedShipId = ship.id;
                     _selectedShipName = ship.name;
-                    _crewMembers.clear();
-                    _isLoading = true;
+                    _prefillFromCatalog(ship.name);
                   });
                   _loadCrew();
                 }
@@ -575,7 +569,7 @@ class _CrewListViewState extends State<CrewListView> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  member.role,
+                  member.role.toUpperCase().trim() == 'CAP' ? 'Capitán' : member.role,
                   style: TextStyle(
                     fontSize: 13,
                     color: captionColor,
@@ -672,8 +666,13 @@ class _CrewRoleAvatarWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = role.toLowerCase().trim();
 
-    // 1. Capitán / Captain / Patrón
-    if (r.contains('capit') || r.contains('patron')) {
+    // 1. Capitán / Captain / Patrón / CAP
+    if (r == 'cap' ||
+        r.startsWith('cap ') ||
+        r.startsWith('cap.') ||
+        r.contains('capit') ||
+        r.contains('captain') ||
+        r.contains('patron')) {
       return Container(
         width: size,
         height: size,
