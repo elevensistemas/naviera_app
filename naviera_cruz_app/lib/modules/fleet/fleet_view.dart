@@ -1034,7 +1034,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                     context: context,
                     icon: Icons.local_gas_station_rounded,
                     color: const Color(0xFFF59E0B), // Yellow-Amber / Combustible
-                    label: "Comb.",
+                    label: "Combustible",
                     progressPercentage: _getFuelPercentage(ship),
                   ),
                   Container(height: 46, width: 1, margin: const EdgeInsets.symmetric(horizontal: 4), color: dividerColor),
@@ -1266,14 +1266,18 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
             children: [
               Icon(icon, size: 12, color: color),
               const SizedBox(width: 3),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white70 : const Color(0xFF334155),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white70 : const Color(0xFF334155),
+                    ),
+                  ),
                 ),
               ),
             ],
