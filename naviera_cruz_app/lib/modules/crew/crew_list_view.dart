@@ -86,7 +86,10 @@ class _CrewListViewState extends State<CrewListView> {
   Future<void> _loadCrew() async {
     final targetQuery = _selectedShipName ?? 'ALFA C';
     
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _crewMembers.clear();
+    });
     try {
       final fleetService = FleetService();
       final crew = await fleetService.fetchCrew(targetQuery);
@@ -338,7 +341,7 @@ class _CrewListViewState extends State<CrewListView> {
                       const SizedBox(height: 16),
 
                       // Crew Members List (Cards on Mobile, Table or Cards on Web)
-                      if (_isLoading && _crewMembers.isEmpty)
+                      if (_isLoading)
                         const Padding(
                           padding: EdgeInsets.all(40.0),
                           child: Center(child: CircularProgressIndicator()),
@@ -418,11 +421,15 @@ class _CrewListViewState extends State<CrewListView> {
             padding: const EdgeInsets.only(right: 10.0),
             child: GestureDetector(
               onTap: () {
-                setState(() {
-                  _selectedShipId = ship.id;
-                  _selectedShipName = ship.name;
-                });
-                _loadCrew();
+                if (_selectedShipName != ship.name) {
+                  setState(() {
+                    _selectedShipId = ship.id;
+                    _selectedShipName = ship.name;
+                    _crewMembers.clear();
+                    _isLoading = true;
+                  });
+                  _loadCrew();
+                }
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),

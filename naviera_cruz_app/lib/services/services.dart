@@ -158,63 +158,9 @@ abstract class ChatService {
 class MockChatService implements ChatService {
   @override
   Future<List<ChatChannel>> fetchChannels() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return [
-      ChatChannel(
-        id: "ch1",
-        name: "Marenco Rubén Darío",
-        isGroup: false,
-        lastMessage: "Perfecto, gracias.",
-        timeDisplay: "10:34",
-        unreadCount: 3,
-        type: "direct",
-      ),
-      ChatChannel(
-        id: "ch2",
-        name: "Caballero Diego",
-        isGroup: false,
-        lastMessage: "Te envío el reporte de hoy.",
-        timeDisplay: "09:15",
-        unreadCount: 0,
-        type: "direct",
-      ),
-      ChatChannel(
-        id: "ch3",
-        name: "Sosa Armando",
-        isGroup: false,
-        lastMessage: "Nos vemos mañana en el taller.",
-        timeDisplay: "Ayer",
-        unreadCount: 1,
-        type: "direct",
-      ),
-      ChatChannel(
-        id: "ch4",
-        name: "NANY - Tripulación",
-        isGroup: true,
-        lastMessage: "Escalante: Todo en orden.",
-        timeDisplay: "Ayer",
-        unreadCount: 4,
-        type: "group",
-      ),
-      ChatChannel(
-        id: "ch5",
-        name: "GUSTAVO U - Tripulación",
-        isGroup: true,
-        lastMessage: "Caratolli: Cambio de turno confirmado.",
-        timeDisplay: "24 sep",
-        unreadCount: 0,
-        type: "group",
-      ),
-      ChatChannel(
-        id: "ch6",
-        name: "Comunicaciones Generales",
-        isGroup: false,
-        lastMessage: "Administración: Recordatorio de capacitaci...",
-        timeDisplay: "23 sep",
-        unreadCount: 0,
-        type: "announcement",
-      ),
-    ];
+    await Future.delayed(const Duration(milliseconds: 100));
+    // No inventar chats recientes: si no hubo conversaciones, lista vacía
+    return [];
   }
 
   @override
@@ -847,6 +793,18 @@ class EzvizService {
 }
 
 class ProductionFleetService implements FleetService {
+  static final Map<String, List<CrewMember>> _cachedCrewByShip = {};
+  static DateTime? _lastCrewCacheTime;
+  static const Duration _crewCacheDuration = Duration(minutes: 5);
+
+  static String _normalizeShipKey(String raw) {
+    final s = raw.trim().toUpperCase();
+    if (s.contains('ALFA') || s == '1' || s == '2071' || s == 'S1') return 'ALFA';
+    if (s.contains('GUSTAVO') || s == '2' || s == '6' || s == '2073' || s == 'S2') return 'GUSTAVO';
+    if (s.contains('NANY') || s == '4' || s == '5' || s == 'S3') return 'NANY';
+    return s;
+  }
+
   static final Set<String> _ignoreWords = {
     'FONDEO', 'FONDEAR', 'FONDEADOS', 'REINICIO', 'ZARPADA', 'NAVEGACION', 'NAVEGACIÓN',
     'AMARRE', 'AMARRADO', 'AMARRADOS', 'ENTREGA', 'OPERACION', 'OPERACIÓN', 'DESTINO',
@@ -1312,37 +1270,35 @@ class ProductionFleetService implements FleetService {
 
   @override
   Future<List<CrewMember>> fetchCrew(String shipId) async {
-    final encodedShipId = Uri.encodeComponent(shipId);
+    final normKey = _normalizeShipKey(shipId);
+
+    // Fast path: In-memory cache hit (0ms delay)
+    final now = DateTime.now();
+    if (_lastCrewCacheTime != null && now.difference(_lastCrewCacheTime!) < _crewCacheDuration) {
+      if (_cachedCrewByShip.containsKey(normKey) && _cachedCrewByShip[normKey]!.isNotEmpty) {
+        return List<CrewMember>.from(_cachedCrewByShip[normKey]!);
+      }
+    }
 
     // 1. Direct Intranet Dynamic Crew & Situations Grid: /api/v1/crew-month-grid/
-    // This endpoint provides the exact live status ('current_situation') and daily counter ('current_situation_days')
+    // Provee el estado actual en tiempo real de toda la flota en una sola petición
     try {
       final gridResponse = await APIClient.shared.request(endpoint: '/api/v1/crew-month-grid/');
       if (gridResponse is Map<String, dynamic> && gridResponse['rows'] is List) {
         final List rows = gridResponse['rows'] as List;
-        final upperShip = shipId.trim().toUpperCase();
-        final String matchKey = upperShip.contains('ALFA')
-            ? 'ALFA'
-            : upperShip.contains('GUSTAVO')
-                ? 'GUSTAVO'
-                : upperShip.contains('NANY')
-                    ? 'NANY'
-                    : (upperShip == '1' || upperShip == '2071' || upperShip == 'S1')
-                        ? 'ALFA'
-                        : (upperShip == '2' || upperShip == '6' || upperShip == '2073' || upperShip == 'S2')
-                            ? 'GUSTAVO'
-                            : (upperShip == '4' || upperShip == '5' || upperShip == 'S3')
-                                ? 'NANY'
-                                : upperShip;
+        final Map<String, List<CrewMember>> parsedByShip = {
+          'ALFA': [],
+          'GUSTAVO': [],
+          'NANY': [],
+        };
 
-        final List<CrewMember> gridCrew = [];
         final nowUtc = DateTime.now().toUtc().subtract(const Duration(hours: 3));
         final todayIdx = nowUtc.day - 1;
 
         for (final row in rows) {
           if (row is! Map<String, dynamic>) continue;
-          final rowShip = (row['ship_name'] ?? '').toString().toUpperCase();
-          if (!rowShip.contains(matchKey)) continue;
+          final rowShip = (row['ship_name'] ?? '').toString();
+          final rowShipKey = _normalizeShipKey(rowShip);
 
           final sit = (row['current_situation'] ?? '').toString();
           // Solo tripulantes actualmente embarcados (A BORDO)
@@ -1368,7 +1324,7 @@ class ProductionFleetService implements FleetService {
           final name = (row['name'] ?? '').toString().trim();
           final position = (row['position'] ?? '').toString().trim();
 
-          gridCrew.add(CrewMember(
+          final member = CrewMember(
             id: memberId.isNotEmpty ? memberId : 'c_$name',
             shipId: shipId,
             shipName: row['ship_name'] ?? '',
@@ -1379,19 +1335,32 @@ class ProductionFleetService implements FleetService {
             isOnBoard: true,
             daysOnBoard: days,
             orderIndex: order,
-          ));
+          );
+
+          if (parsedByShip.containsKey(rowShipKey)) {
+            parsedByShip[rowShipKey]!.add(member);
+          } else {
+            parsedByShip[rowShipKey] = [member];
+          }
         }
 
-        if (gridCrew.isNotEmpty) {
-          gridCrew.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-          return gridCrew;
+        parsedByShip.forEach((k, list) {
+          list.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+          if (list.isNotEmpty) {
+            _cachedCrewByShip[k] = list;
+          }
+        });
+        _lastCrewCacheTime = DateTime.now();
+
+        if (_cachedCrewByShip.containsKey(normKey) && _cachedCrewByShip[normKey]!.isNotEmpty) {
+          return List<CrewMember>.from(_cachedCrewByShip[normKey]!);
         }
       }
     } catch (e) {
       debugPrint("Error fetching dynamic crew from /api/v1/crew-month-grid/: $e");
     }
 
-    // 2. Try exact Intranet endpoint /api/v1/crew-members/?page_size=200 (fetches all crew members with details)
+    // 2. Direct Intranet Crew Members endpoint: /api/v1/crew-members/?page_size=200
     try {
       final response = await APIClient.shared.request(endpoint: '/api/v1/crew-members/?page_size=200');
       List rawList = [];
@@ -1405,68 +1374,43 @@ class ProductionFleetService implements FleetService {
 
       if (rawList.isNotEmpty) {
         final allCrew = rawList.map((json) => CrewMember.fromJson(json)).toList();
-        final upperShip = shipId.trim().toUpperCase();
-        
-        final filtered = allCrew.where((m) {
-          // SOLO TRIPULANTES EMBARCADOS (A BORDO)
-          if (!m.isOnBoard) return false;
+        final Map<String, List<CrewMember>> parsedByShip = {
+          'ALFA': [],
+          'GUSTAVO': [],
+          'NANY': [],
+        };
 
-          final mShipId = m.shipId.trim().toUpperCase();
-          final mShipName = (m.shipName ?? '').trim().toUpperCase();
-          if (mShipId == upperShip || (mShipName.isNotEmpty && mShipName == upperShip)) return true;
-          if (upperShip.contains('ALFA') && (mShipId == '4' || mShipId == 'S1' || mShipId.contains('ALFA') || mShipName.contains('ALFA'))) return true;
-          if (upperShip.contains('NANY') && (mShipId == '5' || mShipId == 'S3' || mShipId.contains('NANY') || mShipName.contains('NANY'))) return true;
-          if (upperShip.contains('GUSTAVO') && (mShipId == '6' || mShipId == 'S2' || mShipId.contains('GUSTAVO') || mShipName.contains('GUSTAVO'))) return true;
-          if ((upperShip == '4' || upperShip == 'S1') && (mShipName.contains('ALFA') || mShipId.contains('ALFA'))) return true;
-          if ((upperShip == '5' || upperShip == 'S3') && (mShipName.contains('NANY') || mShipId.contains('NANY'))) return true;
-          if ((upperShip == '6' || upperShip == 'S2') && (mShipName.contains('GUSTAVO') || mShipId.contains('GUSTAVO'))) return true;
-          return false;
-        }).toList();
+        for (final m in allCrew) {
+          if (!m.isOnBoard) continue;
+          final sName = (m.shipName ?? m.shipId).toString();
+          final sKey = _normalizeShipKey(sName);
+          if (parsedByShip.containsKey(sKey)) {
+            parsedByShip[sKey]!.add(m);
+          } else {
+            parsedByShip[sKey] = [m];
+          }
+        }
 
-        if (filtered.isNotEmpty) {
-          filtered.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-          return filtered;
+        parsedByShip.forEach((k, list) {
+          list.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+          if (list.isNotEmpty) {
+            _cachedCrewByShip[k] = list;
+          }
+        });
+        _lastCrewCacheTime = DateTime.now();
+
+        if (_cachedCrewByShip.containsKey(normKey) && _cachedCrewByShip[normKey]!.isNotEmpty) {
+          return List<CrewMember>.from(_cachedCrewByShip[normKey]!);
         }
       }
     } catch (e) {
-      print("Error fetching crew-members: $e");
+      debugPrint("Error fetching crew-members: $e");
     }
 
-    // 2. Try specific ship crew endpoints
-    final endpoints = [
-      '/api/v1/ships/$encodedShipId/crew/',
-      '/api/v1/crew-members/?ship=$encodedShipId',
-      '/api/ships/$encodedShipId/crew/',
-    ];
-
-    for (final ep in endpoints) {
-      try {
-        final response = await APIClient.shared.request(endpoint: ep);
-        List rawList = [];
-        if (response is List) {
-          rawList = response;
-        } else if (response is Map<String, dynamic> && response['results'] is List) {
-          rawList = response['results'] as List;
-        } else if (response is Map<String, dynamic> && response['data'] is List) {
-          rawList = response['data'] as List;
-        }
-
-        if (rawList.isNotEmpty) {
-          // SOLO TRIPULANTES EMBARCADOS (A BORDO)
-          final crewList = rawList
-              .map((json) => CrewMember.fromJson(json))
-              .where((m) => m.isOnBoard)
-              .toList();
-          if (crewList.isNotEmpty) {
-            crewList.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-            return crewList;
-          }
-        }
-      } catch (_) {}
-    }
-
-    // Fallback to MockFleetService with accurate ship-specific crew
-    return MockFleetService().fetchCrew(shipId);
+    // 3. Fallback inmediato al catálogo verificado IntranetCrewCatalog (evita esperas innecesarias de endpoints inexistentes)
+    final fallback = await MockFleetService().fetchCrew(shipId);
+    _cachedCrewByShip[normKey] = fallback;
+    return fallback;
   }
 }
 
