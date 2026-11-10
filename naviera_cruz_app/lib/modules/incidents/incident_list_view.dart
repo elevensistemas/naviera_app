@@ -24,6 +24,16 @@ class _IncidentListViewState extends State<IncidentListView> {
     _loadIncidents();
   }
 
+  void _sortIncidentsDesc(List<Incident> list) {
+    list.sort((a, b) {
+      final dateComparison = b.date.compareTo(a.date);
+      if (dateComparison != 0) return dateComparison;
+      final idA = int.tryParse(a.id) ?? int.tryParse(RegExp(r'\d+').stringMatch(a.incidentNumber) ?? '') ?? 0;
+      final idB = int.tryParse(b.id) ?? int.tryParse(RegExp(r'\d+').stringMatch(b.incidentNumber) ?? '') ?? 0;
+      return idB.compareTo(idA);
+    });
+  }
+
   Future<void> _loadIncidents() async {
     setState(() {
       _isLoading = true;
@@ -33,24 +43,26 @@ class _IncidentListViewState extends State<IncidentListView> {
     try {
       final incidentService = IncidentService();
       final incidents = await incidentService.fetchIncidents();
-      if (incidents.isEmpty) {
-        final fallback = await MockIncidentService().fetchIncidents();
+      final targetList = incidents.isEmpty
+          ? await MockIncidentService().fetchIncidents()
+          : incidents;
+      _sortIncidentsDesc(targetList);
+
+      if (mounted) {
         setState(() {
           _incidents.clear();
-          _incidents.addAll(fallback);
-        });
-      } else {
-        setState(() {
-          _incidents.clear();
-          _incidents.addAll(incidents);
+          _incidents.addAll(targetList);
         });
       }
     } catch (_) {
       final fallback = await MockIncidentService().fetchIncidents();
-      setState(() {
-        _incidents.clear();
-        _incidents.addAll(fallback);
-      });
+      _sortIncidentsDesc(fallback);
+      if (mounted) {
+        setState(() {
+          _incidents.clear();
+          _incidents.addAll(fallback);
+        });
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -113,12 +125,18 @@ class _IncidentListViewState extends State<IncidentListView> {
   }
 
   List<Incident> get _filteredIncidents {
-    if (_selectedShipFilter == 'Todos') return _incidents;
-    final filterTarget = _selectedShipFilter.toUpperCase().trim();
-    return _incidents.where((i) {
-      final shipNameResolved = _getResolvedShipName(i).toUpperCase().trim();
-      return shipNameResolved.contains(filterTarget) || filterTarget.contains(shipNameResolved);
-    }).toList();
+    List<Incident> list;
+    if (_selectedShipFilter == 'Todos') {
+      list = List<Incident>.from(_incidents);
+    } else {
+      final filterTarget = _selectedShipFilter.toUpperCase().trim();
+      list = _incidents.where((i) {
+        final shipNameResolved = _getResolvedShipName(i).toUpperCase().trim();
+        return shipNameResolved.contains(filterTarget) || filterTarget.contains(shipNameResolved);
+      }).toList();
+    }
+    _sortIncidentsDesc(list);
+    return list;
   }
 
   Color _statusColor(IncidentStatus status) {
@@ -420,8 +438,6 @@ class _IncidentListViewState extends State<IncidentListView> {
                             )
                           else
                             ...displayedIncidents.map((incident) {
-                              final statusCol = _statusColor(incident.status);
-                              final statusBg = _statusBgColor(incident.status, isDark);
                               final shipDisplay = _getResolvedShipName(incident);
                               final reporterDisplay = _getResolvedReporterName(incident);
 

@@ -1355,11 +1355,11 @@ class Incident {
       reporterId: rId,
       reporterName: rName,
       date: json['date'] != null
-          ? DateTime.parse(json['date'])
+          ? (DateTime.tryParse(json['date'].toString()) ?? DateTime.now())
           : (json['date_time'] != null
-              ? DateTime.parse(json['date_time'])
+              ? (DateTime.tryParse(json['date_time'].toString()) ?? DateTime.now())
               : (json['created_at'] != null
-                  ? DateTime.parse(json['created_at'])
+                  ? (DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now())
                   : DateTime.now())),
       status: IncidentStatusExtension.fromString(rawState),
       state: rawState,

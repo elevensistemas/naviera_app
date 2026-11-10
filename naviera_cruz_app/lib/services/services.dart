@@ -1879,6 +1879,7 @@ class ProductionIncidentService implements IncidentService {
       apiIncidents = await MockIncidentService().fetchIncidents();
     }
 
+    final List<Incident> result = [];
     if (_localIncidents.isNotEmpty) {
       final existingIds = apiIncidents.map((i) => i.id).toSet();
       final existingNumbers = apiIncidents.map((i) => i.incidentNumber).where((n) => n.isNotEmpty).toSet();
@@ -1890,10 +1891,21 @@ class ProductionIncidentService implements IncidentService {
         }
       }
       merged.addAll(apiIncidents);
-      return merged;
+      result.addAll(merged);
+    } else {
+      result.addAll(apiIncidents);
     }
 
-    return apiIncidents;
+    // Ordenar estrictamente de más recientes a más antiguos (fecha descendente y por ID en empate)
+    result.sort((a, b) {
+      final dateComparison = b.date.compareTo(a.date);
+      if (dateComparison != 0) return dateComparison;
+      final idA = int.tryParse(a.id) ?? int.tryParse(RegExp(r'\d+').stringMatch(a.incidentNumber) ?? '') ?? 0;
+      final idB = int.tryParse(b.id) ?? int.tryParse(RegExp(r'\d+').stringMatch(b.incidentNumber) ?? '') ?? 0;
+      return idB.compareTo(idA);
+    });
+
+    return result;
   }
 
   @override
