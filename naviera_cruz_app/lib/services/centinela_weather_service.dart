@@ -75,10 +75,13 @@ class CentinelaWeatherService {
     try {
       final catToken = await EzvizService.shared.getCameraAccessToken();
       final hosts = [
-        if (kIsWeb) 'http://127.0.0.1:8086',
-        'https://centinela.dyndns.org:5073',
-        'https://192.168.2.169:5073',
-        'http://192.168.2.169:3001',
+        if (kIsWeb)
+          'http://127.0.0.1:8086'
+        else ...[
+          'https://centinela.dyndns.org:5073',
+          'https://192.168.2.169:5073',
+          'http://192.168.2.169:3001',
+        ],
       ];
 
       for (final host in hosts) {

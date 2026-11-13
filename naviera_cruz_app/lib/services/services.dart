@@ -627,6 +627,12 @@ class EzvizService {
     _offlineSerials.remove(deviceSerial);
   }
 
+  /// Invalida la caché del token de acceso a Centinela para forzar su renovación
+  void invalidateCATCache() {
+    _cachedCAT = null;
+    _catExpiry = null;
+  }
+
   /// Obtiene o renueva el Camera Access Token (CAT) emitido por la Intranet
   Future<String> getCameraAccessToken() async {
     final now = DateTime.now();
@@ -808,10 +814,13 @@ class EzvizService {
 
       // Hosts de Centinela en orden de prioridad
       final hosts = [
-        if (kIsWeb) 'http://127.0.0.1:8086',
-        'https://centinela.dyndns.org:5073',
-        'https://192.168.2.169:5073',
-        'http://192.168.2.169:3001',
+        if (kIsWeb)
+          'http://127.0.0.1:8086'
+        else ...[
+          'https://centinela.dyndns.org:5073',
+          'https://192.168.2.169:5073',
+          'http://192.168.2.169:3001',
+        ],
       ];
 
       for (final host in hosts) {

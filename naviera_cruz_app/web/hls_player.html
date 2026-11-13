@@ -98,10 +98,10 @@
       color: #FFF;
       border: none;
       border-radius: 8px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.2s ease;
     }
     .retry-btn:hover {
       background: #0369A1;
@@ -110,7 +110,9 @@
 </head>
 <body>
   <div class="player-container">
-    <video id="video" controls autoplay muted playsinline></video>
+    <video id="video" autoplay muted playsinline></video>
+    <!-- Overlay transparente sobre el badge STS superior izquierdo para capturar clics nativos en web -->
+    <div id="stsHitTarget" style="position: absolute; top: 0; left: 0; width: 68px; height: 68px; z-index: 99999; cursor: pointer;"></div>
     <div id="spinner" class="spinner-overlay">
       <div class="spinner"></div>
       <div id="spinnerText">Conectando señal en vivo...</div>
@@ -130,6 +132,23 @@
     const spinnerText = document.getElementById('spinnerText');
     const errorOverlay = document.getElementById('errorOverlay');
     const errorText = document.getElementById('errorText');
+    const stsHitTarget = document.getElementById('stsHitTarget');
+    let lastStsClickTime = 0;
+
+    if (stsHitTarget) {
+      stsHitTarget.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const now = Date.now();
+        if (now - lastStsClickTime < 450) {
+          return;
+        }
+        lastStsClickTime = now;
+        try {
+          window.parent.postMessage('ncs_sts_click', '*');
+        } catch (_) {}
+      });
+    }
 
     if (vesselParam.includes('GUSTAVO') || (videoSrc && videoSrc.includes('BF1767228'))) {
       video.classList.add('gustavo-correction');
@@ -164,7 +183,10 @@
       errorOverlay.classList.remove('visible');
     }
 
+    let bufferDebounceTimer = null;
+
     video.addEventListener('playing', () => {
+      clearTimeout(bufferDebounceTimer);
       hideSpinner();
       hideError();
       stallNudgeCount = 0;
@@ -172,13 +194,23 @@
     });
 
     video.addEventListener('waiting', () => {
-      showSpinner('Buffering señal...');
-      notifyParent('buffering');
+      clearTimeout(bufferDebounceTimer);
+      bufferDebounceTimer = setTimeout(() => {
+        showSpinner('Buffering señal...');
+        notifyParent('buffering');
+      }, 3500);
     });
 
     video.addEventListener('canplay', () => {
+      clearTimeout(bufferDebounceTimer);
       hideSpinner();
       notifyParent('playing');
+    });
+
+    video.addEventListener('timeupdate', () => {
+      if (!video.paused && video.currentTime > 0) {
+        hideSpinner();
+      }
     });
 
     function startStream() {
@@ -206,11 +238,11 @@
           liveSyncDurationCount: 3,
           liveMaxLatencyDurationCount: 8,
           manifestLoadingTimeOut: 15000,
-          manifestLoadingMaxRetry: 4,
+          manifestLoadingMaxRetry: 5,
           levelLoadingTimeOut: 15000,
-          levelLoadingMaxRetry: 4,
+          levelLoadingMaxRetry: 5,
           fragLoadingTimeOut: 20000,
-          fragLoadingMaxRetry: 5
+          fragLoadingMaxRetry: 6
         });
 
         hlsInstance.loadSource(videoSrc);
@@ -223,30 +255,35 @@
           });
         });
 
+        hlsInstance.on(Hls.Events.FRAG_LOADED, function () {
+          hideSpinner();
+        });
+
+        hlsInstance.on(Hls.Events.LEVEL_UPDATED, function () {
+          hideSpinner();
+        });
+
         hlsInstance.on(Hls.Events.ERROR, function (event, data) {
           if (data.fatal) {
             switch (data.type) {
               case Hls.ErrorTypes.NETWORK_ERROR:
-                console.warn('Network error encountered, recovering...', data);
-                showSpinner('Reconectando red...');
+                console.warn('Network error encountered, recovering in background...', data);
                 hlsInstance.startLoad();
                 break;
               case Hls.ErrorTypes.MEDIA_ERROR:
-                console.warn('Media error encountered, recovering...', data);
-                showSpinner('Recuperando sincronización...');
+                console.warn('Media error encountered, recovering media...', data);
                 hlsInstance.recoverMediaError();
                 break;
               default:
                 console.error('Fatal unrecoverable HLS error:', data);
-                showError('Error fatal en la transmisión Ezviz.');
-                hlsInstance.destroy();
+                showError('Error en la transmisión. Reintentando...');
+                setTimeout(startStream, 2500);
                 break;
             }
           } else if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR) {
             console.warn('Buffer stalled, advancing playhead...');
             stallNudgeCount++;
             if (stallNudgeCount > 3) {
-              // Si se traba más de 3 veces consecutivas, recuperar media
               hlsInstance.recoverMediaError();
               stallNudgeCount = 0;
             } else if (video.buffered && video.buffered.length > 0) {

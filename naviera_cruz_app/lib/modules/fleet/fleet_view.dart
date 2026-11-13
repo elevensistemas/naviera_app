@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'dart:async';
 import '../../models/models.dart';
+import '../../models/centinela_fleet_models.dart';
 import '../../services/services.dart';
+import '../../services/centinela_fleet_service.dart';
 import '../../app/theme.dart';
 import '../../app/ncs_hero_header.dart';
 import '../crew/crew_list_view.dart';
 import 'sbs_camera_player.dart';
+import 'centinela_sts_badge.dart';
+import 'centinela_tactical_map_widget.dart';
+import 'web_message_helper.dart';
 
 class FleetView extends StatefulWidget {
   const FleetView({super.key});
@@ -24,6 +30,14 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
   final Map<String, CameraPlayerStatus> _cameraStatuses = {};
   final Set<String> _reconnectingShips = {};
 
+  // Centinela Operational & STS State
+  final Map<String, CentinelaStsRisk> _stsDataByShip = {};
+  bool _isLoadingSts = false;
+  Timer? _stsRefreshTimer;
+  int _selectedMediaTab = 0; // 0: Cámara, 1: Mapa
+  bool _showOcimfDetails = false; // Desglose sutil de auditoría OCIMF debajo del número
+  int _mapSessionEpoch = 0; // Época para forzar ticket efímero fresco al alternar al mapa
+
   @override
   void initState() {
     super.initState();
@@ -37,12 +51,30 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     }
     // Pre-poblar inmediatamente los buques para iniciar la conexión de Alfa C en el primer frame
     _ships.addAll(_getDefaultShipsList());
-    _loadCameraForShip(_ships[0], forceRefresh: true);
+    _loadCameraForShip(_ships[0], forceRefresh: false);
     _loadShips(isSilent: true);
+    _loadStsForCurrentShip();
+
+    listenToWebMessages(() {
+      if (mounted && _ships.isNotEmpty && _selectedShipIndex < _ships.length) {
+        final currentShip = _ships[_selectedShipIndex];
+        final key = CentinelaFleetService.resolveVesselKey(currentShip.name);
+        final sts = key != null ? _stsDataByShip[key] : null;
+        _openOcimfAudit(currentShip.name, sts);
+      }
+    });
+
     // Auto-actualización periódica en vivo de recursos y programas de carga cada 45 segundos
     _autoRefreshTimer = Timer.periodic(const Duration(seconds: 45), (_) {
       if (mounted) {
         _loadShips(isSilent: true);
+      }
+    });
+
+    // Auto-actualización de estado operacional y riesgo STS cada 20 segundos según directiva Centinela
+    _stsRefreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      if (mounted) {
+        _loadStsForCurrentShip(isSilent: true);
       }
     });
   }
@@ -51,8 +83,9 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       if (mounted) {
-        // Al volver a primer plano, sincronizar inmediatamente el estado en vivo desde la Intranet
+        // Al volver a primer plano, sincronizar inmediatamente el estado en vivo desde la Intranet y Centinela
         _loadShips(isSilent: true);
+        _loadStsForCurrentShip(isSilent: true);
         if (_ships.isNotEmpty && _selectedShipIndex < _ships.length) {
           _loadCameraForShip(_ships[_selectedShipIndex], forceRefresh: true);
         }
@@ -64,7 +97,31 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _autoRefreshTimer?.cancel();
+    _stsRefreshTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadStsForCurrentShip({bool isSilent = false, bool forceRefresh = false}) async {
+    if (_ships.isEmpty || _selectedShipIndex >= _ships.length) return;
+    final ship = _ships[_selectedShipIndex];
+    final vesselKey = CentinelaFleetService.resolveVesselKey(ship.name);
+    if (vesselKey == null) return;
+
+    if (!isSilent && !_stsDataByShip.containsKey(vesselKey)) {
+      setState(() => _isLoadingSts = true);
+    }
+
+    try {
+      final sts = await CentinelaFleetService.shared.fetchStsRisk(vesselKey, forceRefresh: forceRefresh);
+      if (mounted && sts != null) {
+        setState(() {
+          _stsDataByShip[vesselKey] = sts;
+          _isLoadingSts = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingSts = false);
+    }
   }
 
   static String getShipCameraSerial(Ship ship) {
@@ -175,8 +232,14 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
 
       for (int i = 0; i < sorted.length; i++) {
         final key = sorted[i].name.toUpperCase();
+        final serial = getShipCameraSerial(sorted[i]);
         if (existingCameraUrls.containsKey(key)) {
           sorted[i] = sorted[i].copyWith(cameraUrl: existingCameraUrls[key]);
+        } else {
+          final cached = EzvizService.shared.getCachedStreamUrl(serial);
+          if (cached != null && cached.isNotEmpty) {
+            sorted[i] = sorted[i].copyWith(cameraUrl: cached);
+          }
         }
       }
 
@@ -190,8 +253,9 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
       });
       if (_ships.isNotEmpty) {
         final current = _ships[_selectedShipIndex];
-        if (current.cameraUrl == null || current.cameraUrl!.isEmpty) {
-          _loadCameraForShip(current, forceRefresh: true);
+        if ((current.cameraUrl == null || current.cameraUrl!.isEmpty) &&
+            !_reconnectingShips.contains(current.id)) {
+          _loadCameraForShip(current, forceRefresh: false);
         }
       }
     } catch (e) {
@@ -202,7 +266,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
           _lastSyncTime = DateTime.now();
           _selectedShipIndex = 0;
         });
-        _loadCameraForShip(_ships[0], forceRefresh: true);
+        _loadCameraForShip(_ships[0], forceRefresh: false);
       }
     } finally {
       if (mounted) {
@@ -218,6 +282,10 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     final cameraId = getShipCameraId(ship);
 
     if (!forceRefresh && ship.cameraUrl != null && ship.cameraUrl!.isNotEmpty) {
+      return;
+    }
+
+    if (_reconnectingShips.contains(ship.id)) {
       return;
     }
 
@@ -624,9 +692,11 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                           if (_selectedShipIndex != index) {
                             setState(() {
                               _selectedShipIndex = index;
+                              _mapSessionEpoch++;
                             });
                             final selected = _ships[index];
                             _loadShips(isSilent: true);
+                            _loadStsForCurrentShip();
                             if (selected.cameraUrl == null || selected.cameraUrl!.isEmpty) {
                               _loadCameraForShip(selected, forceRefresh: true);
                             }
@@ -774,9 +844,488 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     );
   }
 
+  DateTime? _lastAuditToggleTime;
+
+  void _openOcimfAudit(String vesselName, CentinelaStsRisk? sts) {
+    final now = DateTime.now();
+    if (_lastAuditToggleTime != null && now.difference(_lastAuditToggleTime!).inMilliseconds < 450) {
+      debugPrint("[FleetView] Ignorando doble clic en _openOcimfAudit (debounce 450ms)");
+      return;
+    }
+    _lastAuditToggleTime = now;
+
+    debugPrint("[FleetView] Toggle _openOcimfAudit para $vesselName -> estado previo: $_showOcimfDetails");
+    setState(() {
+      _showOcimfDetails = !_showOcimfDetails;
+    });
+    if (_showOcimfDetails && (sts == null || !sts.hasSufficientData)) {
+      _loadStsForCurrentShip(forceRefresh: true);
+    }
+  }
+
+
+
+
+
+  Widget _buildFloatingOcimfCard(CentinelaStsRisk stsRisk) {
+    final audit = stsRisk.ocimfAudit;
+    final primaryColor = stsRisk.stsColor;
+
+    final wind = audit.factors['wind'];
+    final wave = audit.factors['wave'];
+    final current = audit.factors['current'];
+    final visibility = audit.factors['visibility'];
+    final weather = audit.factors['weather'];
+
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        width: 270,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xF20B132B), // Dark translucent glass
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: primaryColor.withValues(alpha: 0.45),
+            width: 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.6),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.shield_rounded, size: 13, color: primaryColor),
+                    const SizedBox(width: 4),
+                    const Text(
+                      "Auditoría OCIMF",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        "${stsRisk.score}%",
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: () => setState(() => _showOcimfDetails = false),
+                      child: const Icon(Icons.close_rounded, size: 15, color: Colors.white60),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Divider(height: 1, color: Colors.white.withValues(alpha: 0.12)),
+            const SizedBox(height: 5),
+
+            _buildCompactFactorRow(Icons.air_rounded, "Viento", wind?.displayValue ?? "--", wind?.evaluationLabel ?? "Óptimo", wind?.isAdverse == true),
+            _buildCompactFactorRow(Icons.waves_rounded, "Oleaje", wave?.displayValue ?? "--", wave?.evaluationLabel ?? "Óptimo", wave?.isAdverse == true),
+            _buildCompactFactorRow(Icons.water_rounded, "Corriente", current?.displayValue ?? "--", current?.evaluationLabel ?? "Óptimo", current?.isAdverse == true),
+            _buildCompactFactorRow(Icons.visibility_rounded, "Visibilidad", visibility?.evaluationLabel ?? "Óptima", "", visibility?.isAdverse == true),
+            _buildCompactFactorRow(Icons.cloud_rounded, "Meteorología", weather?.evaluationLabel ?? "Óptimo", "", weather?.isAdverse == true),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFloatingLoadingCard(bool isDark) {
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        width: 270,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xF20B132B),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: const Color(0xFF00FFC8).withValues(alpha: 0.35),
+            width: 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.6),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: const Row(
+          children: [
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF00FFC8)),
+            ),
+            SizedBox(width: 8),
+            Text(
+              "Cargando auditoría OCIMF...",
+              style: TextStyle(color: Colors.white70, fontSize: 11),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactFactorRow(IconData icon, String label, String value, String evalLabel, bool isAdverse) {
+    Color col;
+    if (isAdverse) {
+      col = const Color(0xFFEF4444);
+    } else if (evalLabel.toLowerCase().contains('moder')) {
+      col = const Color(0xFFFBBF24);
+    } else {
+      col = const Color(0xFF00FFC8);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 11.5, color: col),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+          Text(
+            evalLabel.isNotEmpty ? "$value ($evalLabel)" : value,
+            style: TextStyle(color: col, fontSize: 10.5, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCameraVisor(Ship ship, bool isDark) {
+    if (ship.cameraUrl != null && ship.cameraUrl!.isNotEmpty) {
+      return SBSCameraPlayer(
+        key: ValueKey('${ship.id}-${ship.name}-${ship.cameraUrl}'),
+        url: ship.cameraUrl!,
+        vesselName: ship.name,
+        onStatusChanged: (status) {
+          if (mounted) {
+            setState(() {
+              _cameraStatuses[ship.id] = status;
+            });
+            if (status == CameraPlayerStatus.error) {
+              final serial = getShipCameraSerial(ship);
+              EzvizService.shared.invalidateCache(serial);
+            }
+          }
+        },
+        onRetry: () => _reconnectCamera(ship),
+      );
+    } else if (ship.cameras.any((c) => c.isActive)) {
+      return Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF0F172A) : Colors.grey.withValues(alpha: 0.05),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Conectando transmisión de a bordo...",
+                style: TypographyTheme.caption(context),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.grey.withValues(alpha: 0.05),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.videocam_off_outlined, color: Colors.grey, size: 32),
+              const SizedBox(height: 6),
+              Text(
+                "Cámara SBS no disponible",
+                style: TypographyTheme.caption(context),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildOperationalStateHeader(
+    Ship ship,
+    CentinelaStsRisk? sts,
+    bool isDark,
+    Color textColor,
+    Color captionColor,
+  ) {
+    final stateText = sts?.operationalStateDisplay ?? "Estado no disponible";
+    final durationText = sts?.durationDisplay ?? "";
+    final isLive = sts != null && sts.stateFreshness.isLive;
+
+    IconData stateIcon;
+    final rawUpper = (sts?.rawOperationalState ?? '').toUpperCase();
+    if (rawUpper.contains('DESCARGA') || rawUpper.contains('STS')) {
+      stateIcon = Icons.swap_horiz_rounded;
+    } else if (rawUpper.contains('NAVEGANDO')) {
+      stateIcon = Icons.directions_boat_rounded;
+    } else if (rawUpper.contains('PUERTO')) {
+      stateIcon = Icons.anchor_rounded;
+    } else if (rawUpper.contains('FONDEADO')) {
+      stateIcon = Icons.navigation_rounded;
+    } else {
+      stateIcon = Icons.sensors_rounded;
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: InkWell(
+            onTap: () => _openOcimfAudit(ship.name, sts),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      stateIcon,
+                      size: 17,
+                      color: isDark ? Colors.white70 : const Color(0xFF334155),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                stateText,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: textColor,
+                                  letterSpacing: -0.2,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            IconButton(
+                              icon: const Icon(Icons.refresh_rounded, size: 15),
+                              tooltip: "Actualizar estado Centinela",
+                              color: isDark ? Colors.white54 : Colors.black45,
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                              onPressed: () => _loadStsForCurrentShip(forceRefresh: true),
+                            ),
+                            if (isLive) ...[
+                              const SizedBox(width: 2),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0x1F22C55E),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0x5522C55E), width: 0.8),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SizedBox(
+                                      width: 6,
+                                      height: 6,
+                                      child: DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          color: Color(0xFF22C55E),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      "EN VIVO",
+                                      style: TextStyle(
+                                        color: Color(0xFF22C55E),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        if (durationText.isNotEmpty) ...[
+                          const SizedBox(height: 1.5),
+                          Text(
+                            durationText,
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: captionColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_selectedMediaTab == 0 && ship.cameras.any((c) => c.isActive)) ...[
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded, size: 17),
+                tooltip: "Reconectar señal",
+                color: isDark ? Colors.white70 : Colors.black54,
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+                onPressed: () => _reconnectCamera(ship),
+              ),
+              const SizedBox(width: 4),
+            ],
+            if (_selectedMediaTab == 0)
+              _buildCameraBadge(ship, isDark)
+            else
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0284C7).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: const Color(0xFF0284C7).withValues(alpha: 0.4),
+                    width: 0.8,
+                  ),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.satellite_alt_rounded, size: 12, color: Color(0xFF0284C7)),
+                    SizedBox(width: 4),
+                    Text(
+                      "AIS 6h",
+                      style: TextStyle(
+                        color: Color(0xFF0284C7),
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(width: 6),
+            // Píldora interactiva para desglose de Auditoría OCIMF
+            InkWell(
+              onTap: () => _openOcimfAudit(ship.name, sts),
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: (sts?.stsColor ?? const Color(0xFF00FFC8)).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: (sts?.stsColor ?? const Color(0xFF00FFC8)).withValues(alpha: 0.5),
+                    width: 0.8,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.shield_outlined, size: 12, color: sts?.stsColor ?? const Color(0xFF00FFC8)),
+                    const SizedBox(width: 3.5),
+                    Text(
+                      sts != null && sts.hasSufficientData ? "STS ${sts.score}" : "Auditoría",
+                      style: TextStyle(
+                        color: sts?.stsColor ?? const Color(0xFF00FFC8),
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildShipCard(BuildContext context, Ship ship, ThemeData theme) {
+    final vesselKey = CentinelaFleetService.resolveVesselKey(ship.name);
+    final stsRisk = vesselKey != null ? _stsDataByShip[vesselKey] : null;
+
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
+    final captionColor = isDark ? Colors.white60 : const Color(0xFF64748B);
     final dividerColor = isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFF1F5F9);
     final shipAccentColor = _getShipThemeColor(ship.name);
     final String flagEmoji = ship.flag.contains('🇵🇦') || ship.name.toUpperCase().contains('ALFA')
@@ -828,119 +1377,137 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                   ],
                 ),
                 
-                // Header de Cámara a Bordo
+                // Header de Estado Operacional Centinela (reemplaza 'Cámara en Vivo a Bordo')
                 const SizedBox(height: 7),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.videocam_rounded, size: 16, color: Color(0xFF0057B8)),
-                        const SizedBox(width: 5),
-                        Text(
-                          "Cámara en Vivo a Bordo",
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.black87,
+                _buildOperationalStateHeader(ship, stsRisk, isDark, textColor, captionColor),
+
+
+                // Selector Segmentado Estilo Apple: Cámara | Mapa
+                const SizedBox(height: 10),
+                Center(
+                  child: Container(
+                    width: double.infinity,
+                    constraints: const BoxConstraints(maxWidth: 320),
+                    child: CupertinoSlidingSegmentedControl<int>(
+                      groupValue: _selectedMediaTab,
+                      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                      thumbColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      children: {
+                        0: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.videocam_rounded,
+                                size: 16,
+                                color: _selectedMediaTab == 0
+                                    ? const Color(0xFF0284C7)
+                                    : (isDark ? Colors.white60 : Colors.black54),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                "Cámara",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: _selectedMediaTab == 0 ? FontWeight.bold : FontWeight.w500,
+                                  color: _selectedMediaTab == 0
+                                      ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                                      : (isDark ? Colors.white60 : Colors.black54),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (ship.cameras.any((c) => c.isActive)) ...[
-                          IconButton(
-                            icon: const Icon(Icons.refresh_rounded, size: 17),
-                            tooltip: "Reconectar señal",
-                            color: isDark ? Colors.white70 : Colors.black54,
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
-                            onPressed: () => _reconnectCamera(ship),
+                        1: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.map_rounded,
+                                size: 16,
+                                color: _selectedMediaTab == 1
+                                    ? const Color(0xFF0284C7)
+                                    : (isDark ? Colors.white60 : Colors.black54),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                "Mapa",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: _selectedMediaTab == 1 ? FontWeight.bold : FontWeight.w500,
+                                  color: _selectedMediaTab == 1
+                                      ? (isDark ? Colors.white : const Color(0xFF0F172A))
+                                      : (isDark ? Colors.white60 : Colors.black54),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 4),
-                        ],
-                        _buildCameraBadge(ship, isDark),
-                      ],
+                        ),
+                      },
+                      onValueChanged: (val) {
+                        if (val != null && val != _selectedMediaTab) {
+                          setState(() {
+                            _selectedMediaTab = val;
+                            if (val == 1) {
+                              _mapSessionEpoch++;
+                            }
+                          });
+                        }
+                      },
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
 
-          // Video Player or Fallback for SBS camera: full width within card (border 1px)
-          if (ship.cameraUrl != null && ship.cameraUrl!.isNotEmpty)
-            SBSCameraPlayer(
-              key: ValueKey('${ship.id}-${ship.name}-${ship.cameraUrl}'),
-              url: ship.cameraUrl!,
-              vesselName: ship.name,
-              onStatusChanged: (status) {
-                if (mounted) {
-                  setState(() {
-                    _cameraStatuses[ship.id] = status;
-                  });
-                  // Un enlace rechazado por el reproductor debe invalidarse de inmediato
-                  // aunque en teoría todavía no haya alcanzado su fecha de expiración
-                  if (status == CameraPlayerStatus.error) {
-                    final serial = getShipCameraSerial(ship);
-                    EzvizService.shared.invalidateCache(serial);
-                  }
-                }
-              },
-              onRetry: () => _reconnectCamera(ship),
-            )
-          else if (ship.cameras.any((c) => c.isActive))
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF0F172A) : Colors.grey.withOpacity(0.05),
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2.5),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        "Conectando transmisión de a bordo...",
-                        style: TypographyTheme.caption(context),
-                      ),
-                    ],
+          // Contenedor Multimedia: Mismo tamaño y proporción (16:9) tanto para Cámara como para Mapa
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: _selectedMediaTab == 0
+                        ? _buildCameraVisor(ship, isDark)
+                        : CentinelaTacticalMapWidget(
+                            key: ValueKey('tactical-map-${ship.name}-$_mapSessionEpoch'),
+                            vesselIdentifier: ship.name,
+                            vesselName: ship.name,
+                            onStsBadgeTap: () => _openOcimfAudit(ship.name, stsRisk),
+                          ),
                   ),
-                ),
-              ),
-            )
-          else
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.05),
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.videocam_off_outlined, color: Colors.grey, size: 32),
-                      const SizedBox(height: 6),
-                      Text(
-                        "Cámara SBS no disponible",
-                        style: TypographyTheme.caption(context),
-                      ),
-                    ],
+
+                  // Círculo STS (57x57 pt, +30%) flotante sobre la esquina superior izquierda
+                  // Visible y cliqueable en ambos modos (Cámara y Mapa)
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: CentinelaStsBadge(
+                      stsRisk: stsRisk,
+                      vesselName: ship.name,
+                      isLoading: _isLoadingSts,
+                      onTap: () => _openOcimfAudit(ship.name, stsRisk),
+                    ),
                   ),
-                ),
+
+                  // Popover flotante sutil debajo del círculo STS (57x57 pt) dentro del visor
+                  if (_showOcimfDetails)
+                    Positioned(
+                      top: 72,
+                      left: 10,
+                      child: stsRisk != null
+                          ? _buildFloatingOcimfCard(stsRisk)
+                          : _buildFloatingLoadingCard(isDark),
+                    ),
+                ],
               ),
             ),
+          ),
 
           Padding(
             padding: const EdgeInsets.fromLTRB(12.0, 8.0, 12.0, 12.0),
