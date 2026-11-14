@@ -36,23 +36,23 @@ class CentinelaStsBadge extends StatelessWidget {
           }
         },
         child: Container(
-          width: 57,
-          height: 57,
+          width: 43,
+          height: 43,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
               color: isStale ? borderColor.withValues(alpha: 0.5) : borderColor,
-              width: 2.8,
+              width: 2.0,
             ),
             boxShadow: [
               BoxShadow(
                 color: borderColor.withValues(alpha: isStale ? 0.15 : 0.35),
-                blurRadius: 10,
-                spreadRadius: 1.2,
+                blurRadius: 7,
+                spreadRadius: 1,
               ),
               const BoxShadow(
                 color: Colors.black45,
-                blurRadius: 5,
+                blurRadius: 4,
                 offset: Offset(0, 2),
               ),
             ],
@@ -75,10 +75,10 @@ class CentinelaStsBadge extends StatelessWidget {
                   alignment: Alignment.center,
                   child: isLoading && stsRisk == null
                       ? SizedBox(
-                          width: 20,
-                          height: 20,
+                          width: 15,
+                          height: 15,
                           child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
+                            strokeWidth: 2.0,
                             valueColor: AlwaysStoppedAnimation<Color>(borderColor),
                           ),
                         )
@@ -90,18 +90,18 @@ class CentinelaStsBadge extends StatelessWidget {
                               score,
                               style: TextStyle(
                                 color: isStale ? Colors.white70 : Colors.white,
-                                fontSize: score.length > 2 ? 17.5 : 19.0,
+                                fontSize: score.length > 2 ? 13.0 : 14.0,
                                 fontWeight: FontWeight.w900,
                                 height: 1.0,
                                 letterSpacing: -0.3,
                               ),
                             ),
-                            const SizedBox(height: 2.0),
+                            const SizedBox(height: 1.0),
                             Text(
                               "STS",
                               style: TextStyle(
                                 color: borderColor,
-                                fontSize: 11.0,
+                                fontSize: 8.5,
                                 fontWeight: FontWeight.w800,
                                 height: 1.0,
                                 letterSpacing: 0.5,

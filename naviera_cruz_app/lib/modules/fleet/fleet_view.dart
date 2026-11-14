@@ -1105,7 +1105,8 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
   ) {
     final stateText = sts?.operationalStateDisplay ?? "Estado no disponible";
     final durationText = sts?.durationDisplay ?? "";
-    final isLive = sts != null && sts.stateFreshness.isLive;
+    final telemetry = sts?.telemetryLabel ?? "AIS";
+    final isGps = sts?.isGps ?? false;
 
     IconData stateIcon;
     final rawUpper = (sts?.rawOperationalState ?? '').toUpperCase();
@@ -1121,201 +1122,144 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
       stateIcon = Icons.sensors_rounded;
     }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: InkWell(
-            onTap: () => _openOcimfAudit(ship.name, sts),
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2.0),
+    return InkWell(
+      onTap: () => _openOcimfAudit(ship.name, sts),
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : Colors.black.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(7),
+              ),
+              child: Icon(
+                stateIcon,
+                size: 15,
+                color: isDark ? Colors.white70 : const Color(0xFF334155),
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // Texto limpio del estado del buque (ej: "En puerto" o "Navegando a 8.5 kn")
+            Flexible(
+              child: Text(
+                stateText,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                  letterSpacing: -0.2,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 7),
+
+            // Chip de telemetría AIS o GPS (sin "en vivo")
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0284C7).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: const Color(0xFF0284C7).withValues(alpha: 0.4),
+                  width: 0.8,
+                ),
+              ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : Colors.black.withValues(alpha: 0.04),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      stateIcon,
-                      size: 17,
-                      color: isDark ? Colors.white70 : const Color(0xFF334155),
-                    ),
+                  Icon(
+                    isGps ? Icons.gps_fixed_rounded : Icons.satellite_alt_rounded,
+                    size: 10,
+                    color: const Color(0xFF38BDF8),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                stateText,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: textColor,
-                                  letterSpacing: -0.2,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            IconButton(
-                              icon: const Icon(Icons.refresh_rounded, size: 15),
-                              tooltip: "Actualizar estado Centinela",
-                              color: isDark ? Colors.white54 : Colors.black45,
-                              visualDensity: VisualDensity.compact,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
-                              onPressed: () => _loadStsForCurrentShip(forceRefresh: true),
-                            ),
-                            if (isLive) ...[
-                              const SizedBox(width: 2),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                decoration: BoxDecoration(
-                                  color: const Color(0x1F22C55E),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color(0x5522C55E), width: 0.8),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SizedBox(
-                                      width: 6,
-                                      height: 6,
-                                      child: DecoratedBox(
-                                        decoration: BoxDecoration(
-                                          color: Color(0xFF22C55E),
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      "EN VIVO",
-                                      style: TextStyle(
-                                        color: Color(0xFF22C55E),
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 0.3,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        if (durationText.isNotEmpty) ...[
-                          const SizedBox(height: 1.5),
-                          Text(
-                            durationText,
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              color: captionColor,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ],
+                  const SizedBox(width: 3.5),
+                  Text(
+                    telemetry,
+                    style: const TextStyle(
+                      color: Color(0xFF38BDF8),
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.2,
                     ),
                   ),
                 ],
               ),
             ),
+
+            if (durationText.isNotEmpty) ...[
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  durationText,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: captionColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+
+            const SizedBox(width: 4),
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded, size: 15),
+              tooltip: "Actualizar estado Centinela",
+              color: isDark ? Colors.white54 : Colors.black45,
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+              onPressed: () => _loadStsForCurrentShip(forceRefresh: true),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStsPill(String vesselName, CentinelaStsRisk? sts) {
+    final primaryColor = sts?.stsColor ?? const Color(0xFF00FFC8);
+    final scoreText = sts != null && sts.hasSufficientData ? "STS ${sts.score}" : "STS S/D";
+
+    return InkWell(
+      onTap: () => _openOcimfAudit(vesselName, sts),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        decoration: BoxDecoration(
+          color: primaryColor.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: primaryColor.withValues(alpha: 0.5),
+            width: 0.8,
           ),
         ),
-        const SizedBox(width: 8),
-        Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (_selectedMediaTab == 0 && ship.cameras.any((c) => c.isActive)) ...[
-              IconButton(
-                icon: const Icon(Icons.refresh_rounded, size: 17),
-                tooltip: "Reconectar señal",
-                color: isDark ? Colors.white70 : Colors.black54,
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
-                onPressed: () => _reconnectCamera(ship),
-              ),
-              const SizedBox(width: 4),
-            ],
-            if (_selectedMediaTab == 0)
-              _buildCameraBadge(ship, isDark)
-            else
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0284C7).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: const Color(0xFF0284C7).withValues(alpha: 0.4),
-                    width: 0.8,
-                  ),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.satellite_alt_rounded, size: 12, color: Color(0xFF0284C7)),
-                    SizedBox(width: 4),
-                    Text(
-                      "AIS 6h",
-                      style: TextStyle(
-                        color: Color(0xFF0284C7),
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            const SizedBox(width: 6),
-            // Píldora interactiva para desglose de Auditoría OCIMF
-            InkWell(
-              onTap: () => _openOcimfAudit(ship.name, sts),
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
-                  color: (sts?.stsColor ?? const Color(0xFF00FFC8)).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: (sts?.stsColor ?? const Color(0xFF00FFC8)).withValues(alpha: 0.5),
-                    width: 0.8,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.shield_outlined, size: 12, color: sts?.stsColor ?? const Color(0xFF00FFC8)),
-                    const SizedBox(width: 3.5),
-                    Text(
-                      sts != null && sts.hasSufficientData ? "STS ${sts.score}" : "Auditoría",
-                      style: TextStyle(
-                        color: sts?.stsColor ?? const Color(0xFF00FFC8),
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+            Icon(Icons.shield_outlined, size: 12, color: primaryColor),
+            const SizedBox(width: 3.5),
+            Text(
+              scoreText,
+              style: TextStyle(
+                color: primaryColor,
+                fontSize: 10.5,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 
@@ -1349,7 +1293,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header: Ship Name + Bandera colocada al lado del buque
+                // Header: Ship Name + Bandera colocada al lado del buque + Badges en vivo / STS
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -1372,6 +1316,28 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                             fontSize: 17,
                           ),
                         ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_selectedMediaTab == 0) ...[
+                          if (ship.cameras.any((c) => c.isActive)) ...[
+                            IconButton(
+                              icon: const Icon(Icons.refresh_rounded, size: 16),
+                              tooltip: "Reconectar señal",
+                              color: isDark ? Colors.white70 : Colors.black54,
+                              visualDensity: VisualDensity.compact,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                              onPressed: () => _reconnectCamera(ship),
+                            ),
+                            const SizedBox(width: 2),
+                          ],
+                          _buildCameraBadge(ship, isDark),
+                          const SizedBox(width: 6),
+                        ],
+                        _buildStsPill(ship.name, stsRisk),
                       ],
                     ),
                   ],
@@ -1482,7 +1448,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                           ),
                   ),
 
-                  // Círculo STS (57x57 pt, +30%) flotante sobre la esquina superior izquierda
+                  // Círculo STS (43x43 pt, -25%) flotante sobre la esquina superior izquierda
                   // Visible y cliqueable en ambos modos (Cámara y Mapa)
                   Positioned(
                     top: 10,
@@ -1495,10 +1461,10 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                     ),
                   ),
 
-                  // Popover flotante sutil debajo del círculo STS (57x57 pt) dentro del visor
+                  // Popover flotante sutil debajo del círculo STS (43x43 pt) dentro del visor
                   if (_showOcimfDetails)
                     Positioned(
-                      top: 72,
+                      top: 59,
                       left: 10,
                       child: stsRisk != null
                           ? _buildFloatingOcimfCard(stsRisk)

@@ -35,6 +35,7 @@ class _MobilePlatformMapViewState extends State<_MobilePlatformMapView> {
           },
           onPageFinished: (String url) {
             if (mounted) setState(() => _isLoading = false);
+            _injectMapCustomizations();
           },
           onWebResourceError: (WebResourceError error) {
             debugPrint("[Centinela Tactical Map Mobile] Error: ${error.description}");
@@ -42,6 +43,68 @@ class _MobilePlatformMapViewState extends State<_MobilePlatformMapView> {
         ),
       )
       ..loadRequest(Uri.parse(widget.webviewUrl));
+  }
+
+  void _injectMapCustomizations() {
+    const js = '''
+(function() {
+  function applyStyles() {
+    if (!document.getElementById('ncs-custom-map-hide-style')) {
+      const style = document.createElement('style');
+      style.id = 'ncs-custom-map-hide-style';
+      style.textContent = `
+        /* Ocultar selector inferior de barcos (cards flotantes de selección en el mapa) */
+        .mobile-fleet-strip,
+        .mobile-vessel-chip,
+        .mobile-segmented-row,
+        [class*="fleet-strip"],
+        [class*="vessel-chip"],
+        [class*="vessel-chips"] {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          height: 0 !important;
+          min-height: 0 !important;
+          max-height: 0 !important;
+          overflow: hidden !important;
+        }
+
+        /* Ocultar barra superior redundante si existiese */
+        .mobile-hud-top-bar {
+          display: none !important;
+        }
+
+        /* Ocultar pintado de recorridos / estelas de color sobre el agua */
+        .leaflet-pane.leaflet-overlay-pane svg g path,
+        .leaflet-pane.leaflet-overlay-pane svg path {
+          display: none !important;
+        }
+      `;
+      (document.head || document.documentElement).appendChild(style);
+    }
+
+    const strips = document.querySelectorAll('.mobile-fleet-strip, [class*="fleet-strip"], .mobile-vessel-chip, [class*="vessel-chip"]');
+    strips.forEach(el => {
+      el.style.setProperty('display', 'none', 'important');
+      el.style.setProperty('visibility', 'hidden', 'important');
+      el.style.setProperty('height', '0px', 'important');
+    });
+  }
+
+  applyStyles();
+  if (window.MutationObserver) {
+    new MutationObserver(applyStyles).observe(document.documentElement, {
+      childList: true,
+      subtree: true
+    });
+  }
+  setInterval(applyStyles, 600);
+})();
+''';
+    _controller.runJavaScript(js).catchError((e) {
+      debugPrint("[Centinela Tactical Map Mobile] Error inyectando estilos: $e");
+    });
   }
 
   @override

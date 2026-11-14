@@ -8,6 +8,7 @@ class CentinelaFreshness {
   final int ageSec;
   final bool isVerifiedRecently;
   final String? warning;
+  final bool hasLocalGps;
 
   CentinelaFreshness({
     required this.status,
@@ -16,6 +17,7 @@ class CentinelaFreshness {
     this.ageSec = 0,
     this.isVerifiedRecently = false,
     this.warning,
+    this.hasLocalGps = false,
   });
 
   bool get isLive => status.toLowerCase() == 'live';
@@ -32,6 +34,10 @@ class CentinelaFreshness {
     } else if (json['updated_at'] != null) {
       vAt = DateTime.tryParse(json['updated_at'].toString());
     }
+    final hasGps = json['has_local_gps'] == true ||
+        (json['telemetry_source']?.toString().toLowerCase().contains('gps') ?? false) ||
+        (json['source']?.toString().toLowerCase().contains('gps') ?? false);
+
     return CentinelaFreshness(
       status: (json['status'] ?? 'no_data').toString(),
       source: json['source']?.toString() ?? json['telemetry_source']?.toString(),
@@ -39,6 +45,7 @@ class CentinelaFreshness {
       ageSec: int.tryParse(json['age_sec']?.toString() ?? '0') ?? 0,
       isVerifiedRecently: json['is_verified_recently'] == true,
       warning: json['warning']?.toString(),
+      hasLocalGps: hasGps,
     );
   }
 }
@@ -288,6 +295,17 @@ class CentinelaStsRisk {
       return "Hace unos instantes";
     }
   }
+
+  /// Etiqueta limpia de telemetría de posición: GPS o AIS
+  String get telemetryLabel {
+    if (positionFreshness.hasLocalGps ||
+        (positionFreshness.source ?? '').toLowerCase().contains('gps')) {
+      return "GPS";
+    }
+    return "AIS";
+  }
+
+  bool get isGps => telemetryLabel == "GPS";
 
   factory CentinelaStsRisk.fromJson(Map<String, dynamic> json) {
     final vessel = json['vessel'] as Map<String, dynamic>? ?? {};
