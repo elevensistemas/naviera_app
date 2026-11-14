@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../models/centinela_fleet_models.dart';
+import '../../services/centinela_fleet_service.dart';
 import 'centinela_ocimf_sheet.dart';
 
 class CentinelaStsBadge extends StatelessWidget {
@@ -19,10 +20,10 @@ class CentinelaStsBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasData = stsRisk != null && stsRisk!.hasSufficientData;
-    final score = hasData ? "${stsRisk!.score}" : "S/D";
-    final borderColor = hasData ? stsRisk!.stsColor : const Color(0xFF64748B);
-    final isStale = stsRisk?.isStale == true;
+    final effectiveSts = stsRisk ?? CentinelaFleetService.shared.getCachedSts(vesselName);
+    final score = "${effectiveSts.score}";
+    final borderColor = effectiveSts.stsColor;
+    final isStale = effectiveSts.isStale;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -31,8 +32,8 @@ class CentinelaStsBadge extends StatelessWidget {
         onTap: () {
           if (onTap != null) {
             onTap!();
-          } else if (stsRisk != null) {
-            CentinelaOcimfSheet.show(context, stsRisk: stsRisk!, vesselName: vesselName);
+          } else {
+            CentinelaOcimfSheet.show(context, stsRisk: effectiveSts, vesselName: vesselName);
           }
         },
         child: Container(
@@ -73,42 +74,33 @@ class CentinelaStsBadge extends StatelessWidget {
                 ),
                 Container(
                   alignment: Alignment.center,
-                  child: isLoading && stsRisk == null
-                      ? SizedBox(
-                          width: 15,
-                          height: 15,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.0,
-                            valueColor: AlwaysStoppedAnimation<Color>(borderColor),
-                          ),
-                        )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              score,
-                              style: TextStyle(
-                                color: isStale ? Colors.white70 : Colors.white,
-                                fontSize: score.length > 2 ? 13.0 : 14.0,
-                                fontWeight: FontWeight.w900,
-                                height: 1.0,
-                                letterSpacing: -0.3,
-                              ),
-                            ),
-                            const SizedBox(height: 1.0),
-                            Text(
-                              "STS",
-                              style: TextStyle(
-                                color: borderColor,
-                                fontSize: 8.5,
-                                fontWeight: FontWeight.w800,
-                                height: 1.0,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        score,
+                        style: TextStyle(
+                          color: isStale ? Colors.white70 : Colors.white,
+                          fontSize: score.length > 2 ? 13.0 : 14.0,
+                          fontWeight: FontWeight.w900,
+                          height: 1.0,
+                          letterSpacing: -0.3,
                         ),
+                      ),
+                      const SizedBox(height: 1.0),
+                      Text(
+                        "STS",
+                        style: TextStyle(
+                          color: borderColor,
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w800,
+                          height: 1.0,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

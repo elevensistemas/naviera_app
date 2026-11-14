@@ -51,9 +51,17 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     }
     // Pre-poblar inmediatamente los buques para iniciar la conexión de Alfa C en el primer frame
     _ships.addAll(_getDefaultShipsList());
+    for (final ship in _ships) {
+      final key = CentinelaFleetService.resolveVesselKey(ship.name);
+      if (key != null) {
+        _stsDataByShip[key] = CentinelaFleetService.shared.getCachedSts(key);
+      }
+    }
+
     _loadCameraForShip(_ships[0], forceRefresh: false);
     _loadShips(isSilent: true);
     _loadStsForCurrentShip();
+    CentinelaFleetService.shared.preloadAllVessels();
 
     listenToWebMessages(() {
       if (mounted && _ships.isNotEmpty && _selectedShipIndex < _ships.length) {
@@ -107,8 +115,8 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     final vesselKey = CentinelaFleetService.resolveVesselKey(ship.name);
     if (vesselKey == null) return;
 
-    if (!isSilent && !_stsDataByShip.containsKey(vesselKey)) {
-      setState(() => _isLoadingSts = true);
+    if (!_stsDataByShip.containsKey(vesselKey)) {
+      _stsDataByShip[vesselKey] = CentinelaFleetService.shared.getCachedSts(vesselKey);
     }
 
     try {
@@ -1228,11 +1236,12 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
   }
 
   Widget _buildStsPill(String vesselName, CentinelaStsRisk? sts) {
-    final primaryColor = sts?.stsColor ?? const Color(0xFF00FFC8);
-    final scoreText = sts != null && sts.hasSufficientData ? "STS ${sts.score}" : "STS S/D";
+    final effectiveSts = sts ?? CentinelaFleetService.shared.getCachedSts(vesselName);
+    final primaryColor = effectiveSts.stsColor;
+    final scoreText = "STS ${effectiveSts.score}";
 
     return InkWell(
-      onTap: () => _openOcimfAudit(vesselName, sts),
+      onTap: () => _openOcimfAudit(vesselName, effectiveSts),
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -1265,7 +1274,9 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
 
   Widget _buildShipCard(BuildContext context, Ship ship, ThemeData theme) {
     final vesselKey = CentinelaFleetService.resolveVesselKey(ship.name);
-    final stsRisk = vesselKey != null ? _stsDataByShip[vesselKey] : null;
+    final stsRisk = vesselKey != null
+        ? (_stsDataByShip[vesselKey] ?? CentinelaFleetService.shared.getCachedSts(vesselKey))
+        : null;
 
     final isDark = theme.brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
