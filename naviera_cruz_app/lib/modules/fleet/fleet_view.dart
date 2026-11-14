@@ -54,14 +54,31 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     for (final ship in _ships) {
       final key = CentinelaFleetService.resolveVesselKey(ship.name);
       if (key != null) {
-        _stsDataByShip[key] = CentinelaFleetService.shared.getCachedSts(key);
+        final cached = CentinelaFleetService.shared.getCachedSts(key);
+        if (cached != null) {
+          _stsDataByShip[key] = cached;
+        }
       }
     }
 
     _loadCameraForShip(_ships[0], forceRefresh: false);
     _loadShips(isSilent: true);
     _loadStsForCurrentShip();
-    CentinelaFleetService.shared.preloadAllVessels();
+    CentinelaFleetService.shared.preloadAllVessels().then((_) {
+      if (mounted) {
+        setState(() {
+          for (final ship in _ships) {
+            final key = CentinelaFleetService.resolveVesselKey(ship.name);
+            if (key != null) {
+              final fresh = CentinelaFleetService.shared.getCachedSts(key);
+              if (fresh != null) {
+                _stsDataByShip[key] = fresh;
+              }
+            }
+          }
+        });
+      }
+    });
 
     listenToWebMessages(() {
       if (mounted && _ships.isNotEmpty && _selectedShipIndex < _ships.length) {
@@ -116,7 +133,10 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     if (vesselKey == null) return;
 
     if (!_stsDataByShip.containsKey(vesselKey)) {
-      _stsDataByShip[vesselKey] = CentinelaFleetService.shared.getCachedSts(vesselKey);
+      final cached = CentinelaFleetService.shared.getCachedSts(vesselKey);
+      if (cached != null) {
+        _stsDataByShip[vesselKey] = cached;
+      }
     }
 
     try {
@@ -307,11 +327,27 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         EzvizService.shared.clearOfflineStatus(serial);
         EzvizService.shared.invalidateCache(serial);
       }
-      final freshUrl = await EzvizService.shared.getLiveStreamUrl(
+
+      // Traer en paralelo la cámara y el STS del buque desde Centinela para tenerlo listo al mostrar el video
+      final vesselKey = CentinelaFleetService.resolveVesselKey(ship.name);
+      Future<CentinelaStsRisk?>? stsFuture;
+      if (vesselKey != null) {
+        stsFuture = CentinelaFleetService.shared.fetchStsRisk(vesselKey, forceRefresh: forceRefresh);
+      }
+
+      final cameraFuture = EzvizService.shared.getLiveStreamUrl(
         serial,
         cameraId: cameraId,
         forceRefresh: forceRefresh,
       );
+
+      final freshUrl = await cameraFuture;
+      CentinelaStsRisk? freshSts;
+      if (stsFuture != null) {
+        try {
+          freshSts = await stsFuture;
+        } catch (_) {}
+      }
 
       // Verificación de consistencia: registrar si la URL mapea al serial específico
       if (freshUrl.isNotEmpty && !freshUrl.toUpperCase().contains(serial.toUpperCase())) {
@@ -320,6 +356,9 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
 
       if (mounted) {
         setState(() {
+          if (vesselKey != null && freshSts != null) {
+            _stsDataByShip[vesselKey] = freshSts;
+          }
           // Búsqueda ESTRICTA por ID o nombre del buque (NUNCA por índice mutable)
           final idx = _ships.indexWhere((s) => s.id == ship.id || s.name == ship.name);
           if (idx != -1) {
@@ -1111,13 +1150,14 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     Color textColor,
     Color captionColor,
   ) {
-    final stateText = sts?.operationalStateDisplay ?? "Estado no disponible";
-    final durationText = sts?.durationDisplay ?? "";
-    final telemetry = sts?.telemetryLabel ?? "AIS";
-    final isGps = sts?.isGps ?? false;
+    final effectiveSts = sts ?? CentinelaFleetService.shared.getCachedSts(ship.name);
+    final stateText = effectiveSts?.operationalStateDisplay ?? "Consultando Centinela...";
+    final durationText = effectiveSts?.durationDisplay ?? "";
+    final telemetry = effectiveSts?.telemetryLabel ?? "AIS";
+    final isGps = effectiveSts?.isGps ?? false;
 
     IconData stateIcon;
-    final rawUpper = (sts?.rawOperationalState ?? '').toUpperCase();
+    final rawUpper = (effectiveSts?.rawOperationalState ?? '').toUpperCase();
     if (rawUpper.contains('DESCARGA') || rawUpper.contains('STS')) {
       stateIcon = Icons.swap_horiz_rounded;
     } else if (rawUpper.contains('NAVEGANDO')) {
@@ -1237,6 +1277,9 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
 
   Widget _buildStsPill(String vesselName, CentinelaStsRisk? sts) {
     final effectiveSts = sts ?? CentinelaFleetService.shared.getCachedSts(vesselName);
+    if (effectiveSts == null) {
+      return const SizedBox.shrink();
+    }
     final primaryColor = effectiveSts.stsColor;
     final scoreText = "STS ${effectiveSts.score}";
 

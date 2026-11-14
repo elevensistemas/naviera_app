@@ -9,10 +9,6 @@ class CentinelaFleetService {
   static final CentinelaFleetService shared = CentinelaFleetService._internal();
 
   CentinelaFleetService._internal() {
-    // Inicializar semillas instantáneas con valores reales provistos por Centinela
-    for (final key in ['BT.ALFAC', 'BT.GUSTAVO.U', 'BT.NANY1']) {
-      _cachedStsByVessel[key] = _getSeedSts(key);
-    }
     _loadFromDisk();
   }
 
@@ -41,61 +37,20 @@ class CentinelaFleetService {
     }
   }
 
-  /// Retorna inmediatamente el último estado y puntaje STS disponible (nunca nulo)
-  CentinelaStsRisk getCachedSts(String vesselIdentifier) {
-    final key = resolveVesselKey(vesselIdentifier) ?? 'BT.ALFAC';
-    return _cachedStsByVessel[key] ?? _getSeedSts(key);
-  }
-
-  /// Semilla inicial idéntica a la estructura de Centinela (score 100/85, evaluación óptima)
-  static CentinelaStsRisk _getSeedSts(String vesselKey) {
-    final int seedScore = vesselKey.contains('NANY') ? 85 : 100;
-    final String vesselName = vesselKey.contains('ALFA')
-        ? 'ALFA C'
-        : vesselKey.contains('GUSTAVO')
-            ? 'GUSTAVO U'
-            : 'NANY';
-    final String state = vesselKey.contains('ALFA')
-        ? 'OPERANDO_DESCARGA'
-        : 'EN_PUERTO';
-
-    return CentinelaStsRisk(
-      vesselKey: vesselKey,
-      vesselName: vesselName,
-      score: seedScore,
-      colorHex: '#00ffc8',
-      uiLevel: 'OPTIMAL',
-      evaluationState: 'DATOS_SUFICIENTES',
-      hasSufficientData: true,
-      rawOperationalState: state,
-      stateDurationSec: 3600,
-      stateFreshness: CentinelaFreshness(status: 'live', hasLocalGps: true),
-      positionFreshness: CentinelaFreshness(status: 'live', hasLocalGps: true, source: 'local_gps'),
-      dataStatus: 'live',
-      badgeShort: 'STS $seedScore',
-      isStale: false,
-      ocimfAudit: OcimfAudit(
-        title: "Auditoría de Riesgo OCIMF",
-        frameworkCode: "OCIMF_2026",
-        frameworkLabel: "OCIMF 2026 ON",
-        validationNote: "*Datos validados de forma matemática.",
-        zoneName: "Río de la Plata",
-        zoneLocationRef: "Rada La Plata / Zona Común de Fondeo y Alijo",
-        totalPenaltyPct: 0,
-        totalScorePct: seedScore,
-        factorsOrder: ["wind", "wave", "current", "visibility", "weather"],
-        factors: {},
-      ),
-    );
+  /// Retorna el último estado y puntaje STS disponible si existe en memoria (sin valores inventados)
+  CentinelaStsRisk? getCachedSts(String vesselIdentifier) {
+    final key = resolveVesselKey(vesselIdentifier);
+    if (key == null) return null;
+    return _cachedStsByVessel[key];
   }
 
   /// Pre-calienta en paralelo el estado y score de todos los buques de la flota
   Future<void> preloadAllVessels() async {
-    for (final v in ['BT.ALFAC', 'BT.GUSTAVO.U', 'BT.NANY1']) {
-      try {
-        await fetchStsRisk(v);
-      } catch (_) {}
-    }
+    await Future.wait([
+      fetchStsRisk('BT.ALFAC'),
+      fetchStsRisk('BT.GUSTAVO.U'),
+      fetchStsRisk('BT.NANY1'),
+    ]);
   }
 
   /// Convierte el nombre o ID del buque en su clave canónica de Centinela

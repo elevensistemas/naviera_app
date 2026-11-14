@@ -7,6 +7,7 @@ import 'core/app_navigator.dart';
 import 'app/theme.dart';
 import 'modules/auth/login_view.dart';
 import 'modules/main/main_tab_view.dart';
+import 'services/centinela_fleet_service.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -24,6 +25,7 @@ void main() async {
   
   // Inicializa la sesión y preferencias locales
   await SessionManager.shared.init();
+  CentinelaFleetService.shared.preloadAllVessels();
   
   runApp(
     ChangeNotifierProvider<SessionManager>.value(

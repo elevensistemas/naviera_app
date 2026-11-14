@@ -21,6 +21,30 @@ class CentinelaStsBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveSts = stsRisk ?? CentinelaFleetService.shared.getCachedSts(vesselName);
+
+    // Si aún no se recibió la confirmación de Centinela, mostrar carga sutil sin inventar puntaje
+    if (effectiveSts == null) {
+      return Container(
+        width: 43,
+        height: 43,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0xD90B132B),
+          border: Border.all(color: Colors.white24, width: 1.5),
+        ),
+        child: const Center(
+          child: SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.0,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF38BDF8)),
+            ),
+          ),
+        ),
+      );
+    }
+
     final score = "${effectiveSts.score}";
     final borderColor = effectiveSts.stsColor;
     final isStale = effectiveSts.isStale;
