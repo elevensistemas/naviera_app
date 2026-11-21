@@ -13,6 +13,10 @@ import '../crew/crew_novedades_view.dart';
 import '../assistant/crew_assistant_view.dart';
 import '../crew/crew_faq_search_view.dart';
 import '../incidents/report_incident_view.dart';
+import '../salarios/salary_cost_view.dart';
+import '../compras/compras_view.dart';
+import '../salud_buque/vessel_health_view.dart';
+import '../../services/salary_cost_service.dart';
 import '../../app/drawer_widget.dart';
 import '../../core/storage.dart';
 
@@ -65,22 +69,27 @@ class _MainTabViewState extends State<MainTabView> {
 
   // Vistas para el rol de OFICINA / ADMINISTRACIÓN (7 pestañas)
   // Boletines es el penúltimo módulo (índice 5), Chat es el último (índice 6)
-  final List<Widget> _officeViews = const [
-    HomeView(),
-    FleetView(),
-    ScheduleView(),
-    IncidentListView(),
-    TrainingView(),
-    BulletinsView(),
-    CrewFaqSearchView(isTabModule: true), // FAQ reutilizado de Tripulación (penúltimo)
-    ChatListView(),
-  ];
+  // Vistas dinámicas para Oficina / Salarios administradas en build()
 
   @override
   Widget build(BuildContext context) {
     final session = Provider.of<SessionManager>(context);
     final bool isTripulante = session.isTripulanteMode;
     print(">>> MAIN_TAB_VIEW_BUILDING: isTripulante=$isTripulante, currentIndex=$_currentIndex, auth=${session.isAuthenticated} <<<");
+    final bool isSalaryAuthorized = SalaryCostService.isAuthorizedUser(session.currentUser);
+    final List<Widget> officeViews = [
+      const HomeView(),
+      const FleetView(),
+      if (isSalaryAuthorized) const SalaryCostView(isTabModule: true),
+      const ComprasView(isTabModule: true),
+      const ScheduleView(),
+      const VesselHealthView(isTabModule: true),
+      const IncidentListView(),
+      const TrainingView(),
+      const BulletinsView(),
+      const CrewFaqSearchView(isTabModule: true),
+      const ChatListView(),
+    ];
 
     // Vistas para el rol de TRIPULANTE (6 módulos: Inicio, Novedades, Seguridad, Boletines, Cursos, FAQ)
     final List<Widget> tripulanteViews = [
@@ -112,7 +121,7 @@ class _MainTabViewState extends State<MainTabView> {
       ),
     ];
 
-    final activeViews = isTripulante ? tripulanteViews : _officeViews;
+    final activeViews = isTripulante ? tripulanteViews : officeViews;
 
     // Asegurar que el índice actual no exceda el rango al alternar entre modos
     if (_currentIndex >= activeViews.length) {
@@ -125,6 +134,7 @@ class _MainTabViewState extends State<MainTabView> {
       endDrawer: const NavieraDrawer(), // side drawer for settings and profile details
       body: activeViews[_currentIndex],
       bottomNavigationBar: NavieraBottomBar(
+        isSalaryAuthorized: isSalaryAuthorized,
         isTripulante: isTripulante,
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -139,12 +149,14 @@ class _MainTabViewState extends State<MainTabView> {
 
 class NavieraBottomBar extends StatefulWidget {
   final bool isTripulante;
+  final bool isSalaryAuthorized;
   final int currentIndex;
   final ValueChanged<int> onTap;
 
   const NavieraBottomBar({
     super.key,
     this.isTripulante = false,
+    this.isSalaryAuthorized = false,
     required this.currentIndex,
     required this.onTap,
   });
@@ -207,24 +219,28 @@ class _NavieraBottomBarState extends State<NavieraBottomBar> {
   Widget build(BuildContext context) {
     // 6 módulos exclusivos para Tripulante: Inicio, Novedades, Seguridad, Boletines, Cursos, FAQ
     final tripulanteItems = const [
-      _NavItemData(label: "Inicio", icon: Icons.home_outlined, activeIcon: Icons.home_rounded),
-      _NavItemData(label: "Novedades", icon: Icons.campaign_outlined, activeIcon: Icons.campaign_rounded),
-      _NavItemData(label: "Seguridad", icon: Icons.shield_outlined, activeIcon: Icons.shield_rounded),
-      _NavItemData(label: "Boletines", icon: Icons.description_outlined, activeIcon: Icons.description_rounded),
-      _NavItemData(label: "Cursos", icon: Icons.school_outlined, activeIcon: Icons.school_rounded),
-      _NavItemData(label: "FAQ", icon: Icons.quiz_outlined, activeIcon: Icons.quiz_rounded),
+      const _NavItemData(label: "Inicio", icon: Icons.home_outlined, activeIcon: Icons.home_rounded),
+      const _NavItemData(label: "Novedades", icon: Icons.campaign_outlined, activeIcon: Icons.campaign_rounded),
+      const _NavItemData(label: "Seguridad", icon: Icons.shield_outlined, activeIcon: Icons.shield_rounded),
+      const _NavItemData(label: "Boletines", icon: Icons.description_outlined, activeIcon: Icons.description_rounded),
+      const _NavItemData(label: "Cursos", icon: Icons.school_outlined, activeIcon: Icons.school_rounded),
+      const _NavItemData(label: "FAQ", icon: Icons.quiz_outlined, activeIcon: Icons.quiz_rounded),
     ];
 
     // 7 módulos para rol corporativo / oficina (Boletines penúltimo, Chat último)
-    final officeItems = const [
-      _NavItemData(label: "Inicio", icon: Icons.home_outlined, activeIcon: Icons.home_rounded),
-      _NavItemData(label: "Flota", icon: Icons.anchor_outlined, activeIcon: Icons.anchor_rounded),
-      _NavItemData(label: "Programa", icon: Icons.calendar_today_outlined, activeIcon: Icons.calendar_month_rounded),
-      _NavItemData(label: "Seguridad", icon: Icons.shield_outlined, activeIcon: Icons.shield_rounded),
-      _NavItemData(label: "Cursos", icon: Icons.school_outlined, activeIcon: Icons.school_rounded),
-      _NavItemData(label: "Boletines", icon: Icons.description_outlined, activeIcon: Icons.description_rounded),
-      _NavItemData(label: "FAQ", icon: Icons.quiz_outlined, activeIcon: Icons.quiz_rounded),
-      _NavItemData(label: "Chat", icon: Icons.chat_bubble_outline_rounded, activeIcon: Icons.chat_bubble_rounded),
+    final officeItems = [
+      const _NavItemData(label: "Inicio", icon: Icons.home_outlined, activeIcon: Icons.home_rounded),
+      const _NavItemData(label: "Flota", icon: Icons.anchor_outlined, activeIcon: Icons.anchor_rounded),
+      if (widget.isSalaryAuthorized)
+        const _NavItemData(label: "Salarios", icon: Icons.payments_outlined, activeIcon: Icons.payments_rounded),
+      const _NavItemData(label: "Compras", icon: Icons.shopping_bag_outlined, activeIcon: Icons.shopping_bag_rounded),
+      const _NavItemData(label: "Programa", icon: Icons.calendar_today_outlined, activeIcon: Icons.calendar_month_rounded),
+      const _NavItemData(label: "Salud", icon: Icons.health_and_safety_outlined, activeIcon: Icons.health_and_safety_rounded),
+      const _NavItemData(label: "Seguridad", icon: Icons.shield_outlined, activeIcon: Icons.shield_rounded),
+      const _NavItemData(label: "Cursos", icon: Icons.school_outlined, activeIcon: Icons.school_rounded),
+      const _NavItemData(label: "Boletines", icon: Icons.description_outlined, activeIcon: Icons.description_rounded),
+      const _NavItemData(label: "FAQ", icon: Icons.quiz_outlined, activeIcon: Icons.quiz_rounded),
+      const _NavItemData(label: "Chat", icon: Icons.chat_bubble_outline_rounded, activeIcon: Icons.chat_bubble_rounded),
     ];
 
     final items = widget.isTripulante ? tripulanteItems : officeItems;

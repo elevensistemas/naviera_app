@@ -193,6 +193,7 @@ class NCSChatService {
   }
 
   // MARK: - Smart Centinela Bot Intent Processor matching WhatsApp Bot Functions
+  // ignore: unused_element
   Stream<NCSStreamEvent> _mockStreamChatResponse(String prompt) async* {
     final lower = prompt.toLowerCase().trim();
 

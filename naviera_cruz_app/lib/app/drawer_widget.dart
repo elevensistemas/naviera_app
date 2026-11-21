@@ -5,6 +5,10 @@ import 'theme.dart';
 import '../modules/profile/profile_view.dart';
 import '../modules/auth/login_view.dart';
 import '../modules/crew/crew_faq_search_view.dart';
+import '../modules/salarios/salary_cost_view.dart';
+import '../modules/compras/compras_view.dart';
+import '../modules/salud_buque/vessel_health_view.dart';
+import '../services/salary_cost_service.dart';
 
 class NavieraDrawer extends StatelessWidget {
   const NavieraDrawer({super.key});
@@ -169,6 +173,136 @@ class NavieraDrawer extends StatelessWidget {
                     },
                   ),
                   const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
+                  // Salud del Buque (Centinela)
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF30D158).withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.health_and_safety_rounded, color: Color(0xFF30D158), size: 20),
+                    ),
+                    title: const Text(
+                      "Salud del Buque",
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                    ),
+                    subtitle: const Text(
+                      "Condición general, MARAD y certificados",
+                      style: TextStyle(fontSize: 11.5, color: Colors.grey),
+                    ),
+                    trailing: const Icon(Icons.chevron_right, size: 18),
+                    onTap: () {
+                      Navigator.pop(context); // Close drawer
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const VesselHealthView()),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
+                  if (SalaryCostService.isAuthorizedUser(user)) ...[
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF007AFF).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF007AFF), size: 20),
+                      ),
+                      title: Row(
+                        children: [
+                          const Text(
+                            "Salarios",
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF39200).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFFF39200).withOpacity(0.35)),
+                            ),
+                            child: const Text(
+                              "DIRECTORIO",
+                              style: TextStyle(
+                                color: Color(0xFFF39200),
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      subtitle: const Text(
+                        "Análisis de costos laborales y F931",
+                        style: TextStyle(fontSize: 11.5, color: Colors.grey),
+                      ),
+                      trailing: const Icon(Icons.chevron_right, size: 18),
+                      onTap: () {
+                        Navigator.pop(context); // Close drawer
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const SalaryCostView()),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
+                  ],
+                  if (!session.isTripulanteMode) ...[
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00C7BE).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.shopping_bag_rounded, color: Color(0xFF00C7BE), size: 20),
+                      ),
+                      title: Row(
+                        children: [
+                          const Text(
+                            "Compras",
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00C7BE).withOpacity(0.18),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFF00C7BE).withOpacity(0.35)),
+                            ),
+                            child: const Text(
+                              "OFICINA",
+                              style: TextStyle(
+                                color: Color(0xFF00C7BE),
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      subtitle: const Text(
+                        "Pedidos por barco, abiertos y urgentes",
+                        style: TextStyle(fontSize: 11.5, color: Colors.grey),
+                      ),
+                      trailing: const Icon(Icons.chevron_right, size: 18),
+                      onTap: () {
+                        Navigator.pop(context); // Close drawer
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ComprasView()),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
+                  ],
                   if (session.isTripulanteMode) ...[
                     ListTile(
                       leading: const Icon(Icons.quiz_outlined, color: ColorTheme.primary),

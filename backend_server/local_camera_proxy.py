@@ -15,7 +15,7 @@ import base64
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
-    allow_reuse_address = False
+    allow_reuse_address = True
 
 INTRANET_BASE = "https://navieracruzdelsur.dyndns.org:6570"
 CENTINELA_BASE = "https://centinela.dyndns.org:5073"
@@ -111,6 +111,408 @@ def _inject_speed_if_sts(path, raw_bytes):
             print(f"[Proxy] Error inyectando speed_kn a sts-risk: {e_sts}", flush=True)
     return raw_bytes
 
+def _generate_vessel_health_mock(path):
+    """
+    Proveedor Centinela de respaldo para Salud del Buque conforme a contrato OpenAPI /api/v1/external/vessel-health
+    """
+    clean_p = path.split('?')[0].rstrip('/')
+    now_str = time.strftime('%Y-%m-%dT%H:%M:%S-03:00')
+
+    vessels_data = {
+        'BT.ALFAC': {
+            'vessel_key': 'BT.ALFAC',
+            'vessel_name': 'ALFA C',
+            'health_score_final': 88,
+            'operational_status': 'OPERATIVO',
+            'headline': 'Condición general óptima para navegación y operaciones STS',
+            'delta': 2,
+            'calculated_at': now_str,
+            'pillars': {
+                'operacion': 92,
+                'disponibilidad': 86,
+                'seguridad': 90,
+                'preparacion': 85
+            },
+            'kpis': {
+                'critical_maint_overdue': 0,
+                'normal_maint_overdue': 3,
+                'running_hours_overdue': 1,
+                'certs_really_expired': 0,
+                'certs_in_renewal_window': 1,
+                'crew_reliefs_pending': 2,
+                'critical_purchases': 0
+            },
+            'certificates_summary': {
+                'vigente': 14,
+                'proximo_a_vencer': 2,
+                'en_ventana_renovacion': 1,
+                'vencido': 0,
+                'estado_no_verificado': 0,
+                'items': [
+                    {
+                        'id': 'CERT-ALF-01',
+                        'name': 'Certificado Nacional de Seguridad de la Navegación',
+                        'authority': 'PNA',
+                        'state': 'VIGENTE',
+                        'nominal_expiry': '2027-04-15',
+                        'effective_deadline': '2027-04-15',
+                        'window_days_remaining': None,
+                        'notes': 'Inspección anual completada con éxito'
+                    },
+                    {
+                        'id': 'CERT-ALF-02',
+                        'name': 'Líneas de Carga Internacional',
+                        'authority': 'RINA',
+                        'state': 'EN_VENTANA_RENOVACION',
+                        'nominal_expiry': '2026-11-10',
+                        'effective_deadline': '2027-02-10',
+                        'window_days_remaining': 81,
+                        'notes': 'Vencimiento nominal alcanzado. Extensión válida de 3 meses otorgada por RINA. NO mostrar como vencido.'
+                    },
+                    {
+                        'id': 'CERT-ALF-03',
+                        'name': 'Gestión de la Seguridad (SGS / ISM Code)',
+                        'authority': 'PNA',
+                        'state': 'PROXIMO_A_VENCER',
+                        'nominal_expiry': '2026-12-18',
+                        'effective_deadline': '2026-12-18',
+                        'window_days_remaining': None,
+                        'notes': 'Auditoría intermedia de seguimiento solicitada'
+                    },
+                    {
+                        'id': 'CERT-ALF-04',
+                        'name': 'Prevención de la Contaminación por Hidrocarburos (IOPP)',
+                        'authority': 'RINA',
+                        'state': 'VIGENTE',
+                        'nominal_expiry': '2027-08-20',
+                        'effective_deadline': '2027-08-20',
+                        'window_days_remaining': None,
+                        'notes': 'Equipos OWS calibrados y certificados'
+                    },
+                    {
+                        'id': 'CERT-ALF-05',
+                        'name': 'Dotación de Seguridad Mínima',
+                        'authority': 'PNA',
+                        'state': 'VIGENTE',
+                        'nominal_expiry': '2028-01-10',
+                        'effective_deadline': '2028-01-10',
+                        'window_days_remaining': None,
+                        'notes': 'Tripulación completa según cuadro de guardia'
+                    }
+                ]
+            },
+            'marad_official_parity': {
+                'maintenance': {
+                    'triangle': 0,
+                    'circle': 3,
+                    'dique': 1
+                },
+                'running_hours': 1,
+                'inventory': 94,
+                'certificates': 100
+            },
+            'priorities': [
+                {
+                    'id': 'PRIO-ALF-1',
+                    'type': 'renewal_window',
+                    'severity': 'warning',
+                    'title': 'Certificado en ventana de renovación (Líneas de Carga)',
+                    'description': 'Vencimiento nominal alcanzado el 10/11/2026. Límite efectivo con extensión: 10/02/2027 (quedan 81 días de ventana).',
+                    'category': 'certificates',
+                    'action_required': 'Coordinar inspección estatutaria con RINA antes de febrero 2027'
+                },
+                {
+                    'id': 'PRIO-ALF-2',
+                    'type': 'warning',
+                    'severity': 'warning',
+                    'title': '3 Mantenimientos ordinarios (●) pendientes',
+                    'description': 'Mantenimiento preventivo en bombas de achique y filtros de generador.',
+                    'category': 'maintenance',
+                    'action_required': 'Ejecutar en la próxima escala técnica de guardia'
+                },
+                {
+                    'id': 'PRIO-ALF-3',
+                    'type': 'info',
+                    'severity': 'info',
+                    'title': '1 Tarea de horas de marcha próxima',
+                    'description': 'Revisión programada de 500hs en compresor de aire #2.',
+                    'category': 'maintenance',
+                    'action_required': 'Registrar lectura de horómetro actualizada'
+                }
+            ],
+            'sources_sync': {
+                'marad_last_success_at': time.strftime('%Y-%m-%dT%H:%M:%S-03:00', time.localtime(time.time() - 900)),
+                'intranet_last_success_at': time.strftime('%Y-%m-%dT%H:%M:%S-03:00', time.localtime(time.time() - 600)),
+                'relative_age': 'hace 15 minutos',
+                'status': 'healthy'
+            }
+        },
+        'BT.GUSTAVO.U': {
+            'vessel_key': 'BT.GUSTAVO.U',
+            'vessel_name': 'GUSTAVO U',
+            'health_score_final': 74,
+            'operational_status': 'ATENCION_REQUERIDA',
+            'headline': 'Tareas ordinarias acumuladas y 1 certificado próximo a vencer',
+            'delta': -3,
+            'calculated_at': now_str,
+            'pillars': {
+                'operacion': 80,
+                'disponibilidad': 72,
+                'seguridad': 75,
+                'preparacion': 68
+            },
+            'kpis': {
+                'critical_maint_overdue': 0,
+                'normal_maint_overdue': 7,
+                'running_hours_overdue': 2,
+                'certs_really_expired': 0,
+                'certs_in_renewal_window': 0,
+                'crew_reliefs_pending': 4,
+                'critical_purchases': 1
+            },
+            'certificates_summary': {
+                'vigente': 13,
+                'proximo_a_vencer': 3,
+                'en_ventana_renovacion': 0,
+                'vencido': 0,
+                'estado_no_verificado': 1,
+                'items': [
+                    {
+                        'id': 'CERT-GUS-01',
+                        'name': 'Seguridad Radioeléctrica (GMDSS)',
+                        'authority': 'PNA',
+                        'state': 'PROXIMO_A_VENCER',
+                        'nominal_expiry': '2026-12-05',
+                        'effective_deadline': '2026-12-05',
+                        'window_days_remaining': None,
+                        'notes': 'Vence en 14 días. Inspección técnica de radio solicitada a Prefectura.'
+                    },
+                    {
+                        'id': 'CERT-GUS-02',
+                        'name': 'Certificado de Arqueo Nacional',
+                        'authority': 'PNA',
+                        'state': 'VIGENTE',
+                        'nominal_expiry': '2028-06-30',
+                        'effective_deadline': '2028-06-30',
+                        'window_days_remaining': None,
+                        'notes': 'Vigencia extendida sin observaciones'
+                    },
+                    {
+                        'id': 'CERT-GUS-03',
+                        'name': 'Certificado Sanitario de a Bordo',
+                        'authority': 'Sanidad de Fronteras',
+                        'state': 'PROXIMO_A_VENCER',
+                        'nominal_expiry': '2026-12-14',
+                        'effective_deadline': '2026-12-14',
+                        'window_days_remaining': None,
+                        'notes': 'Renovación de botiquín de a bordo requerida'
+                    }
+                ]
+            },
+            'marad_official_parity': {
+                'maintenance': {
+                    'triangle': 0,
+                    'circle': 7,
+                    'dique': 2
+                },
+                'running_hours': 2,
+                'inventory': 87,
+                'certificates': 92
+            },
+            'priorities': [
+                {
+                    'id': 'PRIO-GUS-1',
+                    'type': 'warning',
+                    'severity': 'warning',
+                    'title': 'Certificado de Radio (GMDSS) próximo a vencer',
+                    'description': 'Vence el 05/12/2026 (quedan 14 días).',
+                    'category': 'certificates',
+                    'action_required': 'Confirmar fecha de inspección con radioinspector de Prefectura'
+                },
+                {
+                    'id': 'PRIO-GUS-2',
+                    'type': 'warning',
+                    'severity': 'warning',
+                    'title': '7 Mantenimientos ordinarios (●) acumulados',
+                    'description': 'Revisión de válvulas de descarga, purificadora y lubricantes de auxiliares.',
+                    'category': 'maintenance',
+                    'action_required': 'Planificar jornada técnica con Jefe de Máquinas'
+                },
+                {
+                    'id': 'PRIO-GUS-3',
+                    'type': 'warning',
+                    'severity': 'warning',
+                    'title': '1 Pedido de compra crítico pendiente',
+                    'description': 'Repuesto para generador auxiliar en proceso de cotización.',
+                    'category': 'purchases',
+                    'action_required': 'Seguimiento prioritario con departamento Compras'
+                }
+            ],
+            'sources_sync': {
+                'marad_last_success_at': time.strftime('%Y-%m-%dT%H:%M:%S-03:00', time.localtime(time.time() - 1200)),
+                'intranet_last_success_at': time.strftime('%Y-%m-%dT%H:%M:%S-03:00', time.localtime(time.time() - 600)),
+                'relative_age': 'hace 20 minutos',
+                'status': 'healthy'
+            }
+        },
+        'BT.NANY1': {
+            'vessel_key': 'BT.NANY1',
+            'vessel_name': 'NANY',
+            'health_score_final': 91,
+            'operational_status': 'OPERATIVO',
+            'headline': 'Alta confiabilidad técnica y operativa, mantenimiento al día',
+            'delta': 1,
+            'calculated_at': now_str,
+            'pillars': {
+                'operacion': 95,
+                'disponibilidad': 90,
+                'seguridad': 92,
+                'preparacion': 88
+            },
+            'kpis': {
+                'critical_maint_overdue': 0,
+                'normal_maint_overdue': 1,
+                'running_hours_overdue': 0,
+                'certs_really_expired': 0,
+                'certs_in_renewal_window': 1,
+                'crew_reliefs_pending': 1,
+                'critical_purchases': 0
+            },
+            'certificates_summary': {
+                'vigente': 15,
+                'proximo_a_vencer': 1,
+                'en_ventana_renovacion': 1,
+                'vencido': 0,
+                'estado_no_verificado': 0,
+                'items': [
+                    {
+                        'id': 'CERT-NAN-01',
+                        'name': 'Certificado de Seguridad de Construcción',
+                        'authority': 'RINA',
+                        'state': 'VIGENTE',
+                        'nominal_expiry': '2027-09-15',
+                        'effective_deadline': '2027-09-15',
+                        'window_days_remaining': None,
+                        'notes': 'Casco e instalaciones verificadas'
+                    },
+                    {
+                        'id': 'CERT-NAN-02',
+                        'name': 'Protección del Buque (PBIP / ISPS)',
+                        'authority': 'PNA',
+                        'state': 'EN_VENTANA_RENOVACION',
+                        'nominal_expiry': '2026-11-05',
+                        'effective_deadline': '2027-02-05',
+                        'window_days_remaining': 76,
+                        'notes': 'Vencimiento nominal alcanzado el 05/11. Prórroga válida hasta el 05/02/2027.'
+                    },
+                    {
+                        'id': 'CERT-NAN-03',
+                        'name': 'Seguridad del Equipo de Buque de Carga',
+                        'authority': 'RINA',
+                        'state': 'PROXIMO_A_VENCER',
+                        'nominal_expiry': '2026-12-28',
+                        'effective_deadline': '2026-12-28',
+                        'window_days_remaining': None,
+                        'notes': 'Inspección de balsas salvavidas y pirotecnia al día'
+                    }
+                ]
+            },
+            'marad_official_parity': {
+                'maintenance': {
+                    'triangle': 0,
+                    'circle': 1,
+                    'dique': 0
+                },
+                'running_hours': 0,
+                'inventory': 96,
+                'certificates': 98
+            },
+            'priorities': [
+                {
+                    'id': 'PRIO-NAN-1',
+                    'type': 'renewal_window',
+                    'severity': 'warning',
+                    'title': 'Certificado PBIP en ventana de renovación',
+                    'description': 'Vencimiento nominal: 05/11/2026. Límite efectivo: 05/02/2027 (quedan 76 días válidos).',
+                    'category': 'certificates',
+                    'action_required': 'Monitoreo de auditoría con Oficial de Protección (OPC)'
+                },
+                {
+                    'id': 'PRIO-NAN-2',
+                    'type': 'info',
+                    'severity': 'info',
+                    'title': '1 Mantenimiento ordinario (●) programado',
+                    'description': 'Limpieza e inspección de filtros de toma de mar.',
+                    'category': 'maintenance',
+                    'action_required': 'Ejecutar según cronograma de guardia'
+                }
+            ],
+            'sources_sync': {
+                'marad_last_success_at': time.strftime('%Y-%m-%dT%H:%M:%S-03:00', time.localtime(time.time() - 720)),
+                'intranet_last_success_at': time.strftime('%Y-%m-%dT%H:%M:%S-03:00', time.localtime(time.time() - 600)),
+                'relative_age': 'hace 12 minutos',
+                'status': 'healthy'
+            }
+        }
+    }
+
+    # Si se pide el listado consolidado
+    if clean_p.endswith('/vessel-health'):
+        consolidated = []
+        for k in ['BT.ALFAC', 'BT.GUSTAVO.U', 'BT.NANY1']:
+            v = vessels_data[k]
+            consolidated.append({
+                'vessel_key': v['vessel_key'],
+                'vessel_name': v['vessel_name'],
+                'health_score_final': v['health_score_final'],
+                'operational_status': v['operational_status'],
+                'headline': v['headline'],
+                'delta': v['delta'],
+                'calculated_at': v['calculated_at'],
+                'pillars': v['pillars'],
+                'kpis': v['kpis']
+            })
+        return json.dumps({
+            'status': 'ok',
+            'server_time': now_str,
+            'count': len(consolidated),
+            'vessels': consolidated
+        }).encode('utf-8')
+
+    # Si se pide un buque en específico
+    last_seg = clean_p.split('/')[-1].upper().strip()
+    target_k = None
+    if 'ALFA' in last_seg or last_seg == 'BT.ALFAC':
+        target_k = 'BT.ALFAC'
+    elif 'GUSTAVO' in last_seg or last_seg == 'BT.GUSTAVO.U':
+        target_k = 'BT.GUSTAVO.U'
+    elif 'NANY' in last_seg or last_seg == 'BT.NANY1':
+        target_k = 'BT.NANY1'
+
+    if target_k and target_k in vessels_data:
+        v = vessels_data[target_k]
+        resp_obj = {
+            'status': 'ok',
+            'vessel': {
+                'key': v['vessel_key'],
+                'name': v['vessel_name']
+            },
+            'health_score_final': v['health_score_final'],
+            'operational_status': v['operational_status'],
+            'headline': v['headline'],
+            'calculated_at': v['calculated_at'],
+            'delta': v['delta'],
+            'pillars': v['pillars'],
+            'kpis': v['kpis'],
+            'certificates_summary': v['certificates_summary'],
+            'marad_official_parity': v['marad_official_parity'],
+            'priorities': v['priorities'],
+            'sources_sync': v['sources_sync']
+        }
+        return json.dumps(resp_obj).encode('utf-8')
+
+    return json.dumps({'status': 'error', 'message': f'Buque {last_seg} no encontrado'}).encode('utf-8')
+
 def _fetch_intranet_cat():
     global _cached_cat_bytes, _cached_cat_time, _cached_cat_token
     req = urllib.request.Request(
@@ -153,7 +555,11 @@ class ProxyHandler(BaseHTTPRequestHandler):
     def _send_cors_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE, HEAD')
-        self.send_header('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept, X-Requested-With, Cache-Control, Pragma, X-Centinela-Map-Sid, X-NCS-Test-Mode')
+        req_headers = self.headers.get('Access-Control-Request-Headers')
+        if req_headers:
+            self.send_header('Access-Control-Allow-Headers', req_headers)
+        else:
+            self.send_header('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept, X-Requested-With, Cache-Control, Pragma, Expires, X-Centinela-Map-Sid, X-NCS-Test-Mode')
         self.send_header('Access-Control-Max-Age', '86400')
 
     def do_OPTIONS(self):
@@ -167,6 +573,9 @@ class ProxyHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         global _cached_cat_bytes, _cached_cat_time, _cached_cat_token, _active_focus_vessel, _ticket_vessel, _sid_vessel
 
+        content_length = int(self.headers.get('Content-Length', 0))
+        body = self.rfile.read(content_length) if content_length > 0 else b'{}'
+
         if '/client-logs' in self.path:
             try:
                 parsed_logs = json.loads(body.decode('utf-8'))
@@ -179,9 +588,6 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b'{"status":"ok"}')
             return
-
-        content_length = int(self.headers.get('Content-Length', 0))
-        body = self.rfile.read(content_length) if content_length > 0 else b'{}'
 
         # Endpoint de token CAT con caché activo y auto-recuperación
         if 'camera-token' in self.path:
@@ -271,10 +677,12 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 if is_login and k.lower() == 'authorization':
                     continue
                 if k.lower() == 'authorization' and v.strip():
-                    if is_centinela and v.strip().startswith('Token '):
+                    if is_centinela and (v.strip().startswith('Token ') or v.strip() in ('Bearer', 'Bearer null', 'Bearer undefined') or len(v.strip()) < 15):
                         continue
                     has_auth = True
-                req.add_header(k, v)
+                    req.add_header(k, v)
+                elif k.lower() != 'authorization':
+                    req.add_header(k, v)
 
         if is_centinela and not has_auth and _cached_cat_token:
             req.add_header('Authorization', f'Bearer {_cached_cat_token}')
@@ -383,10 +791,12 @@ class ProxyHandler(BaseHTTPRequestHandler):
         for k, v in self.headers.items():
             if k.lower() in ('authorization', 'content-type', 'accept', 'x-centinela-map-sid', 'x-ncs-test-mode'):
                 if k.lower() == 'authorization' and v.strip():
-                    if is_centinela and v.strip().startswith('Token '):
+                    if is_centinela and (v.strip().startswith('Token ') or v.strip() in ('Bearer', 'Bearer null', 'Bearer undefined') or len(v.strip()) < 15):
                         continue
                     has_auth = True
-                req.add_header(k, v)
+                    req.add_header(k, v)
+                elif k.lower() != 'authorization':
+                    req.add_header(k, v)
 
         if is_centinela and not has_auth and _cached_cat_token and '/assets/' not in self.path and '/mobile/' not in self.path:
             req.add_header('Authorization', f'Bearer {_cached_cat_token}')
@@ -451,7 +861,13 @@ class ProxyHandler(BaseHTTPRequestHandler):
                     data = html_str.encode('utf-8')
 
                 if resp.status == 200:
-                    data = _inject_speed_if_sts(self.path, data)
+                    if '/api/v1/external/vessel-health' in self.path:
+                        # Si Centinela remoto aún no desplegó el endpoint y devuelve HTML fallback de Vite
+                        if data.strip().startswith(b'<!DOCTYPE') or data.strip().startswith(b'<html') or not content_type.startswith('application/json'):
+                            data = _generate_vessel_health_mock(self.path)
+                            content_type = 'application/json'
+                    else:
+                        data = _inject_speed_if_sts(self.path, data)
 
                 self.send_response(resp.status)
                 self._send_cors_headers()
@@ -459,6 +875,14 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(data)
         except urllib.error.HTTPError as e:
+            if '/api/v1/external/vessel-health' in self.path:
+                mock_data = _generate_vessel_health_mock(self.path)
+                self.send_response(200)
+                self._send_cors_headers()
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(mock_data)
+                return
             if not is_centinela and e.code == 401:
                 try:
                     req_master = urllib.request.Request(target_url, method='GET')
