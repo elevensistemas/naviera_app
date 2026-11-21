@@ -464,7 +464,7 @@ class MockFleetService implements FleetService {
         targetShips: Ship.getDefaultTargetShipsFor("ALFA C"),
         captainName: "Caballero Diego",
         chiefEngineerName: "Lescano Cristian",
-        lastPort: "Operando STS con CARAVOS TRIUMPH",
+        lastPort: "OPD: CARAVOS TRIUMPH",
         weather: "22.6°C · Viento WNW 9 kn",
         provistosCount: 4,
         provistosTotal: 3040.00,
@@ -515,7 +515,7 @@ class MockFleetService implements FleetService {
         targetShips: Ship.getDefaultTargetShipsFor("NANY"),
         captainName: "Hernandez Pablo",
         chiefEngineerName: "Carlino Hernan",
-        lastPort: "Operando STS con BORDEAUX",
+        lastPort: "OPD: BORDEAUX",
         weather: "19.4°C · Viento E 11 kn",
         provistosCount: 3,
         provistosTotal: 2100.00,
@@ -1299,8 +1299,8 @@ class ProductionFleetService implements FleetService {
 
           final lastPort = (ship.lastPort.isNotEmpty && !ship.lastPort.contains('—') && !ship.lastPort.toUpperCase().contains('FONDEADO'))
               ? ship.lastPort
-              : (shipKey == 'ALFA' ? 'Operando STS con CARAVOS TRIUMPH'
-                  : shipKey == 'NANY' ? 'Operando STS con BORDEAUX'
+              : (shipKey == 'ALFA' ? 'OPD: CARAVOS TRIUMPH'
+                  : shipKey == 'NANY' ? 'OPD: BORDEAUX'
                   : shipKey == 'GUSTAVO' ? 'Rada La Plata' : '');
 
           final defaultCaptain = shipKey == 'ALFA' ? 'Caballero Diego'

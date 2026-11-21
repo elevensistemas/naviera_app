@@ -209,7 +209,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
               : Ship.getDefaultTargetShipsFor("ALFA C"),
           lastPort: alfa.lastPort.isNotEmpty && !alfa.lastPort.contains('BUENOS AIRES')
               ? alfa.lastPort
-              : 'Operando STS con CARAVOS TRIUMPH',
+              : 'OPD: CARAVOS TRIUMPH',
           weather: alfa.weather.isNotEmpty ? alfa.weather : '22.6°C · Viento WNW 9 kn',
           provistosCount: alfa.provistosCount,
           provistosTotal: alfa.provistosTotal,
@@ -235,7 +235,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
           targetShips: nany.targetShips.isNotEmpty
               ? nany.targetShips
               : Ship.getDefaultTargetShipsFor("NANY"),
-          lastPort: nany.lastPort.isNotEmpty ? nany.lastPort : 'Operando STS con BORDEAUX',
+          lastPort: nany.lastPort.isNotEmpty ? nany.lastPort : 'OPD: BORDEAUX',
           provistosCount: nany.provistosCount,
           provistosTotal: nany.provistosTotal,
           weather: nany.weather.isNotEmpty ? nany.weather : '19.4°C · Viento E 11 kn',
@@ -585,7 +585,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         targetShips: Ship.getDefaultTargetShipsFor("ALFA C"),
         captainName: "Caballero Diego",
         chiefEngineerName: "Lescano Cristian",
-        lastPort: "Operando STS con CARAVOS TRIUMPH",
+        lastPort: "OPD: CARAVOS TRIUMPH",
         weather: "22.6°C · Viento WNW 9 kn",
         provistosCount: 0,
         provistosTotal: 0.00,
@@ -639,7 +639,7 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
         targetShips: Ship.getDefaultTargetShipsFor("NANY"),
         captainName: "Hernandez Pablo",
         chiefEngineerName: "Carlino Hernan",
-        lastPort: "Operando STS con BORDEAUX",
+        lastPort: "OPD: BORDEAUX",
         weather: "19.4°C · Viento E 11 kn",
         provistosCount: 0,
         provistosTotal: 0.00,
@@ -1143,6 +1143,39 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     }
   }
 
+  /// Obtiene la velocidad formateada si el buque está navegando
+  String? _getNavigatingSpeed(CentinelaStsRisk? sts, Ship ship) {
+    final effectiveSts = sts ?? CentinelaFleetService.shared.getCachedSts(ship.name);
+    final rawUpper = (effectiveSts?.rawOperationalState ?? '').toUpperCase().trim();
+    final speed = effectiveSts?.speedKn;
+    final isNavigating = rawUpper.contains("NAVEG") ||
+        rawUpper.contains("NAVIGAT") ||
+        rawUpper.contains("TRANSIT") ||
+        rawUpper.contains("UNDERWAY") ||
+        ((speed ?? 0.0) > 0.5);
+
+    if (!isNavigating) return null;
+
+    if (speed != null && speed > 0.0) {
+      final speedFormatted = speed % 1 == 0
+          ? speed.toInt().toString()
+          : speed.toStringAsFixed(1);
+      return "$speedFormatted kn";
+    }
+
+    final match = RegExp(r'(\d+(?:[.,]\d+)?)\s*(?:kn|kts|nudos)?', caseSensitive: false).firstMatch(rawUpper);
+    if (match != null && match.group(1) != null) {
+      final val = match.group(1)!.replaceAll(',', '.');
+      final d = double.tryParse(val);
+      if (d != null && d > 0.0) {
+        final speedFormatted = d % 1 == 0 ? d.toInt().toString() : d.toStringAsFixed(1);
+        return "$speedFormatted kn";
+      }
+    }
+
+    return "En navegación";
+  }
+
   Widget _buildOperationalStateHeader(
     Ship ship,
     CentinelaStsRisk? sts,
@@ -1151,14 +1184,26 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
     Color captionColor,
   ) {
     final effectiveSts = sts ?? CentinelaFleetService.shared.getCachedSts(ship.name);
-    final stateText = effectiveSts?.operationalStateDisplay ?? "Consultando Centinela...";
+    String stateText = effectiveSts?.operationalStateDisplay ?? "Consultando Centinela...";
+    if (stateText.isEmpty || stateText == "Consultando Centinela...") {
+      if (ship.lastPort.isNotEmpty) {
+        stateText = ship.lastPort;
+      }
+    }
+
+    // Normalizar a "OPD: [Barco]" para que entre completo sin recortarse
+    stateText = stateText.replaceAll(RegExp(r'operando\s+(?:descarga|sts)\s+con\s+', caseSensitive: false), 'OPD: ');
+    stateText = stateText.replaceAll(RegExp(r'operacion_descarga\s+con\s+', caseSensitive: false), 'OPD: ');
+    stateText = stateText.replaceAll(RegExp(r'operando\s+(?:descarga|sts)', caseSensitive: false), 'OPD');
+    stateText = stateText.replaceAll(RegExp(r'operacion_descarga', caseSensitive: false), 'OPD');
+
     final durationText = effectiveSts?.durationDisplay ?? "";
     final telemetry = effectiveSts?.telemetryLabel ?? "AIS";
     final isGps = effectiveSts?.isGps ?? false;
 
     IconData stateIcon;
     final rawUpper = (effectiveSts?.rawOperationalState ?? '').toUpperCase();
-    if (rawUpper.contains('DESCARGA') || rawUpper.contains('STS')) {
+    if (rawUpper.contains('DESCARGA') || rawUpper.contains('STS') || stateText.startsWith('OPD')) {
       stateIcon = Icons.swap_horiz_rounded;
     } else if (rawUpper.contains('NAVEGANDO')) {
       stateIcon = Icons.directions_boat_rounded;
@@ -1194,8 +1239,8 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
             ),
             const SizedBox(width: 8),
 
-            // Texto limpio del estado del buque (ej: "En puerto" o "Navegando a 8.5 kn")
-            Flexible(
+            // Texto limpio del estado del buque (ej: "OPD: AAPUS 11" o "Navegando a 8.5 kn")
+            Expanded(
               child: Text(
                 stateText,
                 style: TextStyle(
@@ -1245,17 +1290,14 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
 
             if (durationText.isNotEmpty) ...[
               const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  durationText,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: captionColor,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              Text(
+                durationText,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: captionColor,
+                  fontWeight: FontWeight.w500,
                 ),
+                maxLines: 1,
               ),
             ],
 
@@ -1513,6 +1555,56 @@ class _FleetViewState extends State<FleetView> with WidgetsBindingObserver {
                       isLoading: _isLoadingSts,
                       onTap: () => _openOcimfAudit(ship.name, stsRisk),
                     ),
+                  ),
+
+                  // Badge de velocidad flotante arriba del video cuando el buque está navegando
+                  Builder(
+                    builder: (context) {
+                      final navSpeed = _getNavigatingSpeed(stsRisk, ship);
+                      if (navSpeed == null) return const SizedBox.shrink();
+                      return Positioned(
+                        top: 10,
+                        right: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFF38BDF8).withValues(alpha: 0.6),
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.4),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.speed_rounded,
+                                size: 14,
+                                color: Color(0xFF38BDF8),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                navSpeed,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
 
                   // Popover flotante sutil debajo del círculo STS (43x43 pt) dentro del visor

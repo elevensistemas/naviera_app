@@ -239,10 +239,17 @@ class CentinelaStsRisk {
 
     final rawUpper = rawOperationalState.toUpperCase().trim();
     if (rawUpper.contains("DESCARGA") || rawUpper.contains("STS")) {
-      if (counterpartVessel != null && counterpartVessel!.isNotEmpty) {
-        return "Operando descarga con $counterpartVessel";
+      String? vessel = counterpartVessel;
+      if ((vessel == null || vessel.isEmpty) && rawUpper.contains(" CON ")) {
+        final parts = rawOperationalState.split(RegExp(r'\s+con\s+', caseSensitive: false));
+        if (parts.length > 1 && parts[1].trim().isNotEmpty) {
+          vessel = parts[1].trim();
+        }
       }
-      return "Operando descarga";
+      if (vessel != null && vessel.isNotEmpty) {
+        return "OPD: $vessel";
+      }
+      return "OPD";
     } else if (rawUpper.contains("NAVEGANDO")) {
       if (speedKn != null && speedKn! > 0.0) {
         final speedFormatted = speedKn! % 1 == 0 ? speedKn!.toInt().toString() : speedKn!.toStringAsFixed(1);

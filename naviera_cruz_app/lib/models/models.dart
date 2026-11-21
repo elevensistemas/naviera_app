@@ -440,7 +440,7 @@ class Ship {
     if (lastPort.isNotEmpty) return lastPort;
     final u = name.toUpperCase();
     if (u.contains('ALFA')) return 'Fondeado en Rada La Plata (Zona Común)';
-    if (u.contains('NANY')) return 'Operando STS con BORDEAUX';
+    if (u.contains('NANY')) return 'OPD: BORDEAUX';
     if (u.contains('GUSTAVO')) return 'Rada La Plata';
     return '';
   }
