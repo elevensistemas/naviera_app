@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 /// Modelo de respuesta para el módulo de Compras / Pedidos de la Intranet
 class ComprasResponse {
@@ -267,6 +266,26 @@ class PedidoCompra {
           [],
     );
   }
+
+  /// Un pedido es Crítico en el sistema de Compras de la Intranet
+  /// si contiene al menos un artículo clasificado como dispositivo crítico (o esCritico si no hay artículos).
+  bool get esPedidoCritico => articulos.isNotEmpty
+      ? articulos.any((a) => a.esDispositivoCritico)
+      : esCritico;
+
+  /// Está cumplido si tiene el flag cumplido o su estado es 'Cumplido'
+  bool get estaCumplido => cumplido || estado.toLowerCase() == 'cumplido';
+
+  /// Está vencido si no está cumplido y su vigencia/estado es vencido, o si sus días transcurridos superan el plazo
+  bool get estaVencido {
+    if (estaCumplido) return false;
+    if (vigencia.toLowerCase() == 'vencido' || estado.toLowerCase() == 'vencido') return true;
+    final plazo = diasPlazo > 0 ? diasPlazo : 45;
+    return diasTranscurridos > plazo;
+  }
+
+  /// En plan si no está cumplido ni vencido
+  bool get estaEnPlan => !estaCumplido && !estaVencido;
 }
 
 class ArticuloPedido {

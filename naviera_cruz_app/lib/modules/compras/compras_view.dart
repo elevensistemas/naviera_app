@@ -97,20 +97,20 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
     switch (_selectedTab) {
       case 'Abiertos':
         // Abiertos son los que NO están cumplidos (En plan + Vencidos)
-        list = list.where((p) => !p.cumplido).toList();
+        list = list.where((p) => !p.estaCumplido).toList();
         break;
       case 'Críticos':
-        // Críticos o con urgencia Urgente
-        list = list.where((p) => p.esCritico || p.urgencia.toLowerCase() == 'urgente').toList();
+        // Críticos según criterio oficial de Intranet (dispositivos críticos)
+        list = list.where((p) => p.esPedidoCritico).toList();
         break;
       case 'Vencidos':
-        // Pedidos vencidos
-        list = list.where((p) => p.vigencia.toLowerCase() == 'vencido' || p.estado.toLowerCase() == 'vencido').toList();
+        // Pedidos vencidos según criterio oficial de Intranet
+        list = list.where((p) => p.estaVencido).toList();
         break;
       case 'Cerrados':
       case 'Cumplidos':
         // Pedidos cumplidos/cerrados
-        list = list.where((p) => p.cumplido).toList();
+        list = list.where((p) => p.estaCumplido).toList();
         break;
     }
 
@@ -155,9 +155,9 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
       totalArticulos += p.cantidadArticulos;
       totalUnidades += p.totalUnidadesSolicitadas;
 
-      final bool isCrit = p.esCritico || p.urgencia.toLowerCase() == 'urgente';
-      final bool isVenc = p.vigencia.toLowerCase() == 'vencido' || p.estado.toLowerCase() == 'vencido';
-      final bool isCump = p.cumplido;
+      final bool isCrit = p.esPedidoCritico;
+      final bool isVenc = p.estaVencido;
+      final bool isCump = p.estaCumplido;
 
       if (isCump) {
         cumplidosTotal++;
@@ -1048,8 +1048,30 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
 
   /// Dynamic Fleet Breakdown Card
   Widget _buildDynamicFleetCard() {
-    final summary = _comprasData?.summary;
-    if (summary == null || summary.porBarco.isEmpty) return const SizedBox.shrink();
+    if (_comprasData == null || _comprasData!.results.isEmpty) return const SizedBox.shrink();
+
+    // Agrupar dinámicamente por buque para consistencia 100% con los criterios de Intranet
+    final Map<String, List<PedidoCompra>> byShip = {};
+    for (var p in _comprasData!.results) {
+      final b = p.barco.trim();
+      if (b.isEmpty) continue;
+      byShip.putIfAbsent(b, () => []).add(p);
+    }
+
+    if (byShip.isEmpty) return const SizedBox.shrink();
+
+    // Ordenar buques: Alfa C, Gustavo U, Nany
+    final sortedShips = byShip.keys.toList()
+      ..sort((a, b) {
+        int rank(String s) {
+          final l = s.toLowerCase();
+          if (l.contains('alfa')) return 1;
+          if (l.contains('gustavo')) return 2;
+          if (l.contains('nany')) return 3;
+          return 4;
+        }
+        return rank(a).compareTo(rank(b));
+      });
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -1069,16 +1091,23 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                 style: TextStyle(color: _textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
               ),
               Text(
-                "${summary.porBarco.length} BUQUES",
+                "${sortedShips.length} BUQUES",
                 style: TextStyle(color: _textTertiary, fontSize: 10, fontWeight: FontWeight.bold),
               ),
             ],
           ),
           const SizedBox(height: 14),
-          ...summary.porBarco.map((b) {
+          ...sortedShips.map((shipName) {
+            final shipList = byShip[shipName]!;
+            final totalShip = shipList.length;
+            final criticosShip = shipList.where((p) => p.esPedidoCritico).length;
+            final cumplidosShip = shipList.where((p) => p.estaCumplido).length;
+            final vencidosShip = shipList.where((p) => p.estaVencido).length;
+            final enPlanShip = shipList.where((p) => p.estaEnPlan).length;
+
             Color shipColor = const Color(0xFF007AFF);
-            if (b.barco.toLowerCase().contains('gustavo')) shipColor = const Color(0xFF30D158);
-            if (b.barco.toLowerCase().contains('nany')) shipColor = const Color(0xFFF39200);
+            if (shipName.toLowerCase().contains('gustavo')) shipColor = const Color(0xFF30D158);
+            if (shipName.toLowerCase().contains('nany')) shipColor = const Color(0xFFF39200);
 
             return Padding(
               padding: const EdgeInsets.only(bottom: 12.0),
@@ -1093,11 +1122,11 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                           Icon(Icons.directions_boat_filled_rounded, size: 15, color: shipColor),
                           const SizedBox(width: 7),
                           Text(
-                            b.barco,
+                            shipName,
                             style: TextStyle(color: _textPrimary, fontSize: 13.5, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(width: 8),
-                          if (b.criticos > 0)
+                          if (criticosShip > 0)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                               decoration: BoxDecoration(
@@ -1105,14 +1134,14 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                "${b.criticos} críticos",
+                                "$criticosShip críticos",
                                 style: const TextStyle(color: Colors.redAccent, fontSize: 9.5, fontWeight: FontWeight.bold),
                               ),
                             ),
                         ],
                       ),
                       Text(
-                        "${b.totalPedidos} pedidos (${b.enPlan} abiertos)",
+                        "$totalShip pedidos ($enPlanShip abiertos)",
                         style: TextStyle(color: _textSecondary, fontSize: 12, fontWeight: FontWeight.w500),
                       ),
                     ],
@@ -1124,18 +1153,21 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                       height: 8,
                       child: Row(
                         children: [
-                          Expanded(
-                            flex: b.cumplidos,
-                            child: Container(color: const Color(0xFF30D158)),
-                          ),
-                          Expanded(
-                            flex: b.enPlan,
-                            child: Container(color: const Color(0xFFFFD60A)),
-                          ),
-                          Expanded(
-                            flex: b.vencidos,
-                            child: Container(color: const Color(0xFFFF453A)),
-                          ),
+                          if (cumplidosShip > 0)
+                            Expanded(
+                              flex: cumplidosShip,
+                              child: Container(color: const Color(0xFF30D158)),
+                            ),
+                          if (enPlanShip > 0)
+                            Expanded(
+                              flex: enPlanShip,
+                              child: Container(color: const Color(0xFFFFD60A)),
+                            ),
+                          if (vencidosShip > 0)
+                            Expanded(
+                              flex: vencidosShip,
+                              child: Container(color: const Color(0xFFFF453A)),
+                            ),
                         ],
                       ),
                     ),
@@ -1143,7 +1175,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
@@ -1155,7 +1187,8 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
     if (pedido.barco.toLowerCase().contains('gustavo')) barcoColor = const Color(0xFF30D158);
     if (pedido.barco.toLowerCase().contains('nany')) barcoColor = const Color(0xFFF39200);
 
-    final bool isVencido = pedido.vigencia.toLowerCase() == 'vencido' || pedido.estado.toLowerCase() == 'vencido';
+    final bool isVencido = pedido.estaVencido;
+    final bool isCritico = pedido.esPedidoCritico;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1163,12 +1196,12 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
         color: _cardBg,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: pedido.esCritico
+          color: isCritico
               ? Colors.redAccent.withOpacity(0.4)
               : isVencido
                   ? Colors.orangeAccent.withOpacity(0.25)
                   : _cardBorder,
-          width: pedido.esCritico ? 1.2 : 1.0,
+          width: isCritico ? 1.2 : 1.0,
         ),
       ),
       child: Material(
@@ -1222,7 +1255,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                         ],
                       ),
                     ),
-                    if (pedido.esCritico)
+                    if (pedido.esPedidoCritico)
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
