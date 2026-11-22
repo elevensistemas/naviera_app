@@ -906,28 +906,6 @@ class _VesselHealthViewState extends State<VesselHealthView>
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const Spacer(),
-              RichText(
-                text: TextSpan(
-                  text: "Score base: ",
-                  style: TextStyle(
-                    color: _textSecondary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: "${card.healthScoreBase} pts",
-                      style: TextStyle(
-                        color: _textPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(Icons.info_outline_rounded, size: 16, color: _textSecondary),
             ],
           ),
           const SizedBox(height: 18),
@@ -1322,14 +1300,19 @@ class _VesselHealthViewState extends State<VesselHealthView>
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            if (prio.category == 'certificates') {
-              _openCertificatesSheet(detail.certificates, detail.card.certificatesSummary);
-            } else if (prio.category == 'maintenance') {
-              _openMaintenanceSheet(detail.maintenanceTasks);
-            } else if (prio.category == 'crew') {
+            final cat = prio.category.toLowerCase();
+            final id = prio.id.toLowerCase();
+            final title = prio.title.toLowerCase();
+
+            if (id.contains('crew') || cat.contains('crew') || cat == 'preparacion' || title.contains('tripulant') || title.contains('relevo')) {
               _openCrewSheet(detail.crew);
-            } else if (prio.category == 'purchases') {
+            } else if (id.contains('cert') || cat.contains('cert') || title.contains('certificad') || title.contains('calibraci')) {
+              _openCertificatesSheet(detail.certificates, detail.card.certificatesSummary);
+            } else if (id.contains('purch') || cat.contains('purch') || title.contains('compra') || title.contains('pedido')) {
               _openPurchasesSheet(detail);
+            } else {
+              // Mantenimiento y verificaciones periódicas (ej. disponibilidad, maint, verificación)
+              _openMaintenanceSheet(detail.maintenanceTasks, initialTab: 'CRITICAL');
             }
           },
           child: Padding(
@@ -1813,6 +1796,7 @@ class _MaintenanceDetailSheet extends StatefulWidget {
 
 class _MaintenanceDetailSheetState extends State<_MaintenanceDetailSheet> {
   late String _activeTab;
+  final Set<int> _expandedTasks = {};
 
   @override
   void initState() {
@@ -1821,6 +1805,7 @@ class _MaintenanceDetailSheetState extends State<_MaintenanceDetailSheet> {
   }
 
   bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get _bg => _isDark ? const Color(0xFF07101D) : const Color(0xFFF1F5F9);
   Color get _cardBg => _isDark ? const Color(0xFF0D1829) : Colors.white;
   Color get _cardBorder => _isDark ? Colors.white.withValues(alpha: 0.07) : const Color(0xFFE2E8F0);
   Color get _textPrimary => _isDark ? Colors.white : const Color(0xFF0F172A);
@@ -1848,12 +1833,13 @@ class _MaintenanceDetailSheetState extends State<_MaintenanceDetailSheet> {
         list = widget.tasks.criticalOverdue;
     }
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) => Column(
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.88,
+      decoration: BoxDecoration(
+        color: _bg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
         children: [
           const SizedBox(height: 12),
           Center(
@@ -1888,7 +1874,7 @@ class _MaintenanceDetailSheetState extends State<_MaintenanceDetailSheet> {
                         style: TextStyle(color: _textPrimary, fontSize: 17, fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        "Paridad MARAD oficial",
+                        "Paridad MARAD oficial • Toca cualquier tarea para desglosarla",
                         style: TextStyle(color: _textTertiary, fontSize: 11),
                       ),
                     ],
@@ -1924,82 +1910,166 @@ class _MaintenanceDetailSheetState extends State<_MaintenanceDetailSheet> {
                     ),
                   )
                 : ListView.builder(
-                    controller: scrollController,
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                     itemCount: list.length,
                     itemBuilder: (context, idx) {
                       final task = list[idx];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: _cardBg,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: task.isCritical ? const Color(0xFFFF5A5F).withValues(alpha: 0.35) : _cardBorder,
+                      final isExpanded = _expandedTasks.contains(idx);
+
+                      return GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          setState(() {
+                            if (_expandedTasks.contains(idx)) {
+                              _expandedTasks.remove(idx);
+                            } else {
+                              _expandedTasks.add(idx);
+                            }
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: _cardBg,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: task.isCritical
+                                  ? const Color(0xFFFF5A5F).withValues(alpha: 0.35)
+                                  : (isExpanded ? const Color(0xFF007AFF).withValues(alpha: 0.4) : _cardBorder),
+                              width: isExpanded ? 1.5 : 1.0,
+                            ),
+                            boxShadow: isExpanded
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: _isDark ? 0.3 : 0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    )
+                                  ]
+                                : null,
                           ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                if (task.isCritical) ...[
-                                  const Text("▲ ", style: TextStyle(color: Color(0xFFFF5A5F), fontWeight: FontWeight.bold, fontSize: 14)),
-                                ] else ...[
-                                  const Text("● ", style: TextStyle(color: Color(0xFFF59E0B), fontSize: 12)),
-                                ],
-                                Expanded(
-                                  child: Text(
-                                    task.name,
-                                    style: TextStyle(color: _textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: (task.status == 'Vencido' ? const Color(0xFFFF5A5F) : const Color(0xFFF59E0B)).withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    task.status,
-                                    style: TextStyle(
-                                      color: task.status == 'Vencido' ? const Color(0xFFFF5A5F) : const Color(0xFFF59E0B),
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  if (task.isCritical) ...[
+                                    const Text("▲ ", style: TextStyle(color: Color(0xFFFF5A5F), fontWeight: FontWeight.bold, fontSize: 14)),
+                                  ] else ...[
+                                    const Text("● ", style: TextStyle(color: Color(0xFFF59E0B), fontSize: 12)),
+                                  ],
+                                  Expanded(
+                                    child: Text(
+                                      task.name,
+                                      style: TextStyle(color: _textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: (task.status == 'Vencido' ? const Color(0xFFFF5A5F) : const Color(0xFFF59E0B)).withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      task.status,
+                                      style: TextStyle(
+                                        color: task.status == 'Vencido' ? const Color(0xFFFF5A5F) : const Color(0xFFF59E0B),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                                    color: _textTertiary,
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
+                              if (task.description.isNotEmpty && task.description != task.name) ...[
+                                const SizedBox(height: 5),
+                                Text(
+                                  task.description,
+                                  style: TextStyle(color: _textSecondary, fontSize: 12),
                                 ),
                               ],
-                            ),
-                            if (task.description.isNotEmpty && task.description != task.name) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                task.description,
-                                style: TextStyle(color: _textSecondary, fontSize: 12),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  if (task.dueDate.isNotEmpty)
+                                    Text(
+                                      "Vencimiento: ${task.dueDate}",
+                                      style: TextStyle(color: _textSecondary, fontSize: 11),
+                                    ),
+                                  const Spacer(),
+                                  if (task.ranks.isNotEmpty)
+                                    Text(
+                                      task.ranks,
+                                      style: const TextStyle(color: Color(0xFF007AFF), fontSize: 11, fontWeight: FontWeight.w600),
+                                    ),
+                                ],
                               ),
-                            ],
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                if (task.dueDate.isNotEmpty)
-                                  Text(
-                                    "Vencimiento: ${task.dueDate}",
-                                    style: TextStyle(color: _textSecondary, fontSize: 11),
+                              // Desglose extendido al hacer tap
+                              if (isExpanded) ...[
+                                const SizedBox(height: 12),
+                                Divider(color: _dividerColor, height: 1),
+                                const SizedBox(height: 10),
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: _isDark ? Colors.white.withValues(alpha: 0.03) : const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: _dividerColor),
                                   ),
-                                const Spacer(),
-                                if (task.ranks.isNotEmpty)
-                                  Text(
-                                    task.ranks,
-                                    style: const TextStyle(color: Color(0xFF007AFF), fontSize: 11, fontWeight: FontWeight.w600),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _buildMaintDetailRow("Sistema / Categoría", task.category),
+                                      if (task.maradJobId.isNotEmpty)
+                                        _buildMaintDetailRow("MARAD Job ID", task.maradJobId),
+                                      if (task.ranks.isNotEmpty)
+                                        _buildMaintDetailRow("Responsables de guardia", task.ranks),
+                                      _buildMaintDetailRow("Prioridad operativa", task.isCritical ? "Crítica (Afecta Disponibilidad)" : "Ordinaria de mantenimiento"),
+                                      if (task.isDock)
+                                        _buildMaintDetailRow("Tipo de parada", "Requiere Dique Seco"),
+                                    ],
                                   ),
+                                ),
                               ],
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     },
                   ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMaintDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 140,
+            child: Text(
+              label,
+              style: TextStyle(color: _textTertiary, fontSize: 11, fontWeight: FontWeight.w500),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(color: _textPrimary, fontSize: 11.5, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
