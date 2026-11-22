@@ -840,55 +840,76 @@ class _VesselHealthViewState extends State<VesselHealthView>
   /// Grilla compacta de 4 KPIs tocables que abren modales detallados
   Widget _buildQuickKpiGrid(VesselHealthDetail detail) {
     final kpis = detail.card.kpis;
-    return Row(
-      children: [
-        // 1. Mant. Críticos (▲)
-        Expanded(
-          child: _buildTappableKpiCard(
-            label: "MANT. CRÍTICOS",
-            value: "${kpis.criticalMaintOverdue}",
-            symbol: "▲",
-            isDanger: kpis.criticalMaintOverdue > 0,
-            color: kpis.criticalMaintOverdue > 0 ? const Color(0xFFFF5A5F) : const Color(0xFF10B981),
-            onTap: () => _openMaintenanceSheet(detail.maintenanceTasks),
+    final int critMaint = kpis.criticalMaintOverdue;
+    final int normMaint = kpis.normalMaintOverdue;
+    final int certsExp = kpis.certsReallyExpired;
+    final int reliefs = kpis.crewReliefsOverdue;
+    final int critPurch = kpis.criticalPurchasesOpen;
+
+    final String critMaintLabel = critMaint == 1 ? 'MANTENIMIENTO\nCRÍTICO' : 'MANTENIMIENTOS\nCRÍTICOS';
+    final String normMaintSub = normMaint == 1 ? '1 ordinario' : '$normMaint ordinarios';
+
+    final String certsLabel = certsExp == 1 ? 'CERTIFICADO\nVENCIDO' : 'CERTIFICADOS\nVENCIDOS';
+    final String? certsSub = kpis.certsInRenewalWindow > 0 ? "+${kpis.certsInRenewalWindow} en renov." : null;
+
+    final String reliefsLabel = reliefs == 1 ? 'RELEVO\nPENDIENTE' : 'RELEVOS\nPENDIENTES';
+    final String reliefsSub = "${kpis.crewOnBoard} a bordo";
+
+    final String purchasesLabel = critPurch == 1 ? 'PEDIDO\nCRÍTICO' : 'PEDIDOS\nCRÍTICOS';
+
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 1. Mant. Críticos (▲) + subetiqueta ordinarios
+          Expanded(
+            child: _buildTappableKpiCard(
+              label: critMaintLabel,
+              value: "$critMaint",
+              symbol: "▲",
+              subLabel: normMaintSub,
+              isDanger: critMaint > 0,
+              color: critMaint > 0 ? const Color(0xFFFF5A5F) : const Color(0xFF10B981),
+              onTap: () => _openMaintenanceSheet(detail.maintenanceTasks),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        // 2. Certs. Vencidos + subetiqueta en renovación
-        Expanded(
-          child: _buildTappableKpiCard(
-            label: "CERTS. VENCIDOS",
-            value: "${kpis.certsReallyExpired}",
-            subLabel: kpis.certsInRenewalWindow > 0 ? "+${kpis.certsInRenewalWindow} en renov." : null,
-            isDanger: kpis.certsReallyExpired > 0,
-            color: kpis.certsReallyExpired > 0 ? const Color(0xFFFF5A5F) : const Color(0xFF10B981),
-            onTap: () => _openCertificatesSheet(detail.certificates, detail.card.certificatesSummary),
+          const SizedBox(width: 8),
+          // 2. Certs. Vencidos + subetiqueta en renovación
+          Expanded(
+            child: _buildTappableKpiCard(
+              label: certsLabel,
+              value: "$certsExp",
+              subLabel: certsSub,
+              isDanger: certsExp > 0,
+              color: certsExp > 0 ? const Color(0xFFFF5A5F) : const Color(0xFF10B981),
+              onTap: () => _openCertificatesSheet(detail.certificates, detail.card.certificatesSummary),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        // 3. Relevos / Tripulación
-        Expanded(
-          child: _buildTappableKpiCard(
-            label: "RELEVOS",
-            value: "${kpis.crewReliefsOverdue}",
-            subLabel: "${kpis.crewOnBoard} a bordo",
-            isDanger: kpis.crewReliefsOverdue > 0,
-            color: kpis.crewReliefsOverdue > 0 ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
-            onTap: () => _openCrewSheet(detail.crew),
+          const SizedBox(width: 8),
+          // 3. Relevos / Tripulación
+          Expanded(
+            child: _buildTappableKpiCard(
+              label: reliefsLabel,
+              value: "$reliefs",
+              subLabel: reliefsSub,
+              isDanger: reliefs > 0,
+              color: reliefs > 0 ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+              onTap: () => _openCrewSheet(detail.crew),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        // 4. Pedidos Compras
-        Expanded(
-          child: _buildTappableKpiCard(
-            label: "COMPRAS CRÍT.",
-            value: "${kpis.criticalPurchasesOpen}",
-            isDanger: kpis.criticalPurchasesOpen > 0,
-            color: kpis.criticalPurchasesOpen > 0 ? const Color(0xFFFF5A5F) : Colors.white70,
-            onTap: () {},
+          const SizedBox(width: 8),
+          // 4. Pedidos Compras
+          Expanded(
+            child: _buildTappableKpiCard(
+              label: purchasesLabel,
+              value: "$critPurch",
+              isDanger: critPurch > 0,
+              color: critPurch > 0 ? const Color(0xFFFF5A5F) : const Color(0xFF10B981),
+              onTap: () {},
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -915,8 +936,9 @@ class _VesselHealthViewState extends State<VesselHealthView>
           borderRadius: BorderRadius.circular(14),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -939,33 +961,42 @@ class _VesselHealthViewState extends State<VesselHealthView>
                     ),
                   ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: _textTertiary,
-                    fontSize: 8.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-                if (subLabel != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    subLabel,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Color(0xFFF59E0B),
-                      fontSize: 8,
-                      fontWeight: FontWeight.w700,
+                const SizedBox(height: 3),
+                SizedBox(
+                  height: 22,
+                  child: Center(
+                    child: Text(
+                      label,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _textTertiary,
+                        fontSize: 7.2,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.2,
+                        height: 1.15,
+                      ),
                     ),
                   ),
-                ],
+                ),
+                const SizedBox(height: 3),
+                SizedBox(
+                  height: 12,
+                  child: subLabel != null
+                      ? Text(
+                          subLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFFF59E0B),
+                            fontSize: 8,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
               ],
             ),
           ),
