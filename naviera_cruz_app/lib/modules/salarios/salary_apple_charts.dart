@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class AppleMiniRing extends StatelessWidget {
   final double percentage; // 0.0 to 1.0
   final Color ringColor;
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final double size;
   final double strokeWidth;
   final Widget? centerChild;
@@ -14,7 +14,7 @@ class AppleMiniRing extends StatelessWidget {
     super.key,
     required this.percentage,
     required this.ringColor,
-    this.backgroundColor = const Color(0x1FFFFFFF),
+    this.backgroundColor,
     this.size = 54.0,
     this.strokeWidth = 6.0,
     this.centerChild,
@@ -22,6 +22,10 @@ class AppleMiniRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final effectiveBg = backgroundColor ??
+        (isDark ? const Color(0x1FFFFFFF) : const Color(0x15000000));
+
     return SizedBox(
       width: size,
       height: size,
@@ -33,7 +37,7 @@ class AppleMiniRing extends StatelessWidget {
             painter: _AppleRingPainter(
               percentage: percentage.clamp(0.0, 1.0),
               ringColor: ringColor,
-              backgroundColor: backgroundColor,
+              backgroundColor: effectiveBg,
               strokeWidth: strokeWidth,
             ),
           ),
@@ -117,6 +121,7 @@ class AppleDonutChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final total = segments.fold<double>(0, (sum, s) => sum + s.value);
 
     return SizedBox(
@@ -139,8 +144,8 @@ class AppleDonutChart extends StatelessWidget {
               if (centerTitle.isNotEmpty)
                 Text(
                   centerTitle,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -0.5,
@@ -150,7 +155,7 @@ class AppleDonutChart extends StatelessWidget {
                 Text(
                   centerSubtitle,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.55),
+                    color: isDark ? Colors.white.withOpacity(0.55) : const Color(0xFF64748B),
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -244,7 +249,7 @@ class AppleMonthlyBarsChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (monthlyData.isEmpty) return const SizedBox.shrink();
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final maxVal = monthlyData.map((m) => m.cost).reduce((a, b) => a > b ? a : b);
 
     return LayoutBuilder(
@@ -267,7 +272,9 @@ class AppleMonthlyBarsChart extends StatelessWidget {
                   Text(
                     item.shortCostLabel,
                     style: TextStyle(
-                      color: isSelected ? const Color(0xFF007AFF) : Colors.white.withOpacity(0.4),
+                      color: isSelected
+                          ? const Color(0xFF007AFF)
+                          : (isDark ? Colors.white.withOpacity(0.4) : const Color(0xFF64748B)),
                       fontSize: 9.5,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
@@ -282,14 +289,19 @@ class AppleMonthlyBarsChart extends StatelessWidget {
                       gradient: LinearGradient(
                         colors: isSelected
                             ? [const Color(0xFF007AFF), const Color(0xFF5856D6)]
-                            : [const Color(0xFF2C3E5D), const Color(0xFF1B283E)],
+                            : (isDark
+                                ? [const Color(0xFF2C3E5D), const Color(0xFF1B283E)]
+                                : [const Color(0xFFCBD5E1), const Color(0xFFE2E8F0)]),
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
                       borderRadius: BorderRadius.circular(8),
                       border: isSelected
-                          ? Border.all(color: Colors.white, width: 1.5)
-                          : Border.all(color: Colors.white.withOpacity(0.08)),
+                          ? Border.all(color: isDark ? Colors.white : const Color(0xFF007AFF), width: 1.5)
+                          : Border.all(
+                              color: isDark
+                                  ? Colors.white.withOpacity(0.08)
+                                  : const Color(0xFFCBD5E1)),
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
@@ -305,7 +317,9 @@ class AppleMonthlyBarsChart extends StatelessWidget {
                   Text(
                     item.monthLabel,
                     style: TextStyle(
-                      color: isSelected ? Colors.white : Colors.white.withOpacity(0.5),
+                      color: isSelected
+                          ? (isDark ? Colors.white : const Color(0xFF007AFF))
+                          : (isDark ? Colors.white.withOpacity(0.5) : const Color(0xFF64748B)),
                       fontSize: 10,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                     ),

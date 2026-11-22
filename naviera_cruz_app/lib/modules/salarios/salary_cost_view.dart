@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../app/theme.dart';
 import '../../core/storage.dart';
 import '../../models/salary_cost_model.dart';
 import '../../services/salary_cost_service.dart';
@@ -25,6 +24,14 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
   String? _errorMessage;
   SalaryCostResponse? _costData;
   late AnimationController _animController;
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get _bg => _isDark ? const Color(0xFF070B14) : const Color(0xFFF8FAFC);
+  Color get _cardBg => _isDark ? const Color(0xFF131B2E) : Colors.white;
+  Color get _cardBorder => _isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE2E8F0);
+  Color get _textPrimary => _isDark ? Colors.white : const Color(0xFF0F172A);
+  Color get _textSecondary => _isDark ? Colors.white.withOpacity(0.65) : const Color(0xFF64748B);
+  Color get _textTertiary => _isDark ? Colors.white.withOpacity(0.4) : const Color(0xFF94A3B8);
+
 
   static String _formatCurrency(double val) {
     final parts = val.toStringAsFixed(2).split('.');
@@ -167,7 +174,7 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
     final period = _currentPeriod;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF070B14),
+      backgroundColor: _bg,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1080),
@@ -183,7 +190,7 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                 expandedHeight: 120.0,
                 floating: false,
                 pinned: true,
-                backgroundColor: const Color(0xFF0A0F1D).withOpacity(0.95),
+                backgroundColor: (_isDark ? const Color(0xFF0A0F1D) : Colors.white).withOpacity(0.95),
                 elevation: 0,
                 systemOverlayStyle: SystemUiOverlayStyle.light,
                 leading: widget.isTabModule
@@ -194,7 +201,7 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                       ),
                 actions: [
                   IconButton(
-                    icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
+                    icon: Icon(Icons.refresh_rounded, color: _textSecondary),
                     tooltip: "Actualizar datos",
                     onPressed: () => _loadData(forceRefresh: true),
                   ),
@@ -216,10 +223,10 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                         child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 16),
                       ),
                       const SizedBox(width: 10),
-                      const Text(
+                      Text(
                         "Salarios",
                         style: TextStyle(
-                          color: Colors.white,
+                          color: _textPrimary,
                           fontSize: 19,
                           fontWeight: FontWeight.w700,
                           letterSpacing: -0.5,
@@ -338,9 +345,9 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: _isDark ? const Color(0xFF131B2E) : const Color(0xFFE2E8F0),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Row(
         children: segments.map((s) {
@@ -385,13 +392,13 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                     Icon(
                       s['icon'] as IconData,
                       size: 15,
-                      color: isSelected ? Colors.white : Colors.white54,
+                      color: isSelected ? Colors.white : (_isDark ? Colors.white54 : const Color(0xFF64748B)),
                     ),
                     const SizedBox(width: 6),
                     Text(
                       s['label'] as String,
                       style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.white60,
+                        color: isSelected ? Colors.white : (_isDark ? Colors.white60 : const Color(0xFF64748B)),
                         fontSize: 13,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                       ),
@@ -417,16 +424,16 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Row(
         children: [
           IconButton(
             icon: Icon(
               Icons.chevron_left_rounded,
-              color: hasPrev ? Colors.white : Colors.white24,
+              color: hasPrev ? _textPrimary : _textTertiary,
               size: 28,
             ),
             onPressed: hasPrev ? () => _changePeriodByOffset(-1) : null,
@@ -438,9 +445,9 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: _isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white.withOpacity(0.05)),
+                  border: Border.all(color: _cardBorder),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -449,8 +456,8 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                     const SizedBox(width: 8),
                     Text(
                       currentLabel,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: _textPrimary,
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.3,
@@ -466,7 +473,7 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
           IconButton(
             icon: Icon(
               Icons.chevron_right_rounded,
-              color: hasNext ? Colors.white : Colors.white24,
+              color: hasNext ? _textPrimary : _textTertiary,
               size: 28,
             ),
             onPressed: hasNext ? () => _changePeriodByOffset(1) : null,
@@ -778,9 +785,9 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -793,7 +800,7 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                 Text(
                   title,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.65),
+                    color: _textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -803,8 +810,8 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                   amount,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: _textPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.4,
@@ -816,7 +823,7 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.4),
+                    color: _textTertiary,
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),
@@ -833,7 +840,7 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
             centerChild: Text(
               pctText,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.9),
+                color: _textPrimary,
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
               ),
@@ -863,9 +870,9 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -873,13 +880,13 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     "Evolución Mensual del Costo",
                     style: TextStyle(
-                      color: Colors.white,
+                      color: _textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       letterSpacing: -0.3,
@@ -888,7 +895,7 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                   SizedBox(height: 2),
                   Text(
                     "Toca cualquier mes para inspeccionarlo",
-                    style: TextStyle(color: Colors.white38, fontSize: 11),
+                    style: TextStyle(color: _textTertiary, fontSize: 11),
                   ),
                 ],
               ),
@@ -938,9 +945,9 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -948,10 +955,10 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                "A Dónde Va Cada Peso",
+              Text(
+                "Estructura del Costo Laboral",
                 style: TextStyle(
-                  color: Colors.white,
+                  color: _textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   letterSpacing: -0.3,
@@ -960,12 +967,12 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.06),
+                  color: _isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Text(
+                child: Text(
                   "DISTRIBUCIÓN",
-                  style: TextStyle(color: Colors.white60, fontSize: 9.5, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: _textSecondary, fontSize: 9.5, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -1002,7 +1009,7 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                         Expanded(
                           child: Text(
                             s.label,
-                            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                            style: TextStyle(color: _textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
                           ),
                         ),
                         Text(
@@ -1012,7 +1019,7 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                         const SizedBox(width: 8),
                         Text(
                           _formatCompact(s.value),
-                          style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 11.5),
+                          style: TextStyle(color: _textTertiary, fontSize: 11.5),
                         ),
                       ],
                     ),
@@ -1054,29 +1061,32 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                "Costo Empleador por Buque",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.3,
+              Expanded(
+                child: Text(
+                  "Costo Empleador por Buque",
+                  style: TextStyle(
+                    color: _textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.3,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.06),
+                  color: _isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -1230,25 +1240,28 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                "Contribuciones Patronales por Tipo",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.3,
+              Expanded(
+                child: Text(
+                  "Contribuciones Patronales por Tipo",
+                  style: TextStyle(
+                    color: _textPrimary,
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.3,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               Text(
                 _formatCompact(period.employerContributions),
                 style: const TextStyle(
@@ -1284,7 +1297,7 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                       Expanded(
                         child: Text(
                           it['label'] as String,
-                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                          style: TextStyle(color: _textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
                         ),
                       ),
                       Text(
@@ -1322,25 +1335,28 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                "Activos y Bajas por Buque",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.3,
+              Expanded(
+                child: Text(
+                  "Activos y Bajas por Buque",
+                  style: TextStyle(
+                    color: _textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.3,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               Row(
                 children: [
                   _buildLegendPill("Activos", const Color(0xFF30D158)),

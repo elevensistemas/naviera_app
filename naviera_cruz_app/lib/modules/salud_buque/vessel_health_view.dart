@@ -28,6 +28,13 @@ class _VesselHealthViewState extends State<VesselHealthView>
   bool _isLoading = false;
   String? _errorMessage;
   bool _isOfflineSnapshot = false;
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get _bg => _isDark ? const Color(0xFF07101D) : const Color(0xFFF8FAFC);
+  Color get _cardBg => _isDark ? const Color(0xFF0D1829) : Colors.white;
+  Color get _cardBorder => _isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0);
+  Color get _textPrimary => _isDark ? Colors.white : const Color(0xFF0F172A);
+  Color get _textSecondary => _isDark ? Colors.white70 : const Color(0xFF64748B);
+  Color get _textTertiary => _isDark ? Colors.white.withValues(alpha: 0.4) : const Color(0xFF94A3B8);
 
   VesselHealthResponse? _consolidated;
   VesselHealthDetail? _detail;
@@ -205,7 +212,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
 
   @override
   Widget build(BuildContext context) {
-    const bgNaval = Color(0xFF07101D);
+    final bgNaval = _bg;
 
     return Scaffold(
       backgroundColor: bgNaval,
@@ -215,7 +222,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
             constraints: const BoxConstraints(maxWidth: 1080),
             child: RefreshIndicator(
               color: const Color(0xFF10B981),
-              backgroundColor: const Color(0xFF0D1829),
+              backgroundColor: _cardBg,
               onRefresh: () => _loadAll(forceRefresh: true),
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
@@ -321,18 +328,18 @@ class _VesselHealthViewState extends State<VesselHealthView>
       expandedHeight: 110.0,
       floating: false,
       pinned: true,
-      backgroundColor: const Color(0xFF07101D).withValues(alpha: 0.95),
+      backgroundColor: (_isDark ? const Color(0xFF07101D) : Colors.white).withValues(alpha: 0.95),
       elevation: 0,
       systemOverlayStyle: SystemUiOverlayStyle.light,
       leading: widget.isTabModule
           ? null
           : IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+              icon: Icon(Icons.arrow_back_ios_new_rounded, color: _textPrimary, size: 20),
               onPressed: () => Navigator.pop(context),
             ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
+          icon: Icon(Icons.refresh_rounded, color: _textSecondary),
           tooltip: "Sincronizar con Centinela",
           onPressed: () => _loadAll(forceRefresh: true),
         ),
@@ -401,9 +408,9 @@ class _VesselHealthViewState extends State<VesselHealthView>
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1829),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Row(
         children: _vessels.map((vName) {
@@ -511,7 +518,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
                     Text(
                       vName,
                       style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.white60,
+                        color: isSelected ? Colors.white : _textSecondary,
                         fontSize: 13,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                       ),
@@ -585,6 +592,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
                   painter: _AppleHealthScorePainter(
                     score: score,
                     color: toneColor,
+                    trackColor: _isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
                   ),
                 ),
                 Column(
@@ -602,7 +610,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
                     Text(
                       "/ 100",
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.4),
+                        color: _textTertiary,
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                       ),
@@ -633,7 +641,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
                           const SizedBox(width: 8),
                           Text(
                             "IMO ${card.imo}",
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 11),
+                            style: TextStyle(color: _textTertiary, fontSize: 11),
                           ),
                         ],
                       ],
@@ -646,24 +654,24 @@ class _VesselHealthViewState extends State<VesselHealthView>
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.06),
+                            color: _isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                            border: Border.all(color: _cardBorder),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 "Score Base: ",
-                                style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11, fontWeight: FontWeight.w600),
+                                style: TextStyle(color: _textTertiary, fontSize: 11, fontWeight: FontWeight.w600),
                               ),
                               Text(
                                 "${card.healthScoreBase}",
-                                style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w800),
+                                style: TextStyle(color: _textPrimary, fontSize: 11.5, fontWeight: FontWeight.w800),
                               ),
                               Text(
                                 " pts",
-                                style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11, fontWeight: FontWeight.w600),
+                                style: TextStyle(color: _textTertiary, fontSize: 11, fontWeight: FontWeight.w600),
                               ),
                             ],
                           ),
@@ -763,10 +771,10 @@ class _VesselHealthViewState extends State<VesselHealthView>
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1829),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isDanger ? const Color(0xFFFF5A5F).withValues(alpha: 0.35) : Colors.white.withValues(alpha: 0.06),
+          color: isDanger ? const Color(0xFFFF5A5F).withValues(alpha: 0.35) : _cardBorder,
         ),
       ),
       child: Material(
@@ -806,7 +814,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.45),
+                    color: _textTertiary,
                     fontSize: 8.5,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.3,
@@ -842,9 +850,9 @@ class _VesselHealthViewState extends State<VesselHealthView>
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1829),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -910,7 +918,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
           children: [
             Text(
               title,
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+              style: TextStyle(color: _textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
             ),
             Text(
               "$value%",
@@ -923,7 +931,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
           borderRadius: BorderRadius.circular(6),
           child: Container(
             height: 7,
-            color: Colors.white.withValues(alpha: 0.06),
+            color: _isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
             child: FractionallySizedBox(
               alignment: Alignment.centerLeft,
               widthFactor: pct,
@@ -976,9 +984,9 @@ class _VesselHealthViewState extends State<VesselHealthView>
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1829),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1082,14 +1090,14 @@ class _VesselHealthViewState extends State<VesselHealthView>
               const SizedBox(width: 4),
               Text(
                 value,
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
+                style: TextStyle(color: _textPrimary, fontSize: 16, fontWeight: FontWeight.w800),
               ),
             ],
           ),
           const SizedBox(height: 3),
           Text(
             label,
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 10, fontWeight: FontWeight.w600),
+            style: TextStyle(color: _textTertiary, fontSize: 10, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -1134,14 +1142,14 @@ class _VesselHealthViewState extends State<VesselHealthView>
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: const Color(0xFF0D1829),
+              color: _cardBg,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+              border: Border.all(color: _cardBorder),
             ),
-            child: const Center(
+            child: Center(
               child: Text(
                 "Sin alertas prioritarias registradas por Centinela.",
-                style: TextStyle(color: Colors.white54, fontSize: 13),
+                style: TextStyle(color: _textTertiary, fontSize: 13),
               ),
             ),
           )
@@ -1169,7 +1177,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1829),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cardColor.withValues(alpha: 0.35)),
       ),
@@ -1209,21 +1217,21 @@ class _VesselHealthViewState extends State<VesselHealthView>
                           Expanded(
                             child: Text(
                               prio.title,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: _textPrimary,
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
-                          const Icon(Icons.chevron_right_rounded, color: Colors.white30, size: 18),
+                          Icon(Icons.chevron_right_rounded, color: _textTertiary, size: 18),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Text(
                         prio.description,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.65),
+                          color: _textSecondary,
                           fontSize: 12,
                           height: 1.3,
                         ),
@@ -1244,9 +1252,9 @@ class _VesselHealthViewState extends State<VesselHealthView>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1829).withValues(alpha: 0.6),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1262,7 +1270,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
               Text(
                 "TRAZABILIDAD OFICIAL CENTINELA (HORA ARGENTINA)",
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.4),
+                  color: _textTertiary,
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.6,
@@ -1273,13 +1281,13 @@ class _VesselHealthViewState extends State<VesselHealthView>
           const SizedBox(height: 8),
           Text(
             "Cálculo Health Score: ${_formatIsoDate(calculatedAt)}",
-            style: const TextStyle(color: Colors.white70, fontSize: 11.5),
+            style: TextStyle(color: _textSecondary, fontSize: 11.5),
           ),
           if (sync.maradLastSuccessFormatted.isNotEmpty) ...[
             const SizedBox(height: 3),
             Text(
               "MARAD: ${sync.maradLastSuccessFormatted} (${sync.maradRelativeAge})",
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 11),
+              style: TextStyle(color: _textTertiary, fontSize: 11),
             ),
           ],
         ],
@@ -1309,7 +1317,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF07101D),
+      backgroundColor: _bg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -1326,7 +1334,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF07101D),
+      backgroundColor: _bg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -1342,7 +1350,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF07101D),
+      backgroundColor: _bg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -1377,6 +1385,13 @@ class _CertificatesDetailSheet extends StatefulWidget {
 class _CertificatesDetailSheetState extends State<_CertificatesDetailSheet> {
   String _filterState = 'TODOS'; // TODOS, VIGENTE, PROXIMO_A_VENCER, EN_VENTANA_RENOVACION, VENCIDO
 
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get _cardBg => _isDark ? const Color(0xFF0D1829) : Colors.white;
+  Color get _textPrimary => _isDark ? Colors.white : const Color(0xFF0F172A);
+  Color get _textSecondary => _isDark ? Colors.white.withValues(alpha: 0.70) : const Color(0xFF475569);
+  Color get _textTertiary => _isDark ? Colors.white.withValues(alpha: 0.45) : const Color(0xFF94A3B8);
+  Color get _dividerColor => _isDark ? const Color(0xFF1B2A42) : const Color(0xFFE2E8F0);
+
   @override
   Widget build(BuildContext context) {
     final filtered = widget.certs.where((c) {
@@ -1397,7 +1412,7 @@ class _CertificatesDetailSheetState extends State<_CertificatesDetailSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.25),
+                color: _textTertiary.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1421,17 +1436,17 @@ class _CertificatesDetailSheetState extends State<_CertificatesDetailSheet> {
                     children: [
                       Text(
                         "Certificados — ${widget.vesselName}",
-                        style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: _textPrimary, fontSize: 17, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         "5 estados estatutarios (${widget.certs.length} certificados)",
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 11),
+                        style: TextStyle(color: _textTertiary, fontSize: 11),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                  icon: Icon(Icons.close_rounded, color: _textSecondary),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -1451,13 +1466,13 @@ class _CertificatesDetailSheetState extends State<_CertificatesDetailSheet> {
               ],
             ),
           ),
-          const Divider(color: Color(0xFF1B2A42), height: 16),
+          Divider(color: _dividerColor, height: 16),
           Expanded(
             child: filtered.isEmpty
                 ? Center(
                     child: Text(
                       "No hay certificados en este estado.",
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                      style: TextStyle(color: _textTertiary),
                     ),
                   )
                 : ListView.builder(
@@ -1483,14 +1498,14 @@ class _CertificatesDetailSheetState extends State<_CertificatesDetailSheet> {
         margin: const EdgeInsets.only(right: 6),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isSel ? color.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.05),
+          color: isSel ? color.withValues(alpha: 0.25) : (_isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04)),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: isSel ? color : Colors.white.withValues(alpha: 0.1)),
+          border: Border.all(color: isSel ? color : (_isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFCBD5E1))),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSel ? color : Colors.white70,
+            color: isSel ? color : _textSecondary,
             fontSize: 11,
             fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
           ),
@@ -1536,9 +1551,9 @@ class _CertificatesDetailSheetState extends State<_CertificatesDetailSheet> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1829),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: stateColor.withValues(alpha: 0.3)),
+        border: Border.all(color: stateColor.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1548,18 +1563,18 @@ class _CertificatesDetailSheetState extends State<_CertificatesDetailSheet> {
               Expanded(
                 child: Text(
                   item.name,
-                  style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: _textPrimary, fontSize: 13.5, fontWeight: FontWeight.w700),
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: _isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   item.category,
-                  style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: _textSecondary, fontSize: 10, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -1583,13 +1598,13 @@ class _CertificatesDetailSheetState extends State<_CertificatesDetailSheet> {
               children: [
                 Text(
                   "Vencimiento nominal: ${item.nominalExpirationDate}",
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11),
+                  style: TextStyle(color: _textSecondary, fontSize: 11),
                 ),
                 if (item.effectiveExpirationDate != null) ...[
                   const SizedBox(width: 12),
                   Text(
                     "Límite efectivo: ${item.effectiveExpirationDate}",
-                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: _textPrimary, fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                 ],
               ],
@@ -1619,7 +1634,7 @@ class _CertificatesDetailSheetState extends State<_CertificatesDetailSheet> {
             const SizedBox(height: 6),
             Text(
               item.normativeBasis!,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10.5, fontStyle: FontStyle.italic),
+              style: TextStyle(color: _textTertiary, fontSize: 10.5, fontStyle: FontStyle.italic),
             ),
           ],
         ],
@@ -1644,6 +1659,14 @@ class _MaintenanceDetailSheet extends StatefulWidget {
 
 class _MaintenanceDetailSheetState extends State<_MaintenanceDetailSheet> {
   String _activeTab = 'CRITICAL'; // CRITICAL, NORMAL, WARNING, DOCK
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get _cardBg => _isDark ? const Color(0xFF0D1829) : Colors.white;
+  Color get _cardBorder => _isDark ? Colors.white.withValues(alpha: 0.07) : const Color(0xFFE2E8F0);
+  Color get _textPrimary => _isDark ? Colors.white : const Color(0xFF0F172A);
+  Color get _textSecondary => _isDark ? Colors.white.withValues(alpha: 0.70) : const Color(0xFF475569);
+  Color get _textTertiary => _isDark ? Colors.white.withValues(alpha: 0.45) : const Color(0xFF94A3B8);
+  Color get _dividerColor => _isDark ? const Color(0xFF1B2A42) : const Color(0xFFE2E8F0);
 
   @override
   Widget build(BuildContext context) {
@@ -1678,7 +1701,7 @@ class _MaintenanceDetailSheetState extends State<_MaintenanceDetailSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.25),
+                color: _textTertiary.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1702,17 +1725,17 @@ class _MaintenanceDetailSheetState extends State<_MaintenanceDetailSheet> {
                     children: [
                       Text(
                         "Mantenimientos — ${widget.vesselName}",
-                        style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: _textPrimary, fontSize: 17, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         "Paridad MARAD oficial",
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 11),
+                        style: TextStyle(color: _textTertiary, fontSize: 11),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                  icon: Icon(Icons.close_rounded, color: _textSecondary),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -1731,13 +1754,13 @@ class _MaintenanceDetailSheetState extends State<_MaintenanceDetailSheet> {
               ],
             ),
           ),
-          const Divider(color: Color(0xFF1B2A42), height: 16),
+          Divider(color: _dividerColor, height: 16),
           Expanded(
             child: list.isEmpty
                 ? Center(
                     child: Text(
                       "Sin tareas registradas en esta categoría.",
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                      style: TextStyle(color: _textTertiary),
                     ),
                   )
                 : ListView.builder(
@@ -1750,10 +1773,10 @@ class _MaintenanceDetailSheetState extends State<_MaintenanceDetailSheet> {
                         margin: const EdgeInsets.only(bottom: 10),
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0D1829),
+                          color: _cardBg,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: task.isCritical ? const Color(0xFFFF5A5F).withValues(alpha: 0.35) : Colors.white.withValues(alpha: 0.08),
+                            color: task.isCritical ? const Color(0xFFFF5A5F).withValues(alpha: 0.35) : _cardBorder,
                           ),
                         ),
                         child: Column(
@@ -1769,7 +1792,7 @@ class _MaintenanceDetailSheetState extends State<_MaintenanceDetailSheet> {
                                 Expanded(
                                   child: Text(
                                     task.name,
-                                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                                    style: TextStyle(color: _textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                                 Container(
@@ -1793,7 +1816,7 @@ class _MaintenanceDetailSheetState extends State<_MaintenanceDetailSheet> {
                               const SizedBox(height: 4),
                               Text(
                                 task.description,
-                                style: TextStyle(color: Colors.white.withValues(alpha: 0.65), fontSize: 12),
+                                style: TextStyle(color: _textSecondary, fontSize: 12),
                               ),
                             ],
                             const SizedBox(height: 8),
@@ -1802,7 +1825,7 @@ class _MaintenanceDetailSheetState extends State<_MaintenanceDetailSheet> {
                                 if (task.dueDate.isNotEmpty)
                                   Text(
                                     "Vencimiento: ${task.dueDate}",
-                                    style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11),
+                                    style: TextStyle(color: _textSecondary, fontSize: 11),
                                   ),
                                 const Spacer(),
                                 if (task.ranks.isNotEmpty)
@@ -1831,14 +1854,14 @@ class _MaintenanceDetailSheetState extends State<_MaintenanceDetailSheet> {
         margin: const EdgeInsets.only(right: 6),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isSel ? color.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.05),
+          color: isSel ? color.withValues(alpha: 0.25) : (_isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04)),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: isSel ? color : Colors.white.withValues(alpha: 0.1)),
+          border: Border.all(color: isSel ? color : (_isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFCBD5E1))),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSel ? color : Colors.white70,
+            color: isSel ? color : _textSecondary,
             fontSize: 11,
             fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
           ),
@@ -1860,6 +1883,14 @@ class _CrewDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF0D1829) : Colors.white;
+    final cardBorder = isDark ? Colors.white.withValues(alpha: 0.07) : const Color(0xFFE2E8F0);
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textSecondary = isDark ? Colors.white.withValues(alpha: 0.70) : const Color(0xFF475569);
+    final textTertiary = isDark ? Colors.white.withValues(alpha: 0.45) : const Color(0xFF94A3B8);
+    final dividerColor = isDark ? const Color(0xFF1B2A42) : const Color(0xFFE2E8F0);
+
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
       minChildSize: 0.5,
@@ -1873,7 +1904,7 @@ class _CrewDetailSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.25),
+                color: textTertiary.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1897,29 +1928,29 @@ class _CrewDetailSheet extends StatelessWidget {
                     children: [
                       Text(
                         "Tripulación — $vesselName",
-                        style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: textPrimary, fontSize: 17, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         "Alineado con RRHH Vista Por Barco (${crew.length} tripulantes)",
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 11),
+                        style: TextStyle(color: textTertiary, fontSize: 11),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                  icon: Icon(Icons.close_rounded, color: textSecondary),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
           ),
-          const Divider(color: Color(0xFF1B2A42), height: 16),
+          Divider(color: dividerColor, height: 16),
           Expanded(
             child: crew.isEmpty
                 ? Center(
                     child: Text(
                       "Sin tripulantes reportados.",
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                      style: TextStyle(color: textTertiary),
                     ),
                   )
                 : ListView.builder(
@@ -1932,10 +1963,10 @@ class _CrewDetailSheet extends StatelessWidget {
                         margin: const EdgeInsets.only(bottom: 10),
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0D1829),
+                          color: cardBg,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: c.isOverLimit ? const Color(0xFFFF5A5F).withValues(alpha: 0.35) : Colors.white.withValues(alpha: 0.08),
+                            color: c.isOverLimit ? const Color(0xFFFF5A5F).withValues(alpha: 0.35) : cardBorder,
                           ),
                         ),
                         child: Column(
@@ -1949,7 +1980,7 @@ class _CrewDetailSheet extends StatelessWidget {
                                     children: [
                                       Text(
                                         c.name,
-                                        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                                        style: TextStyle(color: textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
                                       ),
                                       const SizedBox(height: 2),
                                       Row(
@@ -1968,7 +1999,7 @@ class _CrewDetailSheet extends StatelessWidget {
                                           const SizedBox(width: 6),
                                           Text(
                                             c.regime,
-                                            style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 11),
+                                            style: TextStyle(color: textSecondary, fontSize: 11),
                                           ),
                                         ],
                                       ),
@@ -2013,12 +2044,12 @@ class _CrewDetailSheet extends StatelessWidget {
                               children: [
                                 Text(
                                   "GF: ${c.gfrancoOnboard.toStringAsFixed(1)}",
-                                  style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.w600),
+                                  style: TextStyle(color: textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
                                 ),
                                 const SizedBox(width: 14),
                                 Text(
                                   "F.Pre: ${c.fcoPreEmbark.toStringAsFixed(1)}",
-                                  style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.w600),
+                                  style: TextStyle(color: textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
                                 ),
                                 const Spacer(),
                                 if (c.hasExpiredCert)
@@ -2057,8 +2088,9 @@ class _CrewDetailSheet extends StatelessWidget {
 class _AppleHealthScorePainter extends CustomPainter {
   final int score;
   final Color color;
+  final Color? trackColor;
 
-  _AppleHealthScorePainter({required this.score, required this.color});
+  _AppleHealthScorePainter({required this.score, required this.color, this.trackColor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -2068,7 +2100,7 @@ class _AppleHealthScorePainter extends CustomPainter {
 
     // Track de fondo
     final trackPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.08)
+      ..color = trackColor ?? Colors.white.withValues(alpha: 0.08)
       ..style = PaintingStyle.stroke
       ..strokeWidth = stroke
       ..strokeCap = StrokeCap.round;
