@@ -1087,8 +1087,8 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                           const SizedBox(width: 6),
                           Text(
                             center.centerName,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: _textPrimary,
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                             ),
@@ -1096,14 +1096,14 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                           const SizedBox(width: 8),
                           Text(
                             "(${center.headcountTotal} personas)",
-                            style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 11),
+                            style: TextStyle(color: _textSecondary, fontSize: 11, fontWeight: FontWeight.w500),
                           ),
                         ],
                       ),
                       Text(
                         _formatCurrency(center.totalEmployerCost),
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: _textPrimary,
                           fontSize: 13.5,
                           fontWeight: FontWeight.bold,
                         ),
@@ -1121,7 +1121,7 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                             height: 14,
                             width: constraints.maxWidth,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.05),
+                              color: _isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0),
                               borderRadius: BorderRadius.circular(7),
                             ),
                           ),
@@ -1158,11 +1158,11 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                     children: [
                       Text(
                         "Participación: $sharePctStr",
-                        style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 11),
+                        style: TextStyle(color: _textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
                       ),
                       Text(
                         "Neto ${_formatCompact(center.netPay)} · Contrib ${_formatCompact(center.employerContributions)}",
-                        style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 10.5),
+                        style: TextStyle(color: _textSecondary, fontSize: 10.5, fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
@@ -1264,7 +1264,7 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                       ),
                       Text(
                         _formatCurrency(amt),
-                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: _textPrimary, fontSize: 13, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -1275,7 +1275,7 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                       height: 5,
                       child: LinearProgressIndicator(
                         value: pct.clamp(0.0, 1.0),
-                        backgroundColor: Colors.white.withOpacity(0.05),
+                        backgroundColor: _isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0),
                         valueColor: AlwaysStoppedAnimation<Color>(color),
                       ),
                     ),
@@ -1344,11 +1344,11 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                     children: [
                       Text(
                         center.centerName,
-                        style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: _textPrimary, fontSize: 13.5, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         "$activos activos · $bajas bajas ($total total)",
-                        style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11.5),
+                        style: TextStyle(color: _textSecondary, fontSize: 11.5, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -1558,12 +1558,12 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
           Text(
             "Fuente: ${period.title}",
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white.withOpacity(0.35), fontSize: 11),
+            style: TextStyle(color: _textTertiary, fontSize: 11),
           ),
           const SizedBox(height: 4),
           Text(
             "Controlado contra F931 y asientos contables",
-            style: TextStyle(color: Colors.white.withOpacity(0.25), fontSize: 10),
+            style: TextStyle(color: _textTertiary, fontSize: 10),
           ),
         ],
       ),

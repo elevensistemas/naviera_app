@@ -412,154 +412,25 @@ class _VesselHealthViewState extends State<VesselHealthView>
     }
   }
 
-  /// Estilo tematico de la tarjeta de score principal segun buque y modo (claro/oscuro)
-  ({
-    Gradient bgGradient,
-    Color borderColor,
-    Color shadowColor,
-    Color titleColor,
-    Color imoColor,
-    Color badgeBg,
-    Color badgeBorder,
-    Color badgeLabelColor,
-    Color badgeValColor,
-    Color ringTrackColor,
-    Color ringSubColor,
-  }) _getVesselScoreCardTheme(String vesselName, bool isDark) {
-    final v = vesselName.toUpperCase();
-    if (v.contains('GUSTAVO')) {
-      // GUSTAVO U -> GRIS
-      if (isDark) {
-        return (
-          bgGradient: const LinearGradient(
-            colors: [Color(0xFF263346), Color(0xFF1B2432)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderColor: const Color(0xFF64748B).withValues(alpha: 0.45),
-          shadowColor: Colors.black.withValues(alpha: 0.25),
-          titleColor: Colors.white,
-          imoColor: Colors.white70,
-          badgeBg: Colors.white.withValues(alpha: 0.08),
-          badgeBorder: Colors.white.withValues(alpha: 0.14),
-          badgeLabelColor: Colors.white60,
-          badgeValColor: Colors.white,
-          ringTrackColor: Colors.white.withValues(alpha: 0.08),
-          ringSubColor: Colors.white60,
-        );
-      } else {
-        return (
-          bgGradient: const LinearGradient(
-            colors: [Color(0xFFF8FAFC), Color(0xFFE2E8F0)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderColor: const Color(0xFF94A3B8),
-          shadowColor: const Color(0xFF64748B).withValues(alpha: 0.12),
-          titleColor: const Color(0xFF1E293B),
-          imoColor: const Color(0xFF475569),
-          badgeBg: Colors.white,
-          badgeBorder: const Color(0xFFCBD5E1),
-          badgeLabelColor: const Color(0xFF64748B),
-          badgeValColor: const Color(0xFF0F172A),
-          ringTrackColor: const Color(0xFFCBD5E1).withValues(alpha: 0.50),
-          ringSubColor: const Color(0xFF64748B),
-        );
-      }
-    } else if (v.contains('NANY')) {
-      // NANY -> NARANJA
-      if (isDark) {
-        return (
-          bgGradient: const LinearGradient(
-            colors: [Color(0xFF381F14), Color(0xFF23130C)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderColor: const Color(0xFFF97316).withValues(alpha: 0.45),
-          shadowColor: const Color(0xFFEA580C).withValues(alpha: 0.25),
-          titleColor: Colors.white,
-          imoColor: const Color(0xFFFDBA74),
-          badgeBg: const Color(0xFFF97316).withValues(alpha: 0.15),
-          badgeBorder: const Color(0xFFF97316).withValues(alpha: 0.35),
-          badgeLabelColor: const Color(0xFFFED7AA),
-          badgeValColor: Colors.white,
-          ringTrackColor: const Color(0xFFF97316).withValues(alpha: 0.15),
-          ringSubColor: const Color(0xFFFDBA74),
-        );
-      } else {
-        return (
-          bgGradient: const LinearGradient(
-            colors: [Color(0xFFFFF7ED), Color(0xFFFFEDD5)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderColor: const Color(0xFFFB923C),
-          shadowColor: const Color(0xFFEA580C).withValues(alpha: 0.12),
-          titleColor: const Color(0xFF9A3412),
-          imoColor: const Color(0xFFC2410C),
-          badgeBg: Colors.white,
-          badgeBorder: const Color(0xFFFED7AA),
-          badgeLabelColor: const Color(0xFF9A3412),
-          badgeValColor: const Color(0xFF7C2D12),
-          ringTrackColor: const Color(0xFFFED7AA).withValues(alpha: 0.60),
-          ringSubColor: const Color(0xFFC2410C),
-        );
-      }
-    } else {
-      // ALFA C -> AZUL
-      if (isDark) {
-        return (
-          bgGradient: const LinearGradient(
-            colors: [Color(0xFF132A4A), Color(0xFF0C1B30)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderColor: const Color(0xFF3B82F6).withValues(alpha: 0.45),
-          shadowColor: const Color(0xFF007AFF).withValues(alpha: 0.25),
-          titleColor: Colors.white,
-          imoColor: const Color(0xFF93C5FD),
-          badgeBg: const Color(0xFF007AFF).withValues(alpha: 0.15),
-          badgeBorder: const Color(0xFF3B82F6).withValues(alpha: 0.35),
-          badgeLabelColor: const Color(0xFFBFDBFE),
-          badgeValColor: Colors.white,
-          ringTrackColor: const Color(0xFF3B82F6).withValues(alpha: 0.15),
-          ringSubColor: const Color(0xFF93C5FD),
-        );
-      } else {
-        return (
-          bgGradient: const LinearGradient(
-            colors: [Color(0xFFEFF6FF), Color(0xFFDBEAFE)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderColor: const Color(0xFF60A5FA),
-          shadowColor: const Color(0xFF007AFF).withValues(alpha: 0.12),
-          titleColor: const Color(0xFF1E3A8A),
-          imoColor: const Color(0xFF2563EB),
-          badgeBg: Colors.white,
-          badgeBorder: const Color(0xFFBFDBFE),
-          badgeLabelColor: const Color(0xFF1E40AF),
-          badgeValColor: const Color(0xFF1E3A8A),
-          ringTrackColor: const Color(0xFFBFDBFE).withValues(alpha: 0.60),
-          ringSubColor: const Color(0xFF2563EB),
-        );
-      }
-    }
-  }
-
   Widget _buildVesselSelector() {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: _cardBg,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: _isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0x06000000),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: _vessels.map((vName) {
           final isSelected = _selectedVessel == vName;
           int? quickScore;
-          Color? quickColor;
 
           if (_consolidated != null) {
             final card = _consolidated!.vessels.firstWhere(
@@ -625,7 +496,6 @@ class _VesselHealthViewState extends State<VesselHealthView>
             );
             if (card.vesselId.isNotEmpty) {
               quickScore = card.healthScoreFinal;
-              quickColor = _parseColor(card.colorHex, const Color(0xFF10B981));
             }
           }
 
@@ -648,26 +518,36 @@ class _VesselHealthViewState extends State<VesselHealthView>
                     Text(
                       vName,
                       style: TextStyle(
-                        color: isSelected ? Colors.white : _textSecondary,
+                        color: isSelected ? Colors.white : (_isDark ? Colors.white70 : const Color(0xFF334155)),
                         fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w700,
                       ),
                     ),
                     if (quickScore != null && quickScore > 0) ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? Colors.white.withValues(alpha: 0.25)
-                              : (quickColor ?? const Color(0xFF10B981)).withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(6),
+                              : (quickScore >= 80
+                                  ? (_isDark ? const Color(0xFF16A34A).withValues(alpha: 0.25) : const Color(0xFFDCFCE7))
+                                  : (quickScore >= 60
+                                      ? (_isDark ? const Color(0xFFD97706).withValues(alpha: 0.25) : const Color(0xFFFEF3C7))
+                                      : (_isDark ? const Color(0xFFDC2626).withValues(alpha: 0.25) : const Color(0xFFFEE2E2)))),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           "$quickScore",
                           style: TextStyle(
-                            color: isSelected ? Colors.white : (quickColor ?? const Color(0xFF10B981)),
-                            fontSize: 10.5,
+                            color: isSelected
+                                ? Colors.white
+                                : (quickScore >= 80
+                                    ? (_isDark ? const Color(0xFF86EFAC) : const Color(0xFF16A34A))
+                                    : (quickScore >= 60
+                                        ? (_isDark ? const Color(0xFFFDE68A) : const Color(0xFFD97706))
+                                        : (_isDark ? const Color(0xFFFECACA) : const Color(0xFFDC2626)))),
+                            fontSize: 11,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -693,19 +573,20 @@ class _VesselHealthViewState extends State<VesselHealthView>
             ? "${card.deltaScore} pts"
             : "=";
 
-    final theme = _getVesselScoreCardTheme(card.vesselName, _isDark);
-
-    return Container( 
-      padding: const EdgeInsets.all(20),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
       decoration: BoxDecoration(
-        gradient: theme.bgGradient,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.borderColor, width: 1.2),
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: _isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor,
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+            color: _isDark ? Colors.black.withValues(alpha: 0.3) : const Color(0x0C007AFF),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -714,17 +595,17 @@ class _VesselHealthViewState extends State<VesselHealthView>
         children: [
           // Anillo circular con color oficial entregado por Centinela
           SizedBox(
-            width: 98,
-            height: 98,
+            width: 104,
+            height: 104,
             child: Stack(
               alignment: Alignment.center,
               children: [
                 CustomPaint(
-                  size: const Size(98, 98),
+                  size: const Size(104, 104),
                   painter: _AppleHealthScorePainter(
                     score: score,
                     color: toneColor,
-                    trackColor: theme.ringTrackColor,
+                    trackColor: _isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFF1F5F9),
                   ),
                 ),
                 Column(
@@ -733,7 +614,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
                     Text(
                       "$score",
                       style: TextStyle(
-                        color: toneColor,
+                        color: _textPrimary,
                         fontSize: 34,
                         fontWeight: FontWeight.w900,
                         letterSpacing: -1,
@@ -742,8 +623,8 @@ class _VesselHealthViewState extends State<VesselHealthView>
                     Text(
                       "/ 100",
                       style: TextStyle(
-                        color: theme.ringSubColor,
-                        fontSize: 10,
+                        color: _textSecondary,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -756,80 +637,101 @@ class _VesselHealthViewState extends State<VesselHealthView>
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children:
-                  [
-                    Row(
-                      children: [
-                        Text(
-                          card.vesselName,
+              children: [
+                Text(
+                  card.vesselName,
+                  style: TextStyle(
+                    color: _textPrimary,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                if (card.imo.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    "IMO ${card.imo}",
+                    style: TextStyle(
+                      color: _textSecondary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                // Status pill
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: card.operationalStatus.toLowerCase().contains('restric') || card.operationalStatus.toLowerCase().contains('baja')
+                        ? (_isDark ? const Color(0xFFDC2626).withValues(alpha: 0.2) : const Color(0xFFFEE2E2))
+                        : (_isDark ? const Color(0xFF16A34A).withValues(alpha: 0.2) : const Color(0xFFDCFCE7)),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: card.operationalStatus.toLowerCase().contains('restric') || card.operationalStatus.toLowerCase().contains('baja')
+                          ? (_isDark ? const Color(0xFFDC2626).withValues(alpha: 0.4) : const Color(0xFFFECACA))
+                          : (_isDark ? const Color(0xFF16A34A).withValues(alpha: 0.4) : const Color(0xFF86EFAC)),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        card.operationalStatus.toLowerCase().contains('restric') || card.operationalStatus.toLowerCase().contains('baja')
+                            ? Icons.warning_amber_rounded
+                            : Icons.check_circle_rounded,
+                        color: card.operationalStatus.toLowerCase().contains('restric') || card.operationalStatus.toLowerCase().contains('baja')
+                            ? const Color(0xFFDC2626)
+                            : const Color(0xFF16A34A),
+                        size: 15,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        card.operationalStatus.isNotEmpty
+                            ? card.operationalStatus
+                            : "Sin afectación operacional",
+                        style: TextStyle(
+                          color: card.operationalStatus.toLowerCase().contains('restric') || card.operationalStatus.toLowerCase().contains('baja')
+                              ? (_isDark ? const Color(0xFFFECACA) : const Color(0xFFDC2626))
+                              : (_isDark ? const Color(0xFF86EFAC) : const Color(0xFF15803D)),
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                RichText(
+                  text: TextSpan(
+                    text: "Score base: ",
+                    style: TextStyle(
+                      color: _textSecondary,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: "${card.healthScoreBase} pts",
+                        style: TextStyle(
+                          color: _textPrimary,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      if (card.deltaScore != 0) ...[
+                        const TextSpan(text: "  "),
+                        TextSpan(
+                          text: deltaStr,
                           style: TextStyle(
-                            color: theme.titleColor,
-                            fontSize: 22,
+                            color: card.deltaScore > 0 ? const Color(0xFF10B981) : const Color(0xFFFF5A5F),
                             fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
                           ),
                         ),
-                        if (card.imo.isNotEmpty) ...[
-                          const SizedBox(width: 8),
-                          Text(
-                            "IMO ${card.imo}",
-                            style: TextStyle(color: theme.imoColor, fontSize: 11, fontWeight: FontWeight.w600),
-                          ),
-                        ],
                       ],
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: theme.badgeBg,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: theme.badgeBorder),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                "Score Base: ",
-                                style: TextStyle(color: theme.badgeLabelColor, fontSize: 11, fontWeight: FontWeight.w600),
-                              ),
-                              Text(
-                                "${card.healthScoreBase}",
-                                style: TextStyle(color: theme.badgeValColor, fontSize: 11.5, fontWeight: FontWeight.w800),
-                              ),
-                              Text(
-                                " pts",
-                                style: TextStyle(color: theme.badgeLabelColor, fontSize: 11, fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (card.deltaScore != 0)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: (card.deltaScore > 0 ? const Color(0xFF10B981) : const Color(0xFFFF5A5F)).withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: (card.deltaScore > 0 ? const Color(0xFF10B981) : const Color(0xFFFF5A5F)).withValues(alpha: 0.4),
-                              ),
-                            ),
-                            child: Text(
-                              deltaStr,
-                              style: TextStyle(
-                                color: card.deltaScore > 0 ? const Color(0xFF10B981) : const Color(0xFFFF5A5F),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -846,65 +748,70 @@ class _VesselHealthViewState extends State<VesselHealthView>
     final int reliefs = kpis.crewReliefsOverdue;
     final int critPurch = kpis.criticalPurchasesOpen;
 
-    final String critMaintLabel = critMaint == 1 ? 'MANTENIMIENTO\nCRÍTICO' : 'MANTENIMIENTOS\nCRÍTICOS';
-    final String normMaintSub = normMaint == 1 ? '1 ordinario' : '$normMaint ordinarios';
+    final String critMaintLabel = critMaint == 1 ? "Mantenimiento\ncrítico" : "Mantenimientos\ncríticos";
+    final String normMaintSub = normMaint == 1 ? "1 ordinario" : "$normMaint ordinarios";
 
-    final String certsLabel = certsExp == 1 ? 'CERTIFICADO\nVENCIDO' : 'CERTIFICADOS\nVENCIDOS';
-    final String? certsSub = kpis.certsInRenewalWindow > 0 ? "+${kpis.certsInRenewalWindow} en renov." : null;
+    final String certsLabel = certsExp == 1 ? "Certificado\nvencido" : "Certificados\nvencidos";
+    final String? certsSub = kpis.certsInRenewalWindow > 0 ? "+${kpis.certsInRenewalWindow} en renovación" : null;
 
-    final String reliefsLabel = reliefs == 1 ? 'RELEVO\nPENDIENTE' : 'RELEVOS\nPENDIENTES';
+    final String reliefsLabel = reliefs == 1 ? "Relevo\npendiente" : "Relevos\npendientes";
     final String reliefsSub = "${kpis.crewOnBoard} a bordo";
 
-    final String purchasesLabel = critPurch == 1 ? 'PEDIDO\nCRÍTICO' : 'PEDIDOS\nCRÍTICOS';
+    final String purchasesLabel = critPurch == 1 ? "Pedido\ncrítico" : "Pedidos\ncríticos";
 
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. Mant. Críticos (▲) + subetiqueta ordinarios
+          // 1. Mantenimientos
           Expanded(
             child: _buildTappableKpiCard(
+              icon: Icons.build_rounded,
               label: critMaintLabel,
               value: "$critMaint",
-              symbol: "▲",
-              subLabel: normMaintSub,
-              isDanger: critMaint > 0,
-              color: critMaint > 0 ? const Color(0xFFFF5A5F) : const Color(0xFF10B981),
+              color: critMaint > 0 ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+              pillText: normMaintSub,
+              pillBg: _isDark ? const Color(0xFF16A34A).withValues(alpha: 0.18) : const Color(0xFFDCFCE7),
+              pillTextColor: _isDark ? const Color(0xFF86EFAC) : const Color(0xFF15803D),
               onTap: () => _openMaintenanceSheet(detail.maintenanceTasks),
             ),
           ),
           const SizedBox(width: 8),
-          // 2. Certs. Vencidos + subetiqueta en renovación
+          // 2. Certificados
           Expanded(
             child: _buildTappableKpiCard(
+              icon: Icons.description_outlined,
               label: certsLabel,
               value: "$certsExp",
-              subLabel: certsSub,
-              isDanger: certsExp > 0,
-              color: certsExp > 0 ? const Color(0xFFFF5A5F) : const Color(0xFF10B981),
+              color: certsExp > 0 ? const Color(0xFFEF4444) : const Color(0xFF10B981),
+              pillText: certsSub,
+              pillBg: _isDark ? const Color(0xFFDC2626).withValues(alpha: 0.18) : const Color(0xFFFEE2E2),
+              pillTextColor: _isDark ? const Color(0xFFFECACA) : const Color(0xFFDC2626),
               onTap: () => _openCertificatesSheet(detail.certificates, detail.card.certificatesSummary),
             ),
           ),
           const SizedBox(width: 8),
-          // 3. Relevos / Tripulación
+          // 3. Relevos
           Expanded(
             child: _buildTappableKpiCard(
+              icon: Icons.groups_rounded,
               label: reliefsLabel,
               value: "$reliefs",
-              subLabel: reliefsSub,
-              isDanger: reliefs > 0,
               color: reliefs > 0 ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+              pillText: reliefsSub,
+              pillBg: _isDark ? const Color(0xFFD97706).withValues(alpha: 0.18) : const Color(0xFFFEF3C7),
+              pillTextColor: _isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309),
               onTap: () => _openCrewSheet(detail.crew),
             ),
           ),
           const SizedBox(width: 8),
-          // 4. Pedidos Compras
+          // 4. Compras Críticas
           Expanded(
             child: _buildTappableKpiCard(
+              icon: Icons.shopping_cart_rounded,
               label: purchasesLabel,
               value: "$critPurch",
-              isDanger: critPurch > 0,
-              color: critPurch > 0 ? const Color(0xFFFF5A5F) : const Color(0xFF10B981),
+              color: critPurch > 0 ? const Color(0xFFEF4444) : const Color(0xFF10B981),
               onTap: () {},
             ),
           ),
@@ -914,56 +821,55 @@ class _VesselHealthViewState extends State<VesselHealthView>
   }
 
   Widget _buildTappableKpiCard({
+    required IconData icon,
     required String label,
     required String value,
-    String? symbol,
-    String? subLabel,
-    bool isDanger = false,
     required Color color,
+    String? pillText,
+    Color? pillBg,
+    Color? pillTextColor,
     required VoidCallback onTap,
   }) {
     return Container(
       decoration: BoxDecoration(
         color: _cardBg,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isDanger ? const Color(0xFFFF5A5F).withValues(alpha: 0.35) : _cardBorder,
+          color: _isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+          width: 1.0,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: _isDark ? Colors.black.withValues(alpha: 0.25) : const Color(0x06000000),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(18),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (symbol != null) ...[
-                      Text(
-                        symbol,
-                        style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(width: 3),
-                    ],
-                    Text(
-                      value,
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ],
+                Icon(icon, color: color, size: 22),
+                const SizedBox(height: 5),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
                 SizedBox(
-                  height: 22,
+                  height: 26,
                   child: Center(
                     child: Text(
                       label,
@@ -971,31 +877,39 @@ class _VesselHealthViewState extends State<VesselHealthView>
                       overflow: TextOverflow.ellipsis,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: _textTertiary,
-                        fontSize: 7.2,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.2,
+                        color: _isDark ? Colors.white70 : const Color(0xFF334155),
+                        fontSize: 9.8,
+                        fontWeight: FontWeight.w600,
                         height: 1.15,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 6),
                 SizedBox(
-                  height: 12,
-                  child: subLabel != null
-                      ? Text(
-                          subLabel,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Color(0xFFF59E0B),
-                            fontSize: 8,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        )
-                      : const SizedBox.shrink(),
+                  height: 20,
+                  child: Center(
+                    child: pillText != null
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: pillBg ?? const Color(0xFFDCFCE7),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              pillText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: pillTextColor ?? const Color(0xFF15803D),
+                                fontSize: 8.8,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
                 ),
               ],
             ),
@@ -1011,134 +925,208 @@ class _VesselHealthViewState extends State<VesselHealthView>
     final cert = card.certificatesSummary;
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _cardBg,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _cardBorder),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: _isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _isDark ? Colors.black.withValues(alpha: 0.25) : const Color(0x06000000),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF007AFF).withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(6),
+              const Icon(Icons.bar_chart_rounded, color: Color(0xFF007AFF), size: 22),
+              const SizedBox(width: 8),
+              Text(
+                "Pilares de Salud",
+                style: TextStyle(
+                  color: _textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
-                child: const Icon(Icons.bar_chart_rounded, color: Color(0xFF007AFF), size: 16),
+              ),
+              const Spacer(),
+              RichText(
+                text: TextSpan(
+                  text: "Score base: ",
+                  style: TextStyle(
+                    color: _textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: "${card.healthScoreBase} pts",
+                      style: TextStyle(
+                        color: _textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.info_outline_rounded, size: 16, color: _textSecondary),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _buildPillarBar(
+            title: "Operación",
+            icon: Icons.settings_outlined,
+            value: pillars.operacion,
+            color: const Color(0xFF10B981),
+          ),
+          const SizedBox(height: 14),
+          _buildPillarBar(
+            title: "Disponibilidad",
+            icon: Icons.layers_outlined,
+            value: pillars.disponibilidad,
+            color: const Color(0xFF007AFF),
+          ),
+          const SizedBox(height: 14),
+          _buildPillarBar(
+            title: "Seguridad",
+            icon: Icons.shield_outlined,
+            value: pillars.seguridad,
+            color: const Color(0xFFF59E0B),
+          ),
+          const SizedBox(height: 18),
+          // 3 modern pill badges matching screenshot
+          Row(
+            children: [
+              Expanded(
+                child: _buildModernStateChip(
+                  label: "Vigentes: ${cert.vigentes}",
+                  dotColor: const Color(0xFF16A34A),
+                  bgColor: _isDark ? const Color(0xFF16A34A).withValues(alpha: 0.18) : const Color(0xFFDCFCE7),
+                  borderColor: _isDark ? const Color(0xFF16A34A).withValues(alpha: 0.35) : const Color(0xFF86EFAC),
+                  textColor: _isDark ? const Color(0xFF86EFAC) : const Color(0xFF15803D),
+                ),
               ),
               const SizedBox(width: 8),
-              const Text(
-                "PILARES DE SALUD CENTINELA",
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
+              Expanded(
+                child: _buildModernStateChip(
+                  label: "Próximos: ${cert.proximosAVencer}",
+                  dotColor: const Color(0xFFD97706),
+                  bgColor: _isDark ? const Color(0xFFD97706).withValues(alpha: 0.18) : const Color(0xFFFEF3C7),
+                  borderColor: _isDark ? const Color(0xFFD97706).withValues(alpha: 0.35) : const Color(0xFFFDE68A),
+                  textColor: _isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildModernStateChip(
+                  label: "Vencidos: ${cert.vencidos}",
+                  dotColor: const Color(0xFFDC2626),
+                  bgColor: _isDark ? const Color(0xFFDC2626).withValues(alpha: 0.18) : const Color(0xFFFEE2E2),
+                  borderColor: _isDark ? const Color(0xFFDC2626).withValues(alpha: 0.35) : const Color(0xFFFECACA),
+                  textColor: _isDark ? const Color(0xFFFECACA) : const Color(0xFFDC2626),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          _buildPillarBar("Operación", pillars.operacion, const Color(0xFF10B981)),
-          const SizedBox(height: 12),
-          _buildPillarBar("Disponibilidad", pillars.disponibilidad, const Color(0xFF007AFF)),
-          const SizedBox(height: 12),
-          _buildPillarBar("Seguridad", pillars.seguridad, const Color(0xFFF59E0B)),
-          // Chips de los 5 estados normativos en Seguridad
-          Padding(
-            padding: const EdgeInsets.only(top: 8, left: 4, bottom: 4),
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                _buildStateChip("Vigentes: ${cert.vigentes}", const Color(0xFF10B981)),
-                _buildStateChip("Próximos: ${cert.proximosAVencer}", const Color(0xFFFCD34D)),
-                _buildStateChip("En Renovación: ${cert.enVentanaRenovacion}", const Color(0xFFF59E0B), isAmberWindow: true),
-                _buildStateChip("Vencidos: ${cert.vencidos}", const Color(0xFFFF5A5F)),
-                if (cert.noVerificados > 0)
-                  _buildStateChip("No Verif: ${cert.noVerificados}", const Color(0xFF64748B)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          _buildPillarBar("Preparación", pillars.preparacion, const Color(0xFFAF52DE)),
         ],
       ),
     );
   }
 
-  Widget _buildPillarBar(String title, int value, Color color) {
+  Widget _buildModernStateChip({
+    required String label,
+    required Color dotColor,
+    required Color bgColor,
+    required Color borderColor,
+    required Color textColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: dotColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPillarBar({
+    required String title,
+    required IconData icon,
+    required int value,
+    required Color color,
+  }) {
     final pct = (value / 100.0).clamp(0.0, 1.0);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            Icon(icon, color: const Color(0xFF007AFF), size: 18),
+            const SizedBox(width: 8),
             Text(
               title,
-              style: TextStyle(color: _textPrimary, fontSize: 13, fontWeight: FontWeight.w600),
+              style: TextStyle(color: _textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
             ),
+            const Spacer(),
             Text(
               "$value%",
-              style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w800),
+              style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w800),
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 7),
         ClipRRect(
           borderRadius: BorderRadius.circular(6),
           child: Container(
-            height: 7,
-            color: _isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
+            height: 8,
+            color: _isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
             child: FractionallySizedBox(
               alignment: Alignment.centerLeft,
               widthFactor: pct,
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [color.withValues(alpha: 0.7), color],
-                  ),
+                  color: color,
                 ),
               ),
             ),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildStateChip(String text, Color color, {bool isAmberWindow = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 5,
-            height: 5,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 5),
-          Text(
-            text,
-            style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w700),
-          ),
-          if (isAmberWindow) ...[
-            const SizedBox(width: 3),
-            const Icon(Icons.hourglass_top_rounded, size: 10, color: Color(0xFFF59E0B)),
-          ],
-        ],
-      ),
     );
   }
 
