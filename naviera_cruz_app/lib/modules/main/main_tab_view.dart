@@ -17,6 +17,8 @@ import '../salarios/salary_cost_view.dart';
 import '../compras/compras_view.dart';
 import '../salud_buque/vessel_health_view.dart';
 import '../../services/salary_cost_service.dart';
+import '../../services/compras_service.dart';
+import '../../services/vessel_health_service.dart';
 import '../../app/drawer_widget.dart';
 import '../../core/storage.dart';
 
@@ -76,14 +78,18 @@ class _MainTabViewState extends State<MainTabView> {
     final session = Provider.of<SessionManager>(context);
     final bool isTripulante = session.isTripulanteMode;
     print(">>> MAIN_TAB_VIEW_BUILDING: isTripulante=$isTripulante, currentIndex=$_currentIndex, auth=${session.isAuthenticated} <<<");
-    final bool isSalaryAuthorized = SalaryCostService.isAuthorizedUser(session.currentUser);
+    final user = session.currentUser;
+    final bool isSalaryAuthorized = SalaryCostService.isAuthorizedUser(user);
+    final bool isComprasAuthorized = ComprasService.isAuthorizedUser(user);
+    final bool isHealthAuthorized = VesselHealthService.isAuthorizedUser(user);
+
     final List<Widget> officeViews = [
       const HomeView(),
       const FleetView(),
       if (isSalaryAuthorized) const SalaryCostView(isTabModule: true),
-      const ComprasView(isTabModule: true),
+      if (isComprasAuthorized) const ComprasView(isTabModule: true),
       const ScheduleView(),
-      const VesselHealthView(isTabModule: true),
+      if (isHealthAuthorized) const VesselHealthView(isTabModule: true),
       const IncidentListView(),
       const TrainingView(),
       const BulletinsView(),
@@ -135,6 +141,8 @@ class _MainTabViewState extends State<MainTabView> {
       body: activeViews[_currentIndex],
       bottomNavigationBar: NavieraBottomBar(
         isSalaryAuthorized: isSalaryAuthorized,
+        isComprasAuthorized: isComprasAuthorized,
+        isHealthAuthorized: isHealthAuthorized,
         isTripulante: isTripulante,
         currentIndex: _currentIndex,
         onTap: (index) {
@@ -150,6 +158,8 @@ class _MainTabViewState extends State<MainTabView> {
 class NavieraBottomBar extends StatefulWidget {
   final bool isTripulante;
   final bool isSalaryAuthorized;
+  final bool isComprasAuthorized;
+  final bool isHealthAuthorized;
   final int currentIndex;
   final ValueChanged<int> onTap;
 
@@ -157,6 +167,8 @@ class NavieraBottomBar extends StatefulWidget {
     super.key,
     this.isTripulante = false,
     this.isSalaryAuthorized = false,
+    this.isComprasAuthorized = false,
+    this.isHealthAuthorized = false,
     required this.currentIndex,
     required this.onTap,
   });
@@ -228,14 +240,16 @@ class _NavieraBottomBarState extends State<NavieraBottomBar> {
     ];
 
     // 7 módulos para rol corporativo / oficina (Boletines penúltimo, Chat último)
-    final officeItems = [
+    final officeItems = <_NavItemData>[
       const _NavItemData(label: "Inicio", icon: Icons.home_outlined, activeIcon: Icons.home_rounded),
       const _NavItemData(label: "Flota", icon: Icons.anchor_outlined, activeIcon: Icons.anchor_rounded),
       if (widget.isSalaryAuthorized)
         const _NavItemData(label: "Salarios", icon: Icons.payments_outlined, activeIcon: Icons.payments_rounded),
-      const _NavItemData(label: "Compras", icon: Icons.shopping_bag_outlined, activeIcon: Icons.shopping_bag_rounded),
+      if (widget.isComprasAuthorized)
+        const _NavItemData(label: "Compras", icon: Icons.shopping_bag_outlined, activeIcon: Icons.shopping_bag_rounded),
       const _NavItemData(label: "Programa", icon: Icons.calendar_today_outlined, activeIcon: Icons.calendar_month_rounded),
-      const _NavItemData(label: "Salud", icon: Icons.health_and_safety_outlined, activeIcon: Icons.health_and_safety_rounded),
+      if (widget.isHealthAuthorized)
+        const _NavItemData(label: "Salud", icon: Icons.health_and_safety_outlined, activeIcon: Icons.health_and_safety_rounded),
       const _NavItemData(label: "Seguridad", icon: Icons.shield_outlined, activeIcon: Icons.shield_rounded),
       const _NavItemData(label: "Cursos", icon: Icons.school_outlined, activeIcon: Icons.school_rounded),
       const _NavItemData(label: "Boletines", icon: Icons.description_outlined, activeIcon: Icons.description_rounded),

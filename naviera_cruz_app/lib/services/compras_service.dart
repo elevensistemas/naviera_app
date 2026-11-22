@@ -1,10 +1,32 @@
 import 'package:flutter/foundation.dart';
 import '../core/network.dart';
 import '../models/compras_model.dart';
+import '../models/models.dart';
 
 class ComprasService {
   static final ComprasService shared = ComprasService._internal();
   ComprasService._internal();
+
+  /// Control de acceso al módulo Compras:
+  /// Autorizados: a.lopresti y usuario demo.
+  /// m.piccinini explícitamente sin acceso a compras.
+  static bool isAuthorizedUser(User? user) {
+    if (user == null) return false;
+    final uid = user.id.toLowerCase().trim();
+    final name = user.name.toLowerCase().trim();
+
+    // m.piccinini explícitamente no puede ver compras
+    if (uid == 'm.piccinini' || name.contains('piccinini')) {
+      return false;
+    }
+
+    return uid == 'a.lopresti' ||
+        uid == 'admin' ||
+        uid == 'demo' ||
+        name.contains('lo presti') ||
+        name.contains('demo');
+  }
+
 
   ComprasResponse? _cachedFullResponse;
   DateTime? _lastFetchTime;

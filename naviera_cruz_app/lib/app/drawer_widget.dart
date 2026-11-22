@@ -9,6 +9,8 @@ import '../modules/salarios/salary_cost_view.dart';
 import '../modules/compras/compras_view.dart';
 import '../modules/salud_buque/vessel_health_view.dart';
 import '../services/salary_cost_service.dart';
+import '../services/compras_service.dart';
+import '../services/vessel_health_service.dart';
 
 class NavieraDrawer extends StatelessWidget {
   const NavieraDrawer({super.key});
@@ -174,33 +176,35 @@ class NavieraDrawer extends StatelessWidget {
                   ),
                   const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
                   // Salud del Buque (Centinela)
-                  ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF30D158).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(8),
+                  if (VesselHealthService.isAuthorizedUser(user)) ...[
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF30D158).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.health_and_safety_rounded, color: Color(0xFF30D158), size: 20),
                       ),
-                      child: const Icon(Icons.health_and_safety_rounded, color: Color(0xFF30D158), size: 20),
+                      title: const Text(
+                        "Salud del Buque",
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                      ),
+                      subtitle: const Text(
+                        "Condición general, MARAD y certificados",
+                        style: TextStyle(fontSize: 11.5, color: Colors.grey),
+                      ),
+                      trailing: const Icon(Icons.chevron_right, size: 18),
+                      onTap: () {
+                        Navigator.pop(context); // Close drawer
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const VesselHealthView()),
+                        );
+                      },
                     ),
-                    title: const Text(
-                      "Salud del Buque",
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-                    ),
-                    subtitle: const Text(
-                      "Condición general, MARAD y certificados",
-                      style: TextStyle(fontSize: 11.5, color: Colors.grey),
-                    ),
-                    trailing: const Icon(Icons.chevron_right, size: 18),
-                    onTap: () {
-                      Navigator.pop(context); // Close drawer
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const VesselHealthView()),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
+                    const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
+                  ],
                   if (SalaryCostService.isAuthorizedUser(user)) ...[
                     ListTile(
                       leading: Container(
@@ -252,7 +256,7 @@ class NavieraDrawer extends StatelessWidget {
                     ),
                     const Divider(height: 1, indent: 56, color: Color(0xFFF1F5F9)),
                   ],
-                  if (!session.isTripulanteMode) ...[
+                  if (!session.isTripulanteMode && ComprasService.isAuthorizedUser(user)) ...[
                     ListTile(
                       leading: Container(
                         padding: const EdgeInsets.all(6),

@@ -3,11 +3,28 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/vessel_health_model.dart';
+import '../models/models.dart';
 import 'centinela_fleet_service.dart';
 import 'services.dart';
 
 class VesselHealthService {
   static final VesselHealthService shared = VesselHealthService._internal();
+
+  /// Control de acceso al módulo Salud del Buque:
+  /// Autorizados: a.lopresti, demo y m.piccinini
+  static bool isAuthorizedUser(User? user) {
+    if (user == null) return false;
+    final uid = user.id.toLowerCase().trim();
+    final name = user.name.toLowerCase().trim();
+
+    return uid == 'a.lopresti' ||
+        uid == 'm.piccinini' ||
+        uid == 'demo' ||
+        uid == 'admin' ||
+        name.contains('lo presti') ||
+        name.contains('piccinini') ||
+        name.contains('demo');
+  }
 
   VesselHealthService._internal() {
     _loadFromDisk();
