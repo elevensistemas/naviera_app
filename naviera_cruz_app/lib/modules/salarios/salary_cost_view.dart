@@ -275,6 +275,8 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                       const SizedBox(height: 20),
                       _buildActiveVsSeveranceCard(period),
                       const SizedBox(height: 20),
+                      _buildPercentagesExplanationCard(period),
+                      const SizedBox(height: 20),
                       if (period.executiveNotes.isNotEmpty) ...[
                         _buildExecutiveNotesCard(period),
                         const SizedBox(height: 20),
@@ -1379,26 +1381,139 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
     );
   }
 
-  /// Notas Ejecutivas
+  /// Tarjeta explicativa de porcentajes para el Directorio / Dueño de la empresa
+  Widget _buildPercentagesExplanationCard(SalaryPeriod period) {
+    final double netShare = period.totalEmployerCost > 0 ? (period.netPay / period.totalEmployerCost * 100) : 0.0;
+    final double contribShare = period.totalEmployerCost > 0 ? (period.employerContributions / period.totalEmployerCost * 100) : 0.0;
+    final double contribRemunRatio = period.contribToRemunRatio * 100;
+    final double grossRemunerative = period.contribToRemunRatio > 0
+        ? (period.employerContributions / period.contribToRemunRatio)
+        : (period.netPay + period.withholdings);
+
+    final explanationItems = [
+      (
+        icon: Icons.account_balance_wallet_outlined,
+        color: const Color(0xFF007AFF),
+        title: "Neto a Pagar: ${_formatCurrency(period.netPay)} (${netShare.toStringAsFixed(1)}% del Costo Total)",
+        body: "• En el anillo figura ${netShare.toStringAsFixed(0)}% porque representa exactamente el ${netShare.toStringAsFixed(1)}% del Costo Empleador Total (${_formatCurrency(period.totalEmployerCost)}).\n"
+            "• Es el dinero real transferido a las cuentas bancarias de los empleados (sueldo de bolsillo).\n"
+            "• Surge de: Sueldo Bruto menos Retenciones de Ley (17% de Jubilación, PAMI y Obra Social) y retenciones de Impuesto a las Ganancias.\n"
+            "• Significado para el dueño: De cada \$ 100 que la empresa gasta en salarios, \$ ${netShare.toStringAsFixed(1).replaceAll('.', ',')} van directamente al bolsillo de los trabajadores.",
+      ),
+      (
+        icon: Icons.shield_outlined,
+        color: const Color(0xFFF39200),
+        title: "Contribuciones Patronales: ${_formatCurrency(period.employerContributions)} (${contribShare.toStringAsFixed(1)}% vs ${contribRemunRatio.toStringAsFixed(1)}%)",
+        body: "• ¿Por qué el anillo muestra ${contribShare.toStringAsFixed(0)}% y abajo dice ${contribRemunRatio.toStringAsFixed(1)}%?\n"
+            "• ${contribShare.toStringAsFixed(1)}%: Es la participación sobre la 'torta global' del desembolso total de la empresa (${_formatCurrency(period.totalEmployerCost)}).\n"
+            "• ${contribRemunRatio.toStringAsFixed(1)}%: Es la alícuota legal efectiva calculada sobre la Masa Salarial Bruta Remunerativa sujeta a aportes (${_formatCurrency(grossRemunerative)}).\n"
+            "• Desglose legal F931 y Convenios: Se compone de SIPA Jubilación (10,77%), INSSJyP/PAMI (1,58%), Asignaciones Familiares (4,70%), Fondo de Empleo (0,95%), Obra Social Patronal (6,00%), más la alícuota de ART por riesgo de navegación marítima, Seguro de Vida Colectivo y Fondo de Capacitación/CCT de los convenios marítimos (SOMU, Capitanes).",
+      ),
+      (
+        icon: Icons.repeat_rounded,
+        color: const Color(0xFFAF52DE),
+        title: "Ratio Costo / Neto: \$ ${period.costToNetRatio.toStringAsFixed(2)} por cada \$ 1,00 neto",
+        body: "• Factor multiplicador de la empresa: Por cada \$ 1,00 que un tripulante percibe de bolsillo, la empresa debe desembolsar \$ ${period.costToNetRatio.toStringAsFixed(2)} en total.\n"
+            "• Los \$ ${(period.costToNetRatio - 1.0).toStringAsFixed(2)} adicionales corresponden estrictamente a Cargas Sociales F931, Contribuciones Patronales, Aportes a la Seguridad Social, ART e Impuestos.",
+      ),
+      (
+        icon: Icons.check_circle_outline_rounded,
+        color: const Color(0xFF30D158),
+        title: "Fórmula de Conciliación Contable (100% del Costo Empleador)",
+        body: "• Costo Empleador Total (${_formatCurrency(period.totalEmployerCost)}) =\n"
+            "  + Neto a Pagar en mano: ${_formatCurrency(period.netPay)} (${netShare.toStringAsFixed(1)}%)\n"
+            "  + Contribuciones Patronales F931: ${_formatCurrency(period.employerContributions)} (${contribShare.toStringAsFixed(1)}%)\n"
+            "  + Retenciones de Ley y Ganancias ingresadas por la empresa: ${_formatCurrency(period.totalEmployerCost - period.netPay - period.employerContributions)} (${(100.0 - netShare - contribShare).toStringAsFixed(1)}%)\n"
+            "• Controlado y conciliado al 100% contra declaraciones juradas AFIP F.931, bancos y asientos contables.",
+      ),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: _cardBg,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: _cardBorder),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: false,
+          leading: const Icon(Icons.calculate_outlined, color: Color(0xFF007AFF)),
+          title: Text(
+            "Explicación de Porcentajes & Fórmulas F931",
+            style: TextStyle(color: _textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text(
+            "Guía ejecutiva para directorio: Neto (${netShare.toStringAsFixed(0)}%), Contribuciones (${contribShare.toStringAsFixed(0)}% / ${contribRemunRatio.toStringAsFixed(1)}%) y Costo Empleador",
+            style: TextStyle(color: _textTertiary, fontSize: 11),
+          ),
+          childrenPadding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+          children: explanationItems.map((item) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12.0),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: _isDark ? Colors.white.withOpacity(0.04) : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: item.color.withOpacity(0.25)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(item.icon, color: item.color, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: TextStyle(
+                            color: item.color,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    item.body,
+                    style: TextStyle(
+                      color: _textSecondary,
+                      fontSize: 12,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  /// Notas Ejecutivas & Verificación
   Widget _buildExecutiveNotesCard(SalaryPeriod period) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           initiallyExpanded: false,
           leading: const Icon(Icons.description_outlined, color: Color(0xFF007AFF)),
-          title: const Text(
+          title: Text(
             "Notas Ejecutivas & Verificación",
-            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+            style: TextStyle(color: _textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
           ),
           subtitle: Text(
             "${period.executiveNotes.length} observaciones del estudio y F931",
-            style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 11),
+            style: TextStyle(color: _textTertiary, fontSize: 11),
           ),
           childrenPadding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
           children: period.executiveNotes.map((note) {
@@ -1421,7 +1536,7 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                     child: Text(
                       note,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.75),
+                        color: _textSecondary,
                         fontSize: 12.5,
                         height: 1.45,
                       ),
