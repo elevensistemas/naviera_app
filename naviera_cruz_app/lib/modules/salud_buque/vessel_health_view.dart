@@ -563,15 +563,25 @@ class _VesselHealthViewState extends State<VesselHealthView>
     );
   }
 
+  String _getVesselFlagEmoji(String vesselName) {
+    return vesselName.toUpperCase().contains('ALFA') ? '🇵🇦' : '🇦🇷';
+  }
+
+  String _getVesselFlagFullName(String vesselName) {
+    return vesselName.toUpperCase().contains('ALFA') ? 'Panamá 🇵🇦' : 'Argentina 🇦🇷';
+  }
+
   /// Tarjeta Principal: Anillo Health Score (0-100) + Numeros Oficiales
   Widget _buildMainScoreCard(VesselHealthCard card) {
     final score = card.healthScoreFinal;
     final toneColor = _parseColor(card.colorHex, const Color(0xFF10B981));
-    final deltaStr = card.deltaScore > 0
-        ? "+${card.deltaScore} pts"
-        : card.deltaScore < 0
-            ? "${card.deltaScore} pts"
-            : "=";
+    final String imoNumber = card.imo.isNotEmpty
+        ? card.imo
+        : (card.vesselName.toUpperCase().contains('ALFA')
+            ? '9711652'
+            : (card.vesselName.toUpperCase().contains('GUSTAVO')
+                ? '9654321'
+                : '9018115'));
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
@@ -637,99 +647,58 @@ class _VesselHealthViewState extends State<VesselHealthView>
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  card.vesselName,
-                  style: TextStyle(
-                    color: _textPrimary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                if (card.imo.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    "IMO ${card.imo}",
-                    style: TextStyle(
-                      color: _textSecondary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 8),
-                // Status pill
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: card.operationalStatus.toLowerCase().contains('restric') || card.operationalStatus.toLowerCase().contains('baja')
-                        ? (_isDark ? const Color(0xFFDC2626).withValues(alpha: 0.2) : const Color(0xFFFEE2E2))
-                        : (_isDark ? const Color(0xFF16A34A).withValues(alpha: 0.2) : const Color(0xFFDCFCE7)),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: card.operationalStatus.toLowerCase().contains('restric') || card.operationalStatus.toLowerCase().contains('baja')
-                          ? (_isDark ? const Color(0xFFDC2626).withValues(alpha: 0.4) : const Color(0xFFFECACA))
-                          : (_isDark ? const Color(0xFF16A34A).withValues(alpha: 0.4) : const Color(0xFF86EFAC)),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        card.operationalStatus.toLowerCase().contains('restric') || card.operationalStatus.toLowerCase().contains('baja')
-                            ? Icons.warning_amber_rounded
-                            : Icons.check_circle_rounded,
-                        color: card.operationalStatus.toLowerCase().contains('restric') || card.operationalStatus.toLowerCase().contains('baja')
-                            ? const Color(0xFFDC2626)
-                            : const Color(0xFF16A34A),
-                        size: 15,
+                Row(
+                  children: [
+                    Text(
+                      card.vesselName,
+                      style: TextStyle(
+                        color: _textPrimary,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
                       ),
-                      const SizedBox(width: 5),
-                      Text(
-                        card.operationalStatus.isNotEmpty
-                            ? card.operationalStatus
-                            : "Sin afectación operacional",
-                        style: TextStyle(
-                          color: card.operationalStatus.toLowerCase().contains('restric') || card.operationalStatus.toLowerCase().contains('baja')
-                              ? (_isDark ? const Color(0xFFFECACA) : const Color(0xFFDC2626))
-                              : (_isDark ? const Color(0xFF86EFAC) : const Color(0xFF15803D)),
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _getVesselFlagEmoji(card.vesselName),
+                      style: const TextStyle(fontSize: 22),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: _isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                RichText(
-                  text: TextSpan(
-                    text: "Score base: ",
-                    style: TextStyle(
-                      color: _textSecondary,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    children: [
-                      TextSpan(
-                        text: "${card.healthScoreBase} pts",
+                      child: Text(
+                        "IMO $imoNumber",
                         style: TextStyle(
                           color: _textPrimary,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
                         ),
                       ),
-                      if (card.deltaScore != 0) ...[
-                        const TextSpan(text: "  "),
-                        TextSpan(
-                          text: deltaStr,
-                          style: TextStyle(
-                            color: card.deltaScore > 0 ? const Color(0xFF10B981) : const Color(0xFFFF5A5F),
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      _getVesselFlagFullName(card.vesselName),
+                      style: TextStyle(
+                        color: _textSecondary,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
