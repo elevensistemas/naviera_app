@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import '../../services/crew_faq_service.dart';
 import '../../models/crew_profile.dart';
 import '../../app/ncs_hero_header.dart';
-import '../../app/ncs_assistant_card.dart';
-import '../assistant/crew_assistant_view.dart';
 
 class CrewFaqSearchView extends StatefulWidget {
   final String? initialQuery;
@@ -376,19 +374,6 @@ class _CrewFaqSearchViewState extends State<CrewFaqSearchView> {
                       ),
                     ),
 
-                    // Tarjeta destacada del Asistente NCS para consultas de SGS y procedimientos
-                    if (_searchQuery.isEmpty && _selectedCategory == null)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
-                        child: NcsAssistantCard(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => const CrewAssistantView()),
-                            );
-                          },
-                        ),
-                      ),
 
                     // 3. Encabezado con Contador de Resultados y Agrupación
                     Padding(

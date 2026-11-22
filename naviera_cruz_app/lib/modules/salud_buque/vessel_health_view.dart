@@ -812,7 +812,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
               label: purchasesLabel,
               value: "$critPurch",
               color: critPurch > 0 ? const Color(0xFFEF4444) : const Color(0xFF10B981),
-              onTap: () {},
+              onTap: () => _openPurchasesSheet(detail),
             ),
           ),
         ],
@@ -830,89 +830,86 @@ class _VesselHealthViewState extends State<VesselHealthView>
     Color? pillTextColor,
     required VoidCallback onTap,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: _cardBg,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: _isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
-          width: 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _isDark ? Colors.black.withValues(alpha: 0.25) : const Color(0x06000000),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: _cardBg,
           borderRadius: BorderRadius.circular(18),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: color, size: 22),
-                const SizedBox(height: 5),
-                Text(
-                  value,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                  ),
+          border: Border.all(
+            color: _isDark ? Colors.white.withValues(alpha: 0.08) : const Color(0xFFE2E8F0),
+            width: 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: _isDark ? Colors.black.withValues(alpha: 0.25) : const Color(0x06000000),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 22),
+              const SizedBox(height: 5),
+              Text(
+                value,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
                 ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  height: 26,
-                  child: Center(
-                    child: Text(
-                      label,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: _isDark ? Colors.white70 : const Color(0xFF334155),
-                        fontSize: 9.8,
-                        fontWeight: FontWeight.w600,
-                        height: 1.15,
-                      ),
+              ),
+              const SizedBox(height: 4),
+              SizedBox(
+                height: 26,
+                child: Center(
+                  child: Text(
+                    label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _isDark ? Colors.white70 : const Color(0xFF334155),
+                      fontSize: 9.8,
+                      fontWeight: FontWeight.w600,
+                      height: 1.15,
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
-                SizedBox(
-                  height: 20,
-                  child: Center(
-                    child: pillText != null
-                        ? Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: pillBg ?? const Color(0xFFDCFCE7),
-                              borderRadius: BorderRadius.circular(8),
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                height: 20,
+                child: Center(
+                  child: pillText != null
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: pillBg ?? const Color(0xFFDCFCE7),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            pillText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: pillTextColor ?? const Color(0xFF15803D),
+                              fontSize: 8.8,
+                              fontWeight: FontWeight.w700,
                             ),
-                            child: Text(
-                              pillText,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: pillTextColor ?? const Color(0xFF15803D),
-                                fontSize: 8.8,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          )
-                        : const SizedBox.shrink(),
-                  ),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1012,6 +1009,11 @@ class _VesselHealthViewState extends State<VesselHealthView>
                   bgColor: _isDark ? const Color(0xFF16A34A).withValues(alpha: 0.18) : const Color(0xFFDCFCE7),
                   borderColor: _isDark ? const Color(0xFF16A34A).withValues(alpha: 0.35) : const Color(0xFF86EFAC),
                   textColor: _isDark ? const Color(0xFF86EFAC) : const Color(0xFF15803D),
+                  onTap: () {
+                    if (_detail != null) {
+                      _openCertificatesSheet(_detail!.certificates, _detail!.card.certificatesSummary, initialFilter: 'VIGENTE');
+                    }
+                  },
                 ),
               ),
               const SizedBox(width: 8),
@@ -1022,6 +1024,11 @@ class _VesselHealthViewState extends State<VesselHealthView>
                   bgColor: _isDark ? const Color(0xFFD97706).withValues(alpha: 0.18) : const Color(0xFFFEF3C7),
                   borderColor: _isDark ? const Color(0xFFD97706).withValues(alpha: 0.35) : const Color(0xFFFDE68A),
                   textColor: _isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309),
+                  onTap: () {
+                    if (_detail != null) {
+                      _openCertificatesSheet(_detail!.certificates, _detail!.card.certificatesSummary, initialFilter: 'PROXIMO_A_VENCER');
+                    }
+                  },
                 ),
               ),
               const SizedBox(width: 8),
@@ -1032,6 +1039,11 @@ class _VesselHealthViewState extends State<VesselHealthView>
                   bgColor: _isDark ? const Color(0xFFDC2626).withValues(alpha: 0.18) : const Color(0xFFFEE2E2),
                   borderColor: _isDark ? const Color(0xFFDC2626).withValues(alpha: 0.35) : const Color(0xFFFECACA),
                   textColor: _isDark ? const Color(0xFFFECACA) : const Color(0xFFDC2626),
+                  onTap: () {
+                    if (_detail != null) {
+                      _openCertificatesSheet(_detail!.certificates, _detail!.card.certificatesSummary, initialFilter: 'VENCIDO');
+                    }
+                  },
                 ),
               ),
             ],
@@ -1047,14 +1059,18 @@ class _VesselHealthViewState extends State<VesselHealthView>
     required Color bgColor,
     required Color borderColor,
     required Color textColor,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: borderColor),
-      ),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: borderColor),
+        ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -1081,8 +1097,9 @@ class _VesselHealthViewState extends State<VesselHealthView>
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildPillarBar({
     required String title,
@@ -1189,6 +1206,11 @@ class _VesselHealthViewState extends State<VesselHealthView>
                   iconColor: marad.triangleRed > 0 ? const Color(0xFFFF5A5F) : const Color(0xFF10B981),
                   label: "▲ Críticos",
                   value: "${marad.triangleRed}",
+                  onTap: () {
+                    if (_detail != null) {
+                      _openMaintenanceSheet(_detail!.maintenanceTasks, initialTab: 'CRITICAL');
+                    }
+                  },
                 ),
               ),
               Expanded(
@@ -1198,6 +1220,11 @@ class _VesselHealthViewState extends State<VesselHealthView>
                   iconSize: 12,
                   label: "● Ordinarios",
                   value: "${marad.circleRed}",
+                  onTap: () {
+                    if (_detail != null) {
+                      _openMaintenanceSheet(_detail!.maintenanceTasks, initialTab: 'NORMAL');
+                    }
+                  },
                 ),
               ),
               Expanded(
@@ -1229,28 +1256,33 @@ class _VesselHealthViewState extends State<VesselHealthView>
     double iconSize = 16,
     required String label,
     required String value,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: iconColor, size: iconSize),
-              const SizedBox(width: 4),
-              Text(
-                value,
-                style: TextStyle(color: _textPrimary, fontSize: 16, fontWeight: FontWeight.w800),
-              ),
-            ],
-          ),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(color: _textTertiary, fontSize: 10, fontWeight: FontWeight.w600),
-          ),
-        ],
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: iconColor, size: iconSize),
+                const SizedBox(width: 4),
+                Text(
+                  value,
+                  style: TextStyle(color: _textPrimary, fontSize: 16, fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: TextStyle(color: _textTertiary, fontSize: 10, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1343,6 +1375,8 @@ class _VesselHealthViewState extends State<VesselHealthView>
               _openMaintenanceSheet(detail.maintenanceTasks);
             } else if (prio.category == 'crew') {
               _openCrewSheet(detail.crew);
+            } else if (prio.category == 'purchases') {
+              _openPurchasesSheet(detail);
             }
           },
           child: Padding(
@@ -1464,34 +1498,30 @@ class _VesselHealthViewState extends State<VesselHealthView>
   // ==========================================
 
   /// 1. Hoja de Certificados (5 Estados Normativos)
-  void _openCertificatesSheet(List<HealthCertificateItem> certs, CertificatesSummary summary) {
+  void _openCertificatesSheet(List<HealthCertificateItem> certs, CertificatesSummary summary, {String initialFilter = 'TODOS'}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: _bg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (ctx) => _CertificatesDetailSheet(
         vesselName: _selectedVessel,
         certs: certs,
         summary: summary,
+        initialFilter: initialFilter,
       ),
     );
   }
 
   /// 2. Hoja de Mantenimientos (Críticos ▲, Ordinarios ●, Dique)
-  void _openMaintenanceSheet(MaintenanceTasksSummary tasks) {
+  void _openMaintenanceSheet(MaintenanceTasksSummary tasks, {String initialTab = 'CRITICAL'}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: _bg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (ctx) => _MaintenanceDetailSheet(
         vesselName: _selectedVessel,
         tasks: tasks,
+        initialTab: initialTab,
       ),
     );
   }
@@ -1501,13 +1531,23 @@ class _VesselHealthViewState extends State<VesselHealthView>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: _bg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (ctx) => _CrewDetailSheet(
         vesselName: _selectedVessel,
         crew: crew,
+      ),
+    );
+  }
+
+  /// 4. Hoja de Pedidos de Compras Críticos
+  void _openPurchasesSheet(VesselHealthDetail detail) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _PurchasesDetailSheet(
+        vesselName: _selectedVessel,
+        detail: detail,
       ),
     );
   }
@@ -1522,11 +1562,13 @@ class _CertificatesDetailSheet extends StatefulWidget {
   final String vesselName;
   final List<HealthCertificateItem> certs;
   final CertificatesSummary summary;
+  final String initialFilter;
 
   const _CertificatesDetailSheet({
     required this.vesselName,
     required this.certs,
     required this.summary,
+    this.initialFilter = 'TODOS',
   });
 
   @override
@@ -1534,7 +1576,13 @@ class _CertificatesDetailSheet extends StatefulWidget {
 }
 
 class _CertificatesDetailSheetState extends State<_CertificatesDetailSheet> {
-  String _filterState = 'TODOS'; // TODOS, VIGENTE, PROXIMO_A_VENCER, EN_VENTANA_RENOVACION, VENCIDO
+  late String _filterState;
+
+  @override
+  void initState() {
+    super.initState();
+    _filterState = widget.initialFilter;
+  }
 
   bool get _isDark => Theme.of(context).brightness == Brightness.dark;
   Color get _cardBg => _isDark ? const Color(0xFF0D1829) : Colors.white;
@@ -1550,12 +1598,13 @@ class _CertificatesDetailSheetState extends State<_CertificatesDetailSheet> {
       return c.state == _filterState;
     }).toList();
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) => Column(
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.88,
+      decoration: BoxDecoration(
+        color: _isDark ? const Color(0xFF07101D) : const Color(0xFFF1F5F9),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
         children: [
           const SizedBox(height: 12),
           Center(
@@ -1627,7 +1676,6 @@ class _CertificatesDetailSheetState extends State<_CertificatesDetailSheet> {
                     ),
                   )
                 : ListView.builder(
-                    controller: scrollController,
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                     itemCount: filtered.length,
                     itemBuilder: (context, idx) {
@@ -1798,10 +1846,12 @@ class _CertificatesDetailSheetState extends State<_CertificatesDetailSheet> {
 class _MaintenanceDetailSheet extends StatefulWidget {
   final String vesselName;
   final MaintenanceTasksSummary tasks;
+  final String initialTab;
 
   const _MaintenanceDetailSheet({
     required this.vesselName,
     required this.tasks,
+    this.initialTab = 'CRITICAL',
   });
 
   @override
@@ -1809,7 +1859,13 @@ class _MaintenanceDetailSheet extends StatefulWidget {
 }
 
 class _MaintenanceDetailSheetState extends State<_MaintenanceDetailSheet> {
-  String _activeTab = 'CRITICAL'; // CRITICAL, NORMAL, WARNING, DOCK
+  late String _activeTab;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeTab = widget.initialTab;
+  }
 
   bool get _isDark => Theme.of(context).brightness == Brightness.dark;
   Color get _cardBg => _isDark ? const Color(0xFF0D1829) : Colors.white;
@@ -2042,12 +2098,13 @@ class _CrewDetailSheet extends StatelessWidget {
     final textTertiary = isDark ? Colors.white.withValues(alpha: 0.45) : const Color(0xFF94A3B8);
     final dividerColor = isDark ? const Color(0xFF1B2A42) : const Color(0xFFE2E8F0);
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) => Column(
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.88,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF07101D) : const Color(0xFFF1F5F9),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
         children: [
           const SizedBox(height: 12),
           Center(
@@ -2082,7 +2139,7 @@ class _CrewDetailSheet extends StatelessWidget {
                         style: TextStyle(color: textPrimary, fontSize: 17, fontWeight: FontWeight.bold),
                       ),
                       Text(
-                        "Alineado con RRHH Vista Por Barco (${crew.length} tripulantes)",
+                        "Alineado con RRHH Vista Por Barco (${crew.length} tripulantes a bordo)",
                         style: TextStyle(color: textTertiary, fontSize: 11),
                       ),
                     ],
@@ -2105,7 +2162,6 @@ class _CrewDetailSheet extends StatelessWidget {
                     ),
                   )
                 : ListView.builder(
-                    controller: scrollController,
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                     itemCount: crew.length,
                     itemBuilder: (context, idx) {
@@ -2280,5 +2336,204 @@ class _AppleHealthScorePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _AppleHealthScorePainter oldDelegate) {
     return oldDelegate.score != score || oldDelegate.color != color;
+  }
+}
+
+
+/// Hoja Inferior: Pedidos de Compras Críticos
+class _PurchasesDetailSheet extends StatelessWidget {
+  final String vesselName;
+  final VesselHealthDetail detail;
+
+  const _PurchasesDetailSheet({
+    required this.vesselName,
+    required this.detail,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color bg = isDark ? const Color(0xFF07101D) : const Color(0xFFF1F5F9);
+    final Color cardBg = isDark ? const Color(0xFF0D1829) : Colors.white;
+    final Color textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
+    final Color textSecondary = isDark ? Colors.white.withValues(alpha: 0.70) : const Color(0xFF475569);
+    final Color textTertiary = isDark ? Colors.white.withValues(alpha: 0.45) : const Color(0xFF94A3B8);
+    final Color dividerColor = isDark ? const Color(0xFF1B2A42) : const Color(0xFFE2E8F0);
+
+    final purchasePriorities = detail.card.priorities.where((p) => p.category == 'purchases').toList();
+    final critPurchCount = detail.card.kpis.criticalPurchasesOpen;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.88,
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: textTertiary.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEF4444).withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.shopping_cart_rounded, color: Color(0xFFEF4444), size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Pedidos de Compra — $vesselName",
+                        style: TextStyle(color: textPrimary, fontSize: 17, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        "$critPurchCount pedidos críticos pendientes",
+                        style: TextStyle(color: textTertiary, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.close_rounded, color: textSecondary),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          Divider(color: dividerColor, height: 16),
+          Expanded(
+            child: purchasePriorities.isEmpty && critPurchCount == 0
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check_circle_outline_rounded, color: const Color(0xFF10B981), size: 48),
+                          const SizedBox(height: 12),
+                          Text(
+                            "Sin pedidos críticos pendientes",
+                            style: TextStyle(color: textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            "No hay solicitudes urgentes de repuestos o suministros para este buque.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: textSecondary, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                    children: [
+                      if (purchasePriorities.isNotEmpty)
+                        ...purchasePriorities.map((p) => Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: cardBg,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.35)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFEF4444).withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: const Text("URGENTE", style: TextStyle(color: Color(0xFFEF4444), fontSize: 10, fontWeight: FontWeight.w800)),
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        p.id,
+                                        style: TextStyle(color: textTertiary, fontSize: 11, fontWeight: FontWeight.w600),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    p.title,
+                                    style: TextStyle(color: textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    p.description,
+                                    style: TextStyle(color: textSecondary, fontSize: 12.5),
+                                  ),
+                                  if (p.badge.isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF1F5F9),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFF007AFF)),
+                                          const SizedBox(width: 6),
+                                          Expanded(
+                                            child: Text(
+                                              p.badge,
+                                              style: TextStyle(color: textPrimary, fontSize: 11.5, fontWeight: FontWeight.w600),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            )),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: cardBg,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: dividerColor),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.info_outline_rounded, color: Color(0xFF007AFF), size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                "Total de pedidos de insumos monitoreados: $critPurchCount abiertos.",
+                                style: TextStyle(color: textSecondary, fontSize: 12.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ],
+      ),
+    );
   }
 }
