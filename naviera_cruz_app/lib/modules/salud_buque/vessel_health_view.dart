@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/vessel_health_model.dart';
 import '../../services/vessel_health_service.dart';
+import '../../app/ncs_hero_header.dart';
 
 class VesselHealthView extends StatefulWidget {
   final bool isTabModule;
@@ -216,19 +217,25 @@ class _VesselHealthViewState extends State<VesselHealthView>
 
     return Scaffold(
       backgroundColor: bgNaval,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1080),
-            child: RefreshIndicator(
-              color: const Color(0xFF10B981),
-              backgroundColor: _cardBg,
-              onRefresh: () => _loadAll(forceRefresh: true),
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-                slivers: [
-                  _buildSliverAppBar(),
-                  SliverToBoxAdapter(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1080),
+          child: Column(
+            children: [
+              NcsHeroHeader(
+                title: "Salud del Buque",
+                subtitle: "Health Score e indicadores operacionales Centinela",
+                showBackButton: widget.isTabModule ? false : null,
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  color: const Color(0xFF10B981),
+                  backgroundColor: _cardBg,
+                  onRefresh: () => _loadAll(forceRefresh: true),
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    slivers: [
+                      SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                       child: Column(
@@ -317,63 +324,11 @@ class _VesselHealthViewState extends State<VesselHealthView>
               ),
             ),
           ),
-        ),
+        ],
       ),
-    );
-  }
-
-  /// SliverAppBar estilo Apple Naval (limpio, sin fotos de barcos)
-  Widget _buildSliverAppBar() {
-    return SliverAppBar(
-      expandedHeight: 110.0,
-      floating: false,
-      pinned: true,
-      backgroundColor: (_isDark ? const Color(0xFF07101D) : Colors.white).withValues(alpha: 0.95),
-      elevation: 0,
-      systemOverlayStyle: SystemUiOverlayStyle.light,
-      leading: widget.isTabModule
-          ? null
-          : IconButton(
-              icon: Icon(Icons.arrow_back_ios_new_rounded, color: _textPrimary, size: 20),
-              onPressed: () => Navigator.pop(context),
-            ),
-      actions: [
-        IconButton(
-          icon: Icon(Icons.refresh_rounded, color: _textSecondary),
-          tooltip: "Sincronizar con Centinela",
-          onPressed: () => _loadAll(forceRefresh: true),
-        ),
-        const SizedBox(width: 8),
-      ],
-      flexibleSpace: FlexibleSpaceBar(
-        centerTitle: false,
-        titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF10B981), Color(0xFF007AFF)],
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.health_and_safety_rounded, color: Colors.white, size: 16),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              "Salud del Buque",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 19,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    ),
+  ),
+);
   }
 
   /// Banner offline cuando no hay red (Resiliencia sin pisar con ceros)

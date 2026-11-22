@@ -7,6 +7,7 @@ import '../../core/storage.dart';
 import '../../models/salary_cost_model.dart';
 import '../../services/salary_cost_service.dart';
 import 'salary_apple_charts.dart';
+import '../../app/ncs_hero_header.dart';
 
 class SalaryCostView extends StatefulWidget {
   final bool isTabModule;
@@ -178,66 +179,22 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1080),
-          child: RefreshIndicator(
-            color: const Color(0xFF007AFF),
-            backgroundColor: const Color(0xFF131B2E),
-            onRefresh: () => _loadData(forceRefresh: true),
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-              slivers: [
-              // Apple Header Bar
-              SliverAppBar(
-                expandedHeight: 120.0,
-                floating: false,
-                pinned: true,
-                backgroundColor: (_isDark ? const Color(0xFF0A0F1D) : Colors.white).withOpacity(0.95),
-                elevation: 0,
-                systemOverlayStyle: SystemUiOverlayStyle.light,
-                leading: widget.isTabModule
-                    ? null
-                    : IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                actions: [
-                  IconButton(
-                    icon: Icon(Icons.refresh_rounded, color: _textSecondary),
-                    tooltip: "Actualizar datos",
-                    onPressed: () => _loadData(forceRefresh: true),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                flexibleSpace: FlexibleSpaceBar(
-                  centerTitle: false,
-                  titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-                  title: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF007AFF), Color(0xFF5856D6)],
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 16),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        "Salarios",
-                        style: TextStyle(
-                          color: _textPrimary,
-                          fontSize: 19,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+          child: Column(
+            children: [
+              NcsHeroHeader(
+                title: "Salarios",
+                subtitle: "Consolidado de costos y aportes patronales",
+                showBackButton: widget.isTabModule ? false : null,
               ),
-
-              // Filters Section (Segment & Month Selector)
+              Expanded(
+                child: RefreshIndicator(
+                  color: const Color(0xFF007AFF),
+                  backgroundColor: _cardBg,
+                  onRefresh: () => _loadData(forceRefresh: true),
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    slivers: [
+                      // Filters Section (Segment & Month Selector)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -326,12 +283,15 @@ class _SalaryCostViewState extends State<SalaryCostView> with SingleTickerProvid
                     ]),
                   ),
                 ),
-            ],
-          ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      ],
+    ),
+  ),
+),
+);
   }
 
   /// Segment Selector (Tripulantes | Oficina | Consolidado)

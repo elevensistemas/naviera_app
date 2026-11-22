@@ -1,11 +1,10 @@
-import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../app/theme.dart';
 import '../../models/compras_model.dart';
 import '../../services/compras_service.dart';
 import '../salarios/salary_apple_charts.dart';
+import '../../app/ncs_hero_header.dart';
 
 class ComprasView extends StatefulWidget {
   final bool isTabModule;
@@ -25,6 +24,15 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
   String? _errorMessage;
   ComprasResponse? _comprasData;
   late AnimationController _animController;
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get _bg => _isDark ? const Color(0xFF070B14) : const Color(0xFFF8FAFC);
+  Color get _cardBg => _isDark ? const Color(0xFF131B2E) : Colors.white;
+  Color get _cardBorder => _isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFE2E8F0);
+  Color get _textPrimary => _isDark ? Colors.white : const Color(0xFF0F172A);
+  Color get _textSecondary => _isDark ? Colors.white.withOpacity(0.65) : const Color(0xFF64748B);
+  Color get _textTertiary => _isDark ? Colors.white.withOpacity(0.40) : const Color(0xFF94A3B8);
+
 
   @override
   void initState() {
@@ -183,70 +191,26 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
     final pedidos = _filteredPedidos;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF070B14),
+      backgroundColor: _bg,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1080),
-          child: RefreshIndicator(
-            color: const Color(0xFF00C7BE),
-            backgroundColor: const Color(0xFF131B2E),
-            onRefresh: () => _loadData(forceRefresh: true),
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-              slivers: [
-                // Apple Header Bar
-                SliverAppBar(
-                  expandedHeight: 120.0,
-                  floating: false,
-                  pinned: true,
-                  backgroundColor: const Color(0xFF0A0F1D).withOpacity(0.95),
-                  elevation: 0,
-                  systemOverlayStyle: SystemUiOverlayStyle.light,
-                  leading: widget.isTabModule
-                      ? null
-                      : IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                  actions: [
-                    IconButton(
-                      icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
-                      tooltip: "Actualizar pedidos",
-                      onPressed: () => _loadData(forceRefresh: true),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  flexibleSpace: FlexibleSpaceBar(
-                    centerTitle: false,
-                    titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-                    title: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF00C7BE), Color(0xFF007AFF)],
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(Icons.shopping_bag_rounded, color: Colors.white, size: 16),
-                        ),
-                        const SizedBox(width: 10),
-                        const Text(
-                          "Compras",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 19,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Filters Section (Vessel Selector + Search Bar + Status Tabs)
+          child: Column(
+            children: [
+              NcsHeroHeader(
+                title: "Compras",
+                subtitle: "Requerimientos y pedidos de insumos por buque",
+                showBackButton: widget.isTabModule ? false : null,
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  color: const Color(0xFF00C7BE),
+                  backgroundColor: _cardBg,
+                  onRefresh: () => _loadData(forceRefresh: true),
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    slivers: [
+                      // Filters Section (Vessel Selector + Search Bar + Status Tabs)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -376,7 +340,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                               Text(
                                 "PEDIDOS MOSTRADOS (${pedidos.length})",
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.7),
+                                  color: _textSecondary,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.8,
@@ -443,34 +407,37 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                         ),
                       ),
                     ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
-    );
+    ),
+  ),
+);
   }
 
   /// Search Bar estilo Cupertino
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: _cardBorder),
       ),
       child: TextField(
         controller: _searchController,
-        style: const TextStyle(color: Colors.white, fontSize: 14),
+        style: TextStyle(color: _textPrimary, fontSize: 14),
         cursorColor: const Color(0xFF00C7BE),
         decoration: InputDecoration(
           hintText: "Buscar por número, buque, departamento o artículo...",
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 13),
-          prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54, size: 20),
+          hintStyle: TextStyle(color: _textTertiary, fontSize: 13),
+          prefixIcon: Icon(Icons.search_rounded, color: _textSecondary, size: 20),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear_rounded, color: Colors.white54, size: 18),
+                  icon: Icon(Icons.clear_rounded, color: _textSecondary, size: 18),
                   onPressed: () {
                     setState(() {
                       _searchController.clear();
@@ -503,9 +470,9 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: _isDark ? const Color(0xFF131B2E) : const Color(0xFFE2E8F0),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Row(
         children: barcos.map((b) {
@@ -549,7 +516,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(b['icon'] as IconData, size: 14, color: isSelected ? Colors.white : Colors.white54),
+                    Icon(b['icon'] as IconData, size: 14, color: isSelected ? Colors.white : (_isDark ? Colors.white54 : const Color(0xFF64748B))),
                     const SizedBox(width: 5),
                     Flexible(
                       child: Text(
@@ -557,7 +524,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.white60,
+                          color: isSelected ? Colors.white : (_isDark ? Colors.white60 : const Color(0xFF64748B)),
                           fontSize: 12,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                         ),
@@ -586,9 +553,9 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: _isDark ? const Color(0xFF131B2E) : const Color(0xFFE2E8F0),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Row(
         children: tabs.map((t) {
@@ -635,7 +602,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                     Icon(
                       t['icon'] as IconData,
                       size: 15,
-                      color: isSelected ? Colors.white : Colors.white54,
+                      color: isSelected ? Colors.white : (_isDark ? Colors.white54 : const Color(0xFF64748B)),
                     ),
                     const SizedBox(height: 3),
                     Text(
@@ -643,7 +610,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.white60,
+                        color: isSelected ? Colors.white : (_isDark ? Colors.white60 : const Color(0xFF64748B)),
                         fontSize: 10.5,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                       ),
@@ -674,20 +641,29 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF0F2B36),
-            Color(0xFF143B4A),
-            Color(0xFF0A202A),
-          ],
+        gradient: LinearGradient(
+          colors: _isDark
+              ? const [
+                  Color(0xFF0F2B36),
+                  Color(0xFF143B4A),
+                  Color(0xFF0A202A),
+                ]
+              : const [
+                  Color(0xFFF0FDFA),
+                  Colors.white,
+                  Color(0xFFF8FAFC),
+                ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFF00C7BE).withOpacity(0.35), width: 1.2),
+        border: Border.all(
+          color: const Color(0xFF00C7BE).withOpacity(_isDark ? 0.35 : 0.5),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF00C7BE).withOpacity(0.15),
+            color: const Color(0xFF00C7BE).withOpacity(_isDark ? 0.15 : 0.08),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -715,7 +691,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                         ? "TOTAL PEDIDOS COMPRAS"
                         : "PEDIDOS — ${_selectedBarco.toUpperCase()}",
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
+                      color: _isDark ? Colors.white.withOpacity(0.7) : const Color(0xFF0F766E),
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
@@ -740,8 +716,8 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
           const SizedBox(height: 12),
           Text(
             "$totalPedidos",
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: _textPrimary,
               fontSize: 34,
               fontWeight: FontWeight.w900,
               letterSpacing: -1,
@@ -750,7 +726,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
           const SizedBox(height: 4),
           Text(
             "$totalArticulos artículos solicitados · ${totalUnidades.toStringAsFixed(0)} unidades totales",
-            style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w500),
+            style: TextStyle(color: _textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 16),
           ClipRRect(
@@ -800,7 +776,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
         const SizedBox(width: 5),
         Text(
           label,
-          style: TextStyle(color: Colors.white.withOpacity(0.65), fontSize: 11, fontWeight: FontWeight.w600),
+          style: TextStyle(color: _textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
         ),
       ],
     );
@@ -819,10 +795,8 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
     required int cumplidosTotal,
     required int totalPedidos,
   }) {
-    final double criticosRatio = totalPedidos > 0 ? (criticosTotal / totalPedidos) : 0.0;
     final double criticosCumplidosRatio = criticosTotal > 0 ? (criticosCumplidos / criticosTotal) : 0.0;
 
-    final double noCriticosRatio = totalPedidos > 0 ? (noCriticosTotal / totalPedidos) : 0.0;
     final double noCriticosCumplidosRatio = noCriticosTotal > 0 ? (noCriticosCumplidos / noCriticosTotal) : 0.0;
 
     return LayoutBuilder(
@@ -890,12 +864,12 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: ringColor.withOpacity(0.35)),
+        border: Border.all(color: ringColor.withOpacity(_isDark ? 0.35 : 0.5)),
         boxShadow: [
           BoxShadow(
-            color: ringColor.withOpacity(0.1),
+            color: ringColor.withOpacity(_isDark ? 0.1 : 0.06),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -920,7 +894,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                   const SizedBox(width: 10),
                   Text(
                     title,
-                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: _textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -931,7 +905,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                 strokeWidth: 5.0,
                 centerChild: Text(
                   pctText,
-                  style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 10.5, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: _textPrimary, fontSize: 10.5, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -939,18 +913,18 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
           const SizedBox(height: 12),
           Text(
             "$count",
-            style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.5),
+            style: TextStyle(color: _textPrimary, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.5),
           ),
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 11.5, fontWeight: FontWeight.w500),
+            style: TextStyle(color: _textSecondary, fontSize: 11.5, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.04),
+              color: _isDark ? Colors.white.withOpacity(0.04) : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -976,7 +950,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
         ),
         Text(
           label,
-          style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 9.5, fontWeight: FontWeight.w500),
+          style: TextStyle(color: _textSecondary, fontSize: 9.5, fontWeight: FontWeight.w500),
         ),
       ],
     );
@@ -1006,9 +980,9 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1016,9 +990,9 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 "Estado de Vencimientos",
-                style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                style: TextStyle(color: _textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
               ),
               Row(
                 children: [
@@ -1043,9 +1017,9 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                     holeRadiusRatio: 0.68,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     "Pedidos",
-                    style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: _textSecondary, fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -1059,9 +1033,9 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                     holeRadiusRatio: 0.68,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     "% Pedidos",
-                    style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: _textSecondary, fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -1080,9 +1054,9 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: _cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1090,13 +1064,13 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 "Distribución por Barco",
-                style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                style: TextStyle(color: _textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
               ),
               Text(
                 "${summary.porBarco.length} BUQUES",
-                style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10, fontWeight: FontWeight.bold),
+                style: TextStyle(color: _textTertiary, fontSize: 10, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -1120,7 +1094,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                           const SizedBox(width: 7),
                           Text(
                             b.barco,
-                            style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.bold),
+                            style: TextStyle(color: _textPrimary, fontSize: 13.5, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(width: 8),
                           if (b.criticos > 0)
@@ -1139,7 +1113,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                       ),
                       Text(
                         "${b.totalPedidos} pedidos (${b.enPlan} abiertos)",
-                        style: TextStyle(color: Colors.white.withOpacity(0.65), fontSize: 12, fontWeight: FontWeight.w500),
+                        style: TextStyle(color: _textSecondary, fontSize: 12, fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
@@ -1186,14 +1160,14 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF131B2E),
+        color: _cardBg,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: pedido.esCritico
               ? Colors.redAccent.withOpacity(0.4)
               : isVencido
                   ? Colors.orangeAccent.withOpacity(0.25)
-                  : Colors.white.withOpacity(0.06),
+                  : _cardBorder,
           width: pedido.esCritico ? 1.2 : 1.0,
         ),
       ),
@@ -1236,8 +1210,8 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                           Flexible(
                             child: Text(
                               pedido.numero,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: _textPrimary,
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: -0.2,
@@ -1298,7 +1272,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                     Container(
                       padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
+                        color: _isDark ? Colors.white.withOpacity(0.05) : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Icon(
@@ -1306,24 +1280,24 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                             ? Icons.settings_rounded
                             : Icons.anchor_rounded,
                         size: 13,
-                        color: Colors.white70,
+                        color: _textSecondary,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       "${pedido.departamento} · ${pedido.tipoPedido}",
-                      style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12.5, fontWeight: FontWeight.w500),
+                      style: TextStyle(color: _textSecondary, fontSize: 12.5, fontWeight: FontWeight.w500),
                     ),
                     const Spacer(),
                     Text(
                       "${pedido.cantidadArticulos} art. (${pedido.totalUnidadesSolicitadas.toStringAsFixed(0)} u)",
-                      style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 11.5),
+                      style: TextStyle(color: _textTertiary, fontSize: 11.5),
                     ),
                   ],
                 ),
 
                 const SizedBox(height: 12),
-                const Divider(color: Colors.white10, height: 1),
+                Divider(color: _cardBorder, height: 1),
                 const SizedBox(height: 10),
 
                 // Footer row: Estado + Fechas
@@ -1361,11 +1335,11 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                     ),
                     Row(
                       children: [
-                        Icon(Icons.calendar_today_rounded, size: 12, color: Colors.white.withOpacity(0.4)),
+                        Icon(Icons.calendar_today_rounded, size: 12, color: _textTertiary),
                         const SizedBox(width: 5),
                         Text(
                           pedido.fechaPedido,
-                          style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 11),
+                          style: TextStyle(color: _textTertiary, fontSize: 11),
                         ),
                       ],
                     ),
@@ -1382,7 +1356,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
   void _showPedidoDetailModal(PedidoCompra pedido) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF0E1626),
+      backgroundColor: _bg,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -1402,7 +1376,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.white24,
+                      color: _textTertiary.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -1417,29 +1391,29 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                             children: [
                               Text(
                                 pedido.numero,
-                                style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold),
+                                style: TextStyle(color: _textPrimary, fontSize: 17, fontWeight: FontWeight.bold),
                               ),
                               Text(
                                 "${pedido.barcoNombreCompleto} · ${pedido.departamento}",
-                                style: TextStyle(color: Colors.white.withOpacity(0.55), fontSize: 12),
+                                style: TextStyle(color: _textSecondary, fontSize: 12),
                               ),
                             ],
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                          icon: Icon(Icons.close_rounded, color: _textSecondary),
                           onPressed: () => Navigator.pop(ctx),
                         ),
                       ],
                     ),
                   ),
-                  const Divider(color: Colors.white10, height: 1),
+                  Divider(color: _cardBorder, height: 1),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.04),
+                        color: _isDark ? Colors.white.withOpacity(0.04) : const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Row(
@@ -1460,7 +1434,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                       child: Text(
                         "ARTÍCULOS SOLICITADOS (${pedido.articulos.length})",
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
+                          color: _textTertiary,
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.8,
@@ -1479,9 +1453,9 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                           margin: const EdgeInsets.only(bottom: 10),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF131B2E),
+                            color: _cardBg,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.white.withOpacity(0.06)),
+                            border: Border.all(color: _cardBorder),
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1501,14 +1475,14 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                                   children: [
                                     Text(
                                       art.nombre,
-                                      style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.bold),
+                                      style: TextStyle(color: _textPrimary, fontSize: 13.5, fontWeight: FontWeight.bold),
                                     ),
                                     if (art.descripcion.isNotEmpty && art.descripcion != art.nombre)
                                       Padding(
                                         padding: const EdgeInsets.only(top: 2.0),
                                         child: Text(
                                           art.descripcion,
-                                          style: TextStyle(color: Colors.white.withOpacity(0.55), fontSize: 11.5),
+                                          style: TextStyle(color: _textSecondary, fontSize: 11.5),
                                         ),
                                       ),
                                     const SizedBox(height: 6),
@@ -1529,7 +1503,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                                           ),
                                         Text(
                                           "Ref: ${art.codigoReferencia}",
-                                          style: TextStyle(color: Colors.white.withOpacity(0.35), fontSize: 10.5),
+                                          style: TextStyle(color: _textTertiary, fontSize: 10.5),
                                         ),
                                       ],
                                     ),
@@ -1538,7 +1512,7 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
                               ),
                               Text(
                                 "${art.cantidadSolicitada.toStringAsFixed(0)} ${art.unidad}",
-                                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                                style: TextStyle(color: _textPrimary, fontSize: 13, fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
@@ -1560,12 +1534,12 @@ class _ComprasViewState extends State<ComprasView> with SingleTickerProviderStat
       children: [
         Text(
           title,
-          style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 10.5),
+          style: TextStyle(color: _textTertiary, fontSize: 10.5),
         ),
         const SizedBox(height: 2),
         Text(
           val,
-          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+          style: TextStyle(color: _textPrimary, fontSize: 12, fontWeight: FontWeight.bold),
         ),
       ],
     );
