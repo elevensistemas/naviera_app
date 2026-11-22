@@ -567,9 +567,6 @@ class _VesselHealthViewState extends State<VesselHealthView>
     return vesselName.toUpperCase().contains('ALFA') ? '🇵🇦' : '🇦🇷';
   }
 
-  String _getVesselFlagFullName(String vesselName) {
-    return vesselName.toUpperCase().contains('ALFA') ? 'Panamá 🇵🇦' : 'Argentina 🇦🇷';
-  }
 
   /// Tarjeta Principal: Anillo Health Score (0-100) + Numeros Oficiales
   Widget _buildMainScoreCard(VesselHealthCard card) {
@@ -668,37 +665,24 @@ class _VesselHealthViewState extends State<VesselHealthView>
                   ],
                 ),
                 const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: _isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: _isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0),
-                        ),
-                      ),
-                      child: Text(
-                        "IMO $imoNumber",
-                        style: TextStyle(
-                          color: _textPrimary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: _isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: _isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _getVesselFlagFullName(card.vesselName),
-                      style: TextStyle(
-                        color: _textSecondary,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  ),
+                  child: Text(
+                    "IMO $imoNumber",
+                    style: TextStyle(
+                      color: _textPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),
