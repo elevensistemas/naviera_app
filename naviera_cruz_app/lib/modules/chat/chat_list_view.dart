@@ -3,7 +3,10 @@ import '../../models/models.dart';
 import '../../services/services.dart';
 import '../../app/theme.dart';
 import '../../app/ncs_hero_header.dart';
+import '../../app/ncs_assistant_card.dart';
+import '../../core/storage.dart';
 import '../aichat/aichat_view.dart';
+import '../assistant/crew_assistant_view.dart';
 import 'chat_detail_view.dart';
 
 class ChatListView extends StatefulWidget {
@@ -461,127 +464,20 @@ class _ChatListViewState extends State<ChatListView> {
   }
 
   Widget _buildAssistantBanner(BuildContext context, bool isDark) {
-    return GestureDetector(
+    return NcsAssistantCard(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const AIChatView()),
-        );
+        if (SessionManager.shared.isTripulanteMode) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CrewAssistantView()),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AIChatView()),
+          );
+        }
       },
-      child: Container(
-        height: 82,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(22),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1E293B), // Midnight slate
-              Color(0xFF1E3A8A), // Royal Navy
-              Color(0xFF2563EB), // Electric Cobalt Blue
-              Color(0xFF3B82F6), // Bright Azure
-            ],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF2563EB).withValues(alpha: 0.35),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(22),
-          child: Stack(
-            children: [
-              // Reflejo ondulado luminoso inferior
-              Positioned(
-                right: -25,
-                bottom: -35,
-                child: Container(
-                  width: 150,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        const Color(0xFF93C5FD).withValues(alpha: 0.4),
-                        const Color(0xFF60A5FA).withValues(alpha: 0.15),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                child: Row(
-                  children: [
-                    // Icono de estrella IA con resplandor radial seguro
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF818CF8),
-                            Color(0xFF60A5FA),
-                            Color(0xFFC084FC),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF818CF8).withValues(alpha: 0.4),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.auto_awesome,
-                          size: 28,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    // Títulos del asistente
-                    const Expanded(
-                      child: Text(
-                        "Asistente NCS",
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                    ),
-                    // Botón circular chevron
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.chevron_right_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
