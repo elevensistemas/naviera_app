@@ -49,24 +49,26 @@ class _ChatListViewState extends State<ChatListView> {
         final matches = <ChatChannel>[];
         final seen = <String>{};
 
-        // 1. Buscar en canales recientes
-        for (final c in _channels) {
-          final nMatch = c.name.toLowerCase().contains(query);
-          final mMatch = c.lastMessage != null && c.lastMessage!.toLowerCase().contains(query);
-          if (nMatch || mMatch) {
-            seen.add(c.name.toLowerCase());
-            matches.add(c);
-          }
-        }
-
-        // 2. Buscar en todos los contactos de la empresa (a bordo, en tierra y oficina)
-        for (final c in _contacts) {
-          if (!seen.contains(c.name.toLowerCase())) {
+        if (_activeSegment == 0) {
+          // Buscar únicamente en conversaciones existentes del usuario
+          for (final c in _channels) {
             final nMatch = c.name.toLowerCase().contains(query);
             final mMatch = c.lastMessage != null && c.lastMessage!.toLowerCase().contains(query);
             if (nMatch || mMatch) {
               seen.add(c.name.toLowerCase());
               matches.add(c);
+            }
+          }
+        } else {
+          // Buscar en el directorio completo de contactos de la empresa
+          for (final c in _contacts) {
+            if (!seen.contains(c.name.toLowerCase())) {
+              final nMatch = c.name.toLowerCase().contains(query);
+              final mMatch = c.lastMessage != null && c.lastMessage!.toLowerCase().contains(query);
+              if (nMatch || mMatch) {
+                seen.add(c.name.toLowerCase());
+                matches.add(c);
+              }
             }
           }
         }
@@ -636,7 +638,7 @@ class _ChatListViewState extends State<ChatListView> {
                       : [],
                 ),
                 child: Text(
-                  "Chats recientes",
+                  "Conversaciones",
                   style: TextStyle(
                     color: _activeSegment == 0
                         ? Colors.white
@@ -804,7 +806,7 @@ class _ChatListViewState extends State<ChatListView> {
 
           // Título
           Text(
-            _activeSegment == 0 ? "No hay chats recientes" : "No hay contactos disponibles",
+            _activeSegment == 0 ? "No hay conversaciones aún" : "No hay contactos disponibles",
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -819,7 +821,7 @@ class _ChatListViewState extends State<ChatListView> {
             constraints: const BoxConstraints(maxWidth: 320),
             child: Text(
               _activeSegment == 0
-                  ? "Inicia una conversación, contacta a un miembro de la flota o consulta al Asistente NCS."
+                  ? "Aún no se han iniciado conversaciones en este dispositivo. Puedes seleccionar un contacto del directorio o consultar al Asistente NCS."
                   : "No se encontraron contactos en la agenda corporativa.",
               textAlign: TextAlign.center,
               style: TextStyle(
@@ -970,7 +972,9 @@ class _ChatListViewState extends State<ChatListView> {
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4.0),
           child: Text(
-            channel.lastMessage ?? "Sin mensajes recientes",
+            (channel.lastMessage != null && channel.lastMessage!.isNotEmpty)
+                ? channel.lastMessage!
+                : (channel.type == 'group' ? 'Grupo operativo' : 'Personal Naviera'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(

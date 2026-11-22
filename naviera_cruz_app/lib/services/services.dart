@@ -196,21 +196,9 @@ class MockChatService implements ChatService {
 
   @override
   Future<List<ChatMessage>> fetchMessages(String channelId) async {
-    await Future.delayed(const Duration(milliseconds: 400));
-    return [
-      ChatMessage(
-        id: "m1",
-        senderId: "other",
-        text: "Reporte de situación enviado",
-        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-      ),
-      ChatMessage(
-        id: "m2",
-        senderId: "1", // matches our mock admin id
-        text: "Excelente, gracias.",
-        timestamp: DateTime.now().subtract(const Duration(minutes: 110)),
-      ),
-    ];
+    await Future.delayed(const Duration(milliseconds: 150));
+    // No inventar mensajes previos ficticios: nadie usó el chat aún
+    return [];
   }
 
   @override
@@ -239,18 +227,23 @@ class MockChatService implements ChatService {
 class ProductionChatService implements ChatService {
   @override
   Future<List<ChatChannel>> fetchChannels() async {
+    // Nadie utilizó el chat aún en la empresa: no inventar datos recientes
     try {
       final Map<String, dynamic> response = await APIClient.shared.request(endpoint: '/api/v1/chat/conversations/');
       final List<dynamic> results = response['results'] ?? [];
+      if (results.isEmpty) return [];
       return results.where((json) {
         final participant = json['participant'] ?? {};
         final name = (participant['name'] ?? participant['username'] ?? '').toString().toLowerCase();
         final username = (participant['username'] ?? '').toString().toLowerCase();
-        if (username == 'admin' || username == 'test admin' || username == 'test_admin' || username.contains('admin') ||
+        if (username.isEmpty || username == 'admin' || username == 'test admin' || username == 'test_admin' || username.contains('admin') ||
             name == 'admin' || name == 'test admin' || name == 'test_admin' || name.contains('admin')) {
           return false;
         }
-        return true;
+        final lastMsg = json['last_message'] ?? {};
+        final content = (lastMsg['content'] ?? '').toString().trim();
+        // Solo considerar conversaciones que tengan mensajes reales
+        return content.isNotEmpty;
       }).map((json) {
         final participant = json['participant'] ?? {};
         final lastMsg = json['last_message'] ?? {};
