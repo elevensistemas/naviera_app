@@ -359,6 +359,194 @@ class _VesselHealthViewState extends State<VesselHealthView>
   }
 
   /// Selector ágil superior con transición instantánea
+  ({LinearGradient gradient, List<BoxShadow> shadow}) _getVesselSelectorStyle(String vesselName) {
+    final v = vesselName.toUpperCase();
+    if (v.contains('GUSTAVO')) {
+      // GUSTAVO U -> Gris
+      return (
+        gradient: const LinearGradient(
+          colors: [Color(0xFF64748B), Color(0xFF475569)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        shadow: [
+          BoxShadow(
+            color: const Color(0xFF64748B).withValues(alpha: 0.4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      );
+    } else if (v.contains('NANY')) {
+      // NANY -> Naranja
+      return (
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF97316), Color(0xFFEA580C)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        shadow: [
+          BoxShadow(
+            color: const Color(0xFFF97316).withValues(alpha: 0.4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      );
+    } else {
+      // ALFA C -> Azul
+      return (
+        gradient: const LinearGradient(
+          colors: [Color(0xFF007AFF), Color(0xFF0051B3)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        shadow: [
+          BoxShadow(
+            color: const Color(0xFF007AFF).withValues(alpha: 0.4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      );
+    }
+  }
+
+  /// Estilo tematico de la tarjeta de score principal segun buque y modo (claro/oscuro)
+  ({
+    Gradient bgGradient,
+    Color borderColor,
+    Color shadowColor,
+    Color titleColor,
+    Color imoColor,
+    Color badgeBg,
+    Color badgeBorder,
+    Color badgeLabelColor,
+    Color badgeValColor,
+    Color ringTrackColor,
+    Color ringSubColor,
+  }) _getVesselScoreCardTheme(String vesselName, bool isDark) {
+    final v = vesselName.toUpperCase();
+    if (v.contains('GUSTAVO')) {
+      // GUSTAVO U -> GRIS
+      if (isDark) {
+        return (
+          bgGradient: const LinearGradient(
+            colors: [Color(0xFF263346), Color(0xFF1B2432)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderColor: const Color(0xFF64748B).withValues(alpha: 0.45),
+          shadowColor: Colors.black.withValues(alpha: 0.25),
+          titleColor: Colors.white,
+          imoColor: Colors.white70,
+          badgeBg: Colors.white.withValues(alpha: 0.08),
+          badgeBorder: Colors.white.withValues(alpha: 0.14),
+          badgeLabelColor: Colors.white60,
+          badgeValColor: Colors.white,
+          ringTrackColor: Colors.white.withValues(alpha: 0.08),
+          ringSubColor: Colors.white60,
+        );
+      } else {
+        return (
+          bgGradient: const LinearGradient(
+            colors: [Color(0xFFF8FAFC), Color(0xFFE2E8F0)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderColor: const Color(0xFF94A3B8),
+          shadowColor: const Color(0xFF64748B).withValues(alpha: 0.12),
+          titleColor: const Color(0xFF1E293B),
+          imoColor: const Color(0xFF475569),
+          badgeBg: Colors.white,
+          badgeBorder: const Color(0xFFCBD5E1),
+          badgeLabelColor: const Color(0xFF64748B),
+          badgeValColor: const Color(0xFF0F172A),
+          ringTrackColor: const Color(0xFFCBD5E1).withValues(alpha: 0.50),
+          ringSubColor: const Color(0xFF64748B),
+        );
+      }
+    } else if (v.contains('NANY')) {
+      // NANY -> NARANJA
+      if (isDark) {
+        return (
+          bgGradient: const LinearGradient(
+            colors: [Color(0xFF381F14), Color(0xFF23130C)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderColor: const Color(0xFFF97316).withValues(alpha: 0.45),
+          shadowColor: const Color(0xFFEA580C).withValues(alpha: 0.25),
+          titleColor: Colors.white,
+          imoColor: const Color(0xFFFDBA74),
+          badgeBg: const Color(0xFFF97316).withValues(alpha: 0.15),
+          badgeBorder: const Color(0xFFF97316).withValues(alpha: 0.35),
+          badgeLabelColor: const Color(0xFFFED7AA),
+          badgeValColor: Colors.white,
+          ringTrackColor: const Color(0xFFF97316).withValues(alpha: 0.15),
+          ringSubColor: const Color(0xFFFDBA74),
+        );
+      } else {
+        return (
+          bgGradient: const LinearGradient(
+            colors: [Color(0xFFFFF7ED), Color(0xFFFFEDD5)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderColor: const Color(0xFFFB923C),
+          shadowColor: const Color(0xFFEA580C).withValues(alpha: 0.12),
+          titleColor: const Color(0xFF9A3412),
+          imoColor: const Color(0xFFC2410C),
+          badgeBg: Colors.white,
+          badgeBorder: const Color(0xFFFED7AA),
+          badgeLabelColor: const Color(0xFF9A3412),
+          badgeValColor: const Color(0xFF7C2D12),
+          ringTrackColor: const Color(0xFFFED7AA).withValues(alpha: 0.60),
+          ringSubColor: const Color(0xFFC2410C),
+        );
+      }
+    } else {
+      // ALFA C -> AZUL
+      if (isDark) {
+        return (
+          bgGradient: const LinearGradient(
+            colors: [Color(0xFF132A4A), Color(0xFF0C1B30)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderColor: const Color(0xFF3B82F6).withValues(alpha: 0.45),
+          shadowColor: const Color(0xFF007AFF).withValues(alpha: 0.25),
+          titleColor: Colors.white,
+          imoColor: const Color(0xFF93C5FD),
+          badgeBg: const Color(0xFF007AFF).withValues(alpha: 0.15),
+          badgeBorder: const Color(0xFF3B82F6).withValues(alpha: 0.35),
+          badgeLabelColor: const Color(0xFFBFDBFE),
+          badgeValColor: Colors.white,
+          ringTrackColor: const Color(0xFF3B82F6).withValues(alpha: 0.15),
+          ringSubColor: const Color(0xFF93C5FD),
+        );
+      } else {
+        return (
+          bgGradient: const LinearGradient(
+            colors: [Color(0xFFEFF6FF), Color(0xFFDBEAFE)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderColor: const Color(0xFF60A5FA),
+          shadowColor: const Color(0xFF007AFF).withValues(alpha: 0.12),
+          titleColor: const Color(0xFF1E3A8A),
+          imoColor: const Color(0xFF2563EB),
+          badgeBg: Colors.white,
+          badgeBorder: const Color(0xFFBFDBFE),
+          badgeLabelColor: const Color(0xFF1E40AF),
+          badgeValColor: const Color(0xFF1E3A8A),
+          ringTrackColor: const Color(0xFFBFDBFE).withValues(alpha: 0.60),
+          ringSubColor: const Color(0xFF2563EB),
+        );
+      }
+    }
+  }
+
   Widget _buildVesselSelector() {
     return Container(
       padding: const EdgeInsets.all(4),
@@ -441,32 +629,19 @@ class _VesselHealthViewState extends State<VesselHealthView>
             }
           }
 
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => _onVesselSelected(vName),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? const LinearGradient(
-                          colors: [Color(0xFF007AFF), Color(0xFF0051B3)],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        )
-                      : null,
-                  borderRadius: BorderRadius.circular(11),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: const Color(0xFF007AFF).withValues(alpha: 0.4),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
-                ),
+                final vesselStyle = _getVesselSelectorStyle(vName);
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () => _onVesselSelected(vName),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        gradient: isSelected ? vesselStyle.gradient : null,
+                        borderRadius: BorderRadius.circular(11),
+                        boxShadow: isSelected ? vesselStyle.shadow : null,
+                      ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -518,15 +693,17 @@ class _VesselHealthViewState extends State<VesselHealthView>
             ? "${card.deltaScore} pts"
             : "=";
 
+    final theme = _getVesselScoreCardTheme(card.vesselName, _isDark);
+
     return Container( 
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1829),
+        gradient: theme.bgGradient,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: theme.borderColor, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: theme.shadowColor,
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -547,7 +724,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
                   painter: _AppleHealthScorePainter(
                     score: score,
                     color: toneColor,
-                    trackColor: _isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+                    trackColor: theme.ringTrackColor,
                   ),
                 ),
                 Column(
@@ -565,7 +742,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
                     Text(
                       "/ 100",
                       style: TextStyle(
-                        color: _textTertiary,
+                        color: theme.ringSubColor,
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                       ),
@@ -585,8 +762,8 @@ class _VesselHealthViewState extends State<VesselHealthView>
                       children: [
                         Text(
                           card.vesselName,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: theme.titleColor,
                             fontSize: 22,
                             fontWeight: FontWeight.w800,
                             letterSpacing: -0.5,
@@ -596,7 +773,7 @@ class _VesselHealthViewState extends State<VesselHealthView>
                           const SizedBox(width: 8),
                           Text(
                             "IMO ${card.imo}",
-                            style: TextStyle(color: _textTertiary, fontSize: 11),
+                            style: TextStyle(color: theme.imoColor, fontSize: 11, fontWeight: FontWeight.w600),
                           ),
                         ],
                       ],
@@ -609,24 +786,24 @@ class _VesselHealthViewState extends State<VesselHealthView>
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                           decoration: BoxDecoration(
-                            color: _isDark ? Colors.white.withValues(alpha: 0.06) : const Color(0xFFF1F5F9),
+                            color: theme.badgeBg,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: _cardBorder),
+                            border: Border.all(color: theme.badgeBorder),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 "Score Base: ",
-                                style: TextStyle(color: _textTertiary, fontSize: 11, fontWeight: FontWeight.w600),
+                                style: TextStyle(color: theme.badgeLabelColor, fontSize: 11, fontWeight: FontWeight.w600),
                               ),
                               Text(
                                 "${card.healthScoreBase}",
-                                style: TextStyle(color: _textPrimary, fontSize: 11.5, fontWeight: FontWeight.w800),
+                                style: TextStyle(color: theme.badgeValColor, fontSize: 11.5, fontWeight: FontWeight.w800),
                               ),
                               Text(
                                 " pts",
-                                style: TextStyle(color: _textTertiary, fontSize: 11, fontWeight: FontWeight.w600),
+                                style: TextStyle(color: theme.badgeLabelColor, fontSize: 11, fontWeight: FontWeight.w600),
                               ),
                             ],
                           ),
